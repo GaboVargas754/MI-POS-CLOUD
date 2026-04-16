@@ -1,0 +1,38 @@
+<div class="flex flex-col gap-3 mt-4">
+    {% for producto in productos %}
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-blue-500 dark:hover:border-blue-400 cursor-pointer transition-all duration-200 flex justify-between items-center"
+             hx-post="{% url 'agregar_al_carrito' producto.id %}"
+             hx-target="#panel-carrito"
+             hx-swap="innerHTML">
+
+            <div>
+                <strong class="block text-lg text-gray-800 dark:text-gray-100">{{ producto.nombre }}</strong>
+                <span class="text-sm text-gray-400 dark:text-gray-500 font-mono">Cód: {{ producto.codigo_barras }}</span>
+            </div>
+
+            <div class="text-right flex flex-col items-end">
+                <span class="text-blue-600 dark:text-blue-400 font-bold text-xl">${{ producto.precio }}</span>
+
+                {% if producto.stock > 5 %}
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 mt-1">
+                        Stock: {{ producto.stock }}
+                    </span>
+                {% elif producto.stock > 0 %}
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 mt-1">
+                        Stock: {{ producto.stock }}
+                    </span>
+                {% else %}
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 mt-1">
+                        Agotado
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        {% if request.GET.q %}
+            <p class="text-gray-500 dark:text-gray-400 text-center py-10 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 border-dashed transition-colors">
+                No se encontraron productos con "{{ request.GET.q }}".
+            </p>
+        {% endif %}
+    {% endfor %}
+</div>

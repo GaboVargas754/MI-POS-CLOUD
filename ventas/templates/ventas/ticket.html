@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket #{{ venta.id }}</title>
+    <style>
+        /* Estilos simulando una impresora térmica de 80mm */
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            width: 300px; /* Ancho típico de ticket */
+            margin: 0 auto;
+            color: black;
+            padding: 10px;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        .bold { font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 4px 0; }
+        .border-top { border-top: 1px dashed black; }
+        .border-bottom { border-bottom: 1px dashed black; }
+
+        /* Ocultar márgenes de impresión del navegador */
+        @media print {
+            @page { margin: 0; }
+            body { margin: 0.5cm; }
+        }
+    </style>
+</head>
+<body onload="window.print();">
+
+    <div class="text-center">
+        <h2 style="margin-bottom: 5px; text-transform: uppercase;">{{ config.nombre_negocio|default:"MI NEGOCIO" }}</h2>
+
+        {% if config.ubicacion %}
+            <p style="margin: 0;">{{ config.ubicacion }}</p>
+        {% endif %}
+
+        {% if config.telefono %}
+            <p style="margin: 0;">Tel: {{ config.telefono }}</p>
+        {% endif %}
+        <p style="margin: 5px 0;" class="border-bottom pb-2">
+            Ticket: #{{ venta.id }} <br>
+            Fecha: {{ venta.fecha|date:"d/m/Y H:i" }} <br>
+            Cajero: {{ venta.cajero.username|default:"Admin" }}
+        </p>
+    </div>
+
+    <table>
+        <thead>
+            <tr class="border-bottom">
+                <th class="text-left">Cant</th>
+                <th class="text-left">Desc</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in detalles %}
+            <tr>
+                <td class="text-left" style="vertical-align: top;">{{ item.cantidad }}</td>
+                <td class="text-left">{{ item.producto.nombre|truncatechars:18 }}</td>
+                <td class="text-right">${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="border-top" style="margin-top: 10px; padding-top: 10px;">
+        <table style="width: 100%; margin-top: 0;">
+            <tr>
+                <td class="text-left bold">TOTAL:</td>
+                <td class="text-right bold" style="font-size: 18px;">${{ venta.total }}</td>
+            </tr>
+            <tr>
+                <td class="text-left">Efectivo Recibido:</td>
+                <td class="text-right">${{ venta.pago_recibido }}</td>
+            </tr>
+            <tr>
+                <td class="text-left bold">CAMBIO:</td>
+                <td class="text-right bold">${{ venta.cambio }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="text-center" style="margin-top: 20px;">
+        <p>¡Gracias por su compra!</p>
+        <p style="font-size: 10px; margin-top: 10px;">Este documento no es un comprobante fiscal.</p>
+    </div>
+
+</body>
+</html>

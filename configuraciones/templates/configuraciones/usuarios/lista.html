@@ -1,0 +1,77 @@
+{% extends "base/base.html" %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <div class="flex items-center gap-4 w-full sm:w-auto">
+        <a href="{% url 'config_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h2 class="text-2xl sm:text-3xl font-bold">Usuarios del Sistema</h2>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <form method="GET" class="flex items-center gap-2">
+            <label class="text-sm font-bold text-gray-600 dark:text-gray-400">Mostrar:</label>
+            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </form>
+
+        <button hx-get="{% url 'nuevo_usuario' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+            + Nuevo Usuario
+        </button>
+    </div>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Usuario</th>
+                    <th class="p-4 text-center">Rol/Grupo</th>
+                    <th class="p-4 text-center">Estado</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for u in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4">
+                        <div class="font-bold">{{ u.username }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ u.email }}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        {% for group in u.groups.all %}
+                            <span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-bold">{{ group.name }}</span>
+                        {% empty %}
+                            <span class="text-gray-400 italic text-xs">Sin Rol</span>
+                        {% endfor %}
+                    </td>
+                    <td class="p-4 text-center">
+                        {% if u.is_active %}
+                            <span class="text-green-500 font-bold text-xs uppercase">Activo</span>
+                        {% else %}
+                            <span class="text-red-500 font-bold text-xs uppercase">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button hx-get="{% url 'editar_usuario' u.id %}" hx-target="#modal-content" class="text-yellow-600 hover:underline font-bold text-sm">Editar</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay usuarios registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "base/pagination.html" %}
+</div>
+{% endblock %}

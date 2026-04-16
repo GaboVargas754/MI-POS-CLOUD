@@ -1,0 +1,50 @@
+{% extends "base/base.html" %}
+
+{% block title %}Iniciar Sesión - {{ block.super }}{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 mx-auto">
+
+    <div class="text-center mb-8">
+        <div class="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 p-4 rounded-full inline-block mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </div>
+        <h1 class="text-3xl font-black text-gray-800 dark:text-white tracking-tight">Bienvenido</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Ingresa tus credenciales para acceder al sistema</p>
+    </div>
+
+    {% if form.errors %}
+    <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 mb-6 rounded-r">
+        <p class="font-bold text-sm">Error de acceso</p>
+        <p class="text-sm">Usuario o contraseña incorrectos.</p>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Usuario</label>
+            <input type="text" name="username" required autofocus
+                   class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors"
+                   placeholder="Ej. admin">
+        </div>
+
+        <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Contraseña</label>
+            <input type="password" name="password" required
+                   class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors"
+                   placeholder="••••••••">
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-lg text-lg">
+            Iniciar Sesión
+        </button>
+    </form>
+
+</div>
+{% endblock %}

@@ -1,0 +1,2710 @@
+
+
+============================================================
+ARCHIVO: ./manage.py
+============================================================
+
+#!/usr/bin/env python
+"""Django's command-line utility for administrative tasks."""
+import os
+import sys
+
+
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pos_project.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == '__main__':
+    main()
+
+
+============================================================
+ARCHIVO: ./juntar_codigo.py
+============================================================
+
+import os
+
+IGNORAR = ['entorno', 'venv', '__pycache__', 'migrations', '.git', 'static', 'media']
+
+with open('mi_codigo_completo.txt', 'w', encoding='utf-8') as outfile:
+    for root, dirs, files in os.walk('.'):
+        # Saltamos las carpetas ignoradas
+        if any(ignorado in root for ignorado in IGNORAR):
+            continue
+
+        for file in files:
+            # Solo leemos Python y HTML
+            if file.endswith(('.py', '.html')):
+                filepath = os.path.join(root, file)
+                outfile.write(f'\n\n{"="*60}\n')
+                outfile.write(f'ARCHIVO: {filepath}\n')
+                outfile.write(f'{"="*60}\n\n')
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as infile:
+                        outfile.write(infile.read())
+                except Exception as e:
+                    outfile.write(f"Error leyendo archivo: {e}\n")
+
+print("¡Listo! Se creó el archivo mi_codigo_completo.txt")
+
+
+============================================================
+ARCHIVO: ./core/views.py
+============================================================
+
+# core/views.py
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from core.utils import get_config_context
+
+@login_required
+def portal_principal(request):
+    return render(request, 'core/portal.html', get_config_context('Portal Principal', 'border-gray-500'))
+
+
+============================================================
+ARCHIVO: ./core/urls.py
+============================================================
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.portal_principal, name='portal_principal'),
+]
+
+
+============================================================
+ARCHIVO: ./core/__init__.py
+============================================================
+
+
+
+============================================================
+ARCHIVO: ./core/utils.py
+============================================================
+
+from django.urls import reverse
+
+def get_config_context(nav_title, accent_color, nav_items=None):
+    if nav_items is None:
+        nav_items = [
+            {'label': 'Ventas', 'url': reverse('dashboard'), 'hover_color': 'text-yellow-600', 'hover_color_dark': 'text-yellow-500'},
+            {'label': 'Inventario', 'url': reverse('inventario_dashboard'), 'hover_color': 'text-yellow-600', 'hover_color_dark': 'text-yellow-500'},
+            {'label': 'Configuración', 'url': reverse('config_dashboard'), 'hover_color': 'text-yellow-600', 'hover_color_dark': 'text-yellow-500'},
+        ]
+    return {
+        'nav_title': nav_title,
+        'accent_color': accent_color,
+        'nav_items': nav_items,
+        'htmx_enabled': True
+    }
+
+
+============================================================
+ARCHIVO: ./core/templates/core/portal.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Portal de Acceso - {{ block.super }}{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-12">
+    <h1 class="text-4xl sm:text-5xl font-black text-gray-800 dark:text-white mb-4 tracking-tight">Hola, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+    <p class="text-gray-500 dark:text-gray-400 text-xl">¿A qué módulo deseas ingresar hoy?</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    {% if perms.configuraciones.acceder_ventas or request.user.is_superuser %}
+    <a href="{% url 'pantalla_pos' %}" class="group bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-2 flex flex-col items-center text-center">
+        <div class="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 w-24 h-24 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+        </div>
+        <h2 class="text-2xl font-black text-gray-800 dark:text-white mb-2">Ventas y POS</h2>
+        <p class="text-gray-500 dark:text-gray-400">Punto de venta, cobros y dashboard de métricas.</p>
+    </a>
+    {% endif %}
+
+    {% if perms.configuraciones.acceder_inventario or request.user.is_superuser %}
+    <a href="{% url 'inventario_dashboard' %}" class="group bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-2 flex flex-col items-center text-center">
+        <div class="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 w-24 h-24 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+        </div>
+        <h2 class="text-2xl font-black text-gray-800 dark:text-white mb-2">Inventarios</h2>
+        <p class="text-gray-500 dark:text-gray-400">Catálogo de productos, stock y categorías.</p>
+    </a>
+    {% endif %}
+
+    {% if perms.configuraciones.acceder_configuraciones or request.user.is_superuser %}
+    <a href="{% url 'config_dashboard' %}" class="group bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-yellow-500 dark:hover:border-yellow-500 transition-all duration-300 transform hover:-translate-y-2 flex flex-col items-center text-center">
+        <div class="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 w-24 h-24 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-black text-gray-800 dark:text-white mb-2">Configuración</h3>
+        <p class="text-gray-500 dark:text-gray-400">Usuarios, roles, accesos y preferencias del sistema.</p>
+    </a>
+    {% endif %}
+
+</div>
+
+<div class="mt-12 text-center">
+    <form method="POST" action="{% url 'logout' %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors font-bold bg-transparent border-none cursor-pointer focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Cerrar Sesión
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./templates/base/nav.html
+============================================================
+
+<nav class="bg-gray-200 dark:bg-gray-800 border-b-4 {{ accent_color|default:'border-yellow-500' }} p-4 shadow-md flex-shrink-0 transition-colors duration-200 relative z-40">
+    <div class="container mx-auto flex flex-wrap justify-between items-center">
+
+        <h1 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">
+            {{ nav_title|default:'Panel de Control' }}
+        </h1>
+
+        <div class="flex items-center gap-2 sm:gap-4">
+
+            <button onclick="toggleDarkMode()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-800 dark:text-yellow-400" title="Cambiar Tema">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </svg>
+            </button>
+
+            <a href="{% url 'portal_principal' %}" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400" title="Ir al Portal Principal">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+            </a>
+
+            <div class="relative">
+                <button onclick="toggleMenu()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-700 dark:text-gray-200 flex items-center focus:outline-none focus:ring-2 focus:ring-gray-400" title="Menú de Opciones">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
+                <div id="mobile-menu" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transform origin-top-right transition-all z-50">
+                    <div class="py-2">
+
+                        {% for item in nav_items %}
+                        <a href="{{ item.url }}" class="block px-5 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-{{ item.hover_color|default:'yellow-600' }} transition">
+                            {{ item.label }}
+                        </a>
+                        {% endfor %}
+
+                        <div class="px-5 py-1">
+                            {% block extra_nav %}{% endblock %}
+                        </div>
+
+                        <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+
+                        <form method="POST" action="{% url 'logout' %}" class="block w-full">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full text-left px-5 py-3 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</nav>
+
+<script>
+    function toggleMenu() {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+    }
+
+    // Cerrar el menú si el usuario hace clic en cualquier otro lado de la pantalla
+    window.addEventListener('click', function(e) {
+        const menu = document.getElementById('mobile-menu');
+        const button = e.target.closest('button[onclick="toggleMenu()"]');
+        if (!button && menu && !menu.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+</script>
+
+
+============================================================
+ARCHIVO: ./templates/base/base.html
+============================================================
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema POS{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.11"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', }
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        }
+    </script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-200 h-screen flex flex-col{% endblock %}" {% block body_extra %}{% endblock %} hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+    {% block nav %}
+    {% include "base/nav.html" %}
+    {% endblock %}
+
+    {% block main_container %}
+    <main class="{% block main_class %}container mx-auto p-4 sm:p-8 flex-grow flex flex-col justify-center max-w-5xl{% endblock %}">
+        {% block content %}
+        {% endblock %}
+    </main>
+    {% endblock %}
+
+    <!-- Modal Global -->
+    <div id="modal-container" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div id="modal-content" class="w-full max-w-2xl transform transition-all"></div>
+    </div>
+
+    <script>
+        // Función para cerrar el modal
+        function cerrarModal() {
+            const modal = document.getElementById('modal-container');
+            const content = document.getElementById('modal-content');
+            if (modal) modal.classList.add('hidden');
+            if (content) content.innerHTML = '';
+        }
+
+        // Cerrar al hacer click fuera del contenido
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal-container');
+            if (event.target == modal) cerrarModal();
+        }
+
+        // Cerrar con la tecla Escape
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') cerrarModal();
+        });
+
+        // Mostrar modal automáticamente cuando HTMX carga contenido en el target
+        document.addEventListener('htmx:afterOnLoad', function(evt) {
+            if (evt.detail.target.id === 'modal-content') {
+                document.getElementById('modal-container').classList.remove('hidden');
+            }
+        });
+
+        // También cerrar modal si la respuesta de HTMX indica éxito en un formulario (opcional)
+        // O si se redirige la página completa.
+    </script>
+
+    {% block extra_body %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
+
+============================================================
+ARCHIVO: ./templates/base/pagination.html
+============================================================
+
+<div class="bg-gray-50 dark:bg-gray-800/80 p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="text-sm text-gray-600 dark:text-gray-400">
+        Mostrando <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.start_index|default:0 }}</span>
+        a <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.end_index|default:0 }}</span>
+        de <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.paginator.count }}</span> registros
+    </div>
+
+    <div class="flex items-center gap-2">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Anterior</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Anterior</span>
+        {% endif %}
+
+        <span class="text-sm px-2 text-gray-600 dark:text-gray-400">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Siguiente</a>
+        {% else %}
+            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Siguiente</span>
+        {% endif %}
+    </div>
+</div>
+
+
+============================================================
+ARCHIVO: ./pos_project/settings.py
+============================================================
+
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+SECRET_KEY = 'django-insecure-)98@g-5s=)ow#)8+8^w-*s#_w(dazpc2s4p&=0$z1puz@ingnw'
+DEBUG = True
+ALLOWED_HOSTS = []
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'ventas',
+    'inventario',
+    'configuraciones',
+    'core',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'pos_project.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'pos_project.wsgi.application'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+STATIC_URL = 'static/'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'portal_principal'
+LOGOUT_REDIRECT_URL = 'login'
+
+
+============================================================
+ARCHIVO: ./pos_project/wsgi.py
+============================================================
+
+"""
+WSGI config for pos_project project.
+
+It exposes the WSGI callable as a module-level variable named ``application``.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
+"""
+
+import os
+
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pos_project.settings')
+
+application = get_wsgi_application()
+
+
+============================================================
+ARCHIVO: ./pos_project/asgi.py
+============================================================
+
+"""
+ASGI config for pos_project project.
+
+It exposes the ASGI callable as a module-level variable named ``application``.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
+"""
+
+import os
+
+from django.core.asgi import get_asgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pos_project.settings')
+
+application = get_asgi_application()
+
+
+============================================================
+ARCHIVO: ./pos_project/urls.py
+============================================================
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+
+    path('', include('core.urls')),
+
+    path('ventas/', include('ventas.urls')),
+
+    path('inventario/', include('inventario.urls')),
+    path('configuraciones/', include('configuraciones.urls')),
+]
+
+
+============================================================
+ARCHIVO: ./pos_project/__init__.py
+============================================================
+
+
+
+============================================================
+ARCHIVO: ./configuraciones/decorators.py
+============================================================
+
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def admin_requerido(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_superuser or request.user.groups.filter(name='Administrador').exists():
+            return view_func(request, *args, **kwargs)
+        else:
+            messages.error(request, "No tienes permisos para acceder a esta área.")
+            return redirect('pantalla_pos')
+    return wrapper
+
+
+============================================================
+ARCHIVO: ./configuraciones/apps.py
+============================================================
+
+from django.apps import AppConfig
+
+
+class ConfiguracionesConfig(AppConfig):
+    name = 'configuraciones'
+
+
+============================================================
+ARCHIVO: ./configuraciones/tests.py
+============================================================
+
+from django.test import TestCase
+
+# Create your tests here.
+
+
+============================================================
+ARCHIVO: ./configuraciones/views.py
+============================================================
+
+from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import User, Group
+from django.core.paginator import Paginator
+from .forms import UsuarioForm, ConfiguracionForm, RolForm
+from .models import ConfiguracionSistema
+from core.utils import get_config_context
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+def dashboard_configuracion(request):
+    return render(request, 'configuraciones/dashboard.html', get_config_context('Panel de Control', 'border-yellow-500'))
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+def lista_usuarios(request):
+    usuarios_list = User.objects.all().order_by('username')
+    per_page = request.GET.get('per_page', 10)
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(usuarios_list, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'configuraciones/usuarios/lista.html', {
+        **get_config_context('Gestión de Usuarios', 'border-yellow-500'),
+        'page_obj': page_obj,
+        'per_page': per_page,
+    })
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+def editar_usuario(request, pk=None):
+    if pk:
+        usuario = get_object_or_404(User, pk=pk)
+        titulo = "Editar Usuario"
+        rol_actual = usuario.groups.first()
+        form = UsuarioForm(request.POST or None, instance=usuario, initial={'rol': rol_actual})
+    else:
+        usuario = None
+        titulo = "Nuevo Usuario"
+        form = UsuarioForm(request.POST or None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect('lista_usuarios')
+
+    return render(request, 'configuraciones/usuarios/formulario.html', {
+        'form': form,
+        'is_instance': usuario is not None,
+        'titulo': titulo
+    })
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+def ajustes_sistema(request):
+    config, created = ConfiguracionSistema.objects.get_or_create(id=1)
+
+    if request.method == 'POST':
+        form = ConfiguracionForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            return redirect('config_dashboard')
+    else:
+        form = ConfiguracionForm(instance=config)
+
+    return render(request, 'configuraciones/usuarios/formulario.html', {
+        'form': form,
+        'titulo': "Preferencias del Sistema",
+        'is_instance': True
+    })
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+def lista_roles(request):
+    roles_list = Group.objects.all().order_by('name')
+    per_page = request.GET.get('per_page', 10)
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(roles_list, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'configuraciones/roles/lista.html', {
+        **get_config_context('Gestión de Roles', 'border-orange-500'),
+        'page_obj': page_obj,
+        'per_page': per_page,
+    })
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+def editar_rol(request, pk=None):
+    if pk:
+        rol = get_object_or_404(Group, pk=pk)
+        titulo = "Editar Rol"
+    else:
+        rol = None
+        titulo = "Nuevo Rol"
+
+    if request.method == 'POST':
+        form = RolForm(request.POST, instance=rol)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_roles')
+    else:
+        form = RolForm(instance=rol)
+
+    return render(request, 'configuraciones/roles/formulario_rol.html', {
+        'form': form,
+        'titulo': titulo,
+        'is_instance': rol is not None
+    })
+
+
+============================================================
+ARCHIVO: ./configuraciones/urls.py
+============================================================
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.dashboard_configuracion, name='config_dashboard'),
+
+    # Usuarios
+    path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
+    path('usuarios/nuevo/', views.editar_usuario, name='nuevo_usuario'),
+    path('usuarios/editar/<int:pk>/', views.editar_usuario, name='editar_usuario'),
+
+    # Preferencias
+    path('ajustes/', views.ajustes_sistema, name='ajustes_sistema'),
+
+    # Roles y Permisos
+    path('roles/', views.lista_roles, name='lista_roles'),
+    path('roles/nuevo/', views.editar_rol, name='nuevo_rol'),
+    path('roles/editar/<int:pk>/', views.editar_rol, name='editar_rol'),
+]
+
+
+============================================================
+ARCHIVO: ./configuraciones/__init__.py
+============================================================
+
+
+
+============================================================
+ARCHIVO: ./configuraciones/admin.py
+============================================================
+
+from django.contrib import admin
+
+# Register your models here.
+
+
+============================================================
+ARCHIVO: ./configuraciones/models.py
+============================================================
+
+from django.db import models
+
+class ConfiguracionSistema(models.Model):
+    nombre_negocio = models.CharField(max_length=100, default="Mi Negocio")
+    ubicacion = models.CharField(max_length=255, blank=True, null=True, help_text="Dirección que aparecerá en el ticket")
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"Configuración: {self.nombre_negocio}"
+
+    class Meta:
+        verbose_name = "Configuración del Sistema"
+        # Mantenemos los permisos que creamos en el paso anterior
+        permissions = [
+            ("acceder_ventas", "Módulo de Ventas: Acceso al Punto de Venta y Cobro"),
+            ("acceder_inventario", "Módulo de Inventario: Gestión de Productos y Categorías"),
+            ("acceder_configuraciones", "Módulo de Configuración: Usuarios, Roles y Ajustes"),
+        ]
+
+
+============================================================
+ARCHIVO: ./configuraciones/forms.py
+============================================================
+
+from django import forms
+from django.contrib.auth.models import User, Group, Permission
+from .models import ConfiguracionSistema
+
+# Clases base para el estilo amarillo
+clases_comunes = 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors'
+
+class UsuarioForm(forms.ModelForm):
+    # Campo extra para elegir el Rol
+    rol = forms.ModelChoiceField(
+        queryset=Group.objects.all(),
+        required=False,
+        empty_label="--- Sin Rol ---",
+        widget=forms.Select(attrs={'class': clases_comunes})
+    )
+
+    # Campo extra para la contraseña
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': clases_comunes, 'placeholder': 'Dejar en blanco para no cambiar'}),
+        required=False,
+        label="Contraseña"
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_active']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': clases_comunes}),
+            'first_name': forms.TextInput(attrs={'class': clases_comunes}),
+            'last_name': forms.TextInput(attrs={'class': clases_comunes}),
+            'email': forms.EmailInput(attrs={'class': clases_comunes}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Si es un usuario nuevo, la contraseña es obligatoria
+        if not self.instance.pk:
+            self.fields['password'].required = True
+            self.fields['password'].widget.attrs['placeholder'] = 'Contraseña obligatoria'
+
+    def save(self, commit=True):
+        # Guardamos el usuario pero pausamos el envío a la base de datos
+        user = super().save(commit=False)
+
+        # Encriptamos la contraseña si se escribió una
+        password = self.cleaned_data.get('password')
+        if password:
+            user.set_password(password)
+
+        if commit:
+            user.save()
+            # Asignamos el Grupo (Rol)
+            rol = self.cleaned_data.get('rol')
+            user.groups.clear() # Limpiamos roles anteriores
+            if rol:
+                user.groups.add(rol)
+        return user
+
+class ConfiguracionForm(forms.ModelForm):
+    class Meta:
+        model = ConfiguracionSistema
+        fields = ['nombre_negocio', 'ubicacion', 'telefono']
+        widgets = {
+            'nombre_negocio': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. Abarrotes Doña Mary'}),
+            'ubicacion': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. Av. Siempre Viva 123, Col. Centro'}),
+            'telefono': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. 55-1234-5678'}),
+        }
+        labels = {
+            'nombre_negocio': 'Nombre de la Tienda / Local',
+            'ubicacion': 'Dirección Completa',
+            'telefono': 'Teléfono de Contacto',
+        }
+
+class RolForm(forms.ModelForm):
+    permisos = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.filter(content_type__app_label__in=['ventas', 'inventario', 'configuraciones', 'auth']).order_by('content_type__app_label', 'name'),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'w-4 h-4 text-orange-500 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600'}),
+        required=False,
+        label="Permisos Asignados"
+    )
+
+    class Meta:
+        model = Group
+        fields = ['name']
+        labels = {'name': 'Nombre del Rol (Ej. Supervisor)'}
+        widgets = {
+            'name': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Nombre del Rol'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        nombres_permisos = ['acceder_ventas', 'acceder_inventario', 'acceder_configuraciones']
+        self.fields['permisos'].queryset = Permission.objects.filter(codename__in=nombres_permisos).order_by('name')
+
+        if self.instance.pk:
+            self.fields['permisos'].initial = self.instance.permissions.all()
+
+    def save(self, commit=True):
+        grupo = super().save(commit)
+        if commit:
+            grupo.permissions.set(self.cleaned_data['permisos'])
+        return grupo
+
+
+============================================================
+ARCHIVO: ./configuraciones/templates/configuraciones/dashboard.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Configuración del Sistema{% endblock %}
+
+{% block content %}
+<div class="text-center mb-12">
+    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-4">Configuraciones Globales</h2>
+    <p class="text-gray-500 dark:text-gray-400 text-lg">Selecciona el módulo que deseas gestionar.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <a href="{% url 'lista_usuarios' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-yellow-500 dark:hover:border-yellow-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Usuarios</h3>
+        <p class="text-gray-500 dark:text-gray-400">Crea, edita o suspende cuentas de empleados en el sistema.</p>
+    </a>
+
+    <a href="{% url 'lista_roles' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-orange-500 dark:hover:border-orange-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Roles y Permisos</h3>
+        <p class="text-gray-500 dark:text-gray-400">Define qué puede hacer un Cajero vs un Administrador.</p>
+    </a>
+
+    <a href="#" hx-get="{% url 'ajustes_sistema' %}" hx-target="#modal-content" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 text-left cursor-pointer">
+        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Preferencias</h3>
+        <p class="text-gray-500 dark:text-gray-400">Cambia la pantalla de inicio y nombre del negocio.</p>
+    </a>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./configuraciones/templates/configuraciones/usuarios/formulario.html
+============================================================
+
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="bg-gray-100 dark:bg-gray-700 border-b-4 border-yellow-500 p-4 flex justify-between items-center">
+        <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">{{ titulo }}</h2>
+        <button onclick="cerrarModal()" class="text-gray-500 hover:text-red-500 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <form hx-post="{{ request.path }}" hx-target="body" class="p-6 space-y-4">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for field in form %}
+                {% if field.name != 'is_active' %}
+                <div class="{% if field.name == 'password' or field.name == 'rol' or field.name == 'email' or field.name == 'permisos' %}col-span-1 md:col-span-2{% endif %}">
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
+                    {% if field.name == 'permisos' %}
+                        <div class="max-h-64 overflow-y-auto bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl p-4 custom-scrollbar">
+                            <div class="checkbox-grid">
+                                {{ field }}
+                            </div>
+                        </div>
+                        <style>
+                            .checkbox-grid ul { list-style: none !important; padding: 0 !important; margin: 0 !important; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+                            .checkbox-grid li { display: flex !important; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 600; color: #4b5563; }
+                            .dark .checkbox-grid li { color: #d1d5db; }
+                            .checkbox-grid label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; width: 100%; }
+                            .checkbox-grid input[type="checkbox"] { width: 1.25rem; height: 1.25rem; border-radius: 0.375rem; border-color: #d1d5db; color: #f59e0b; cursor: pointer; }
+                            .dark .checkbox-grid input[type="checkbox"] { border-color: #4b5563; background-color: #1f2937; }
+                        </style>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {% if field.errors %}
+                        <p class="text-red-500 text-xs mt-1 font-bold">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="col-span-1 md:col-span-2 flex items-center gap-2 mt-2">
+                {{ form.is_active }}
+                <label class="text-sm font-bold text-gray-700 dark:text-gray-300">Usuario Activo (Permitir inicio de sesión)</label>
+            </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+            <button type="button" onclick="cerrarModal()" class="w-1/2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                Cancelar
+            </button>
+            <button type="submit" class="w-1/2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl transition shadow-lg">
+                {% if is_instance %}Actualizar{% else %}Guardar{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+
+
+============================================================
+ARCHIVO: ./configuraciones/templates/configuraciones/usuarios/lista.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Usuarios del Sistema</h2>
+    <button hx-get="{% url 'nuevo_usuario' %}" hx-target="#modal-content"
+        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition">
+        + Nuevo Usuario
+    </button>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Usuario</th>
+                    <th class="p-4">Nombre Completo</th>
+                    <th class="p-4">Email</th>
+                    <th class="p-4 text-center">Rol/Grupo</th>
+                    <th class="p-4 text-center">Estado</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for u in usuarios %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td class="p-4 font-bold">{{ u.username }}</td>
+                    <td class="p-4">{{ u.get_full_name|default:"---" }}</td>
+                    <td class="p-4 text-gray-500 dark:text-gray-400 text-sm">{{ u.email }}</td>
+                    <td class="p-4 text-center">
+                        {% for group in u.groups.all %}
+                            <span class="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-bold">{{ group.name }}</span>
+                        {% empty %}
+                            <span class="text-gray-400 italic text-xs">Sin Rol</span>
+                        {% endfor %}
+                    </td>
+                    <td class="p-4 text-center">
+                        {% if u.is_active %}
+                            <span class="text-green-500 font-bold text-xs uppercase">Activo</span>
+                        {% else %}
+                            <span class="text-red-500 font-bold text-xs uppercase">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button hx-get="{% url 'editar_usuario' u.id %}" hx-target="#modal-content"
+                            class="text-yellow-600 hover:underline font-bold text-sm">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./configuraciones/templates/configuraciones/roles/lista.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Roles y Permisos - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Roles del Sistema</h2>
+    <button hx-get="{% url 'nuevo_rol' %}" hx-target="#modal-content" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition">
+        + Nuevo Rol
+    </button>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4 w-1/3">Nombre del Rol</th>
+                    <th class="p-4 w-2/3">Permisos Asignados</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for rol in roles %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td class="p-4 font-bold text-orange-600 dark:text-orange-400">{{ rol.name }}</td>
+                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">
+                        {% if rol.permissions.all %}
+                            <div class="flex flex-wrap gap-1">
+                            {% for p in rol.permissions.all %}
+                                <span class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">{{ p.name }}</span>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="italic">Sin permisos específicos asignados</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button hx-get="{% url 'editar_rol' rol.id %}" hx-target="#modal-content" class="text-blue-600 hover:underline font-bold text-sm">Editar</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="p-8 text-center text-gray-500">No hay roles definidos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./configuraciones/templatetags/seguridad_tags.py
+============================================================
+
+from django import template
+
+register = template.Library()
+
+@register.filter(name='tiene_rol')
+def tiene_rol(user, group_name):
+    """
+    Verifica si un usuario pertenece a un grupo específico.
+    Uso en HTML: {% if request.user|tiene_rol:"Administrador" %}
+    """
+    if user.is_superuser:
+        return True
+    return user.groups.filter(name=group_name).exists()
+
+
+============================================================
+ARCHIVO: ./configuraciones/templatetags/__init__.py
+============================================================
+
+
+
+============================================================
+ARCHIVO: ./inventario/apps.py
+============================================================
+
+from django.apps import AppConfig
+
+
+class InventarioConfig(AppConfig):
+    name = 'inventario'
+
+
+============================================================
+ARCHIVO: ./inventario/tests.py
+============================================================
+
+from django.test import TestCase
+
+# Create your tests here.
+
+
+============================================================
+ARCHIVO: ./inventario/urls.py
+============================================================
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.dashboard, name='inventario_dashboard'),
+
+    path('productos/', views.lista_inventario, name='lista_inventario'),
+    path('productos/nuevo/', views.editar_producto, name='nuevo_producto'),
+    path('productos/editar/<int:pk>/', views.editar_producto, name='editar_producto'),
+
+    path('categorias/', views.lista_categorias, name='lista_categorias'),
+    path('categorias/nueva/', views.editar_categoria, name='nueva_categoria'),
+    path('categorias/editar/<int:pk>/', views.editar_categoria, name='editar_categoria'),
+]
+
+
+============================================================
+ARCHIVO: ./inventario/__init__.py
+============================================================
+
+
+
+============================================================
+ARCHIVO: ./inventario/admin.py
+============================================================
+
+from django.contrib import admin
+from .models import Categoria, Producto
+
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+
+@admin.register(Producto)
+class ProductoAdmin(admin.ModelAdmin):
+    # Esto define qué columnas se ven en la tabla principal
+    list_display = ('nombre', 'codigo_barras', 'categoria', 'precio', 'stock')
+    # Agrega un buscador
+    search_fields = ('nombre', 'codigo_barras')
+    # Agrega filtros laterales
+    list_filter = ('categoria',)
+
+
+============================================================
+ARCHIVO: ./inventario/models.py
+============================================================
+
+from django.db import models
+
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    descripcion = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.nombre
+
+class Producto(models.Model):
+    codigo_barras = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(max_length=200)
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, related_name='productos')
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    costo = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.nombre} (Stock: {self.stock})"
+
+
+============================================================
+ARCHIVO: ./inventario/forms.py
+============================================================
+
+from django import forms
+from .models import Producto, Categoria
+
+clases_comunes = 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors'
+
+class ProductoForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = ['codigo_barras', 'nombre', 'precio', 'stock']
+        widgets = {
+            'codigo_barras': forms.TextInput(attrs={
+                'class': clases_comunes,
+                'placeholder': 'Ej. 7501234567890'
+            }),
+            'nombre': forms.TextInput(attrs={
+                'class': clases_comunes,
+                'placeholder': 'Nombre del producto'
+            }),
+            'precio': forms.NumberInput(attrs={
+                'class': clases_comunes,
+                'step': '0.50'
+            }),
+            'stock': forms.NumberInput(attrs={
+                'class': clases_comunes
+            }),
+        }
+
+class CategoriaForm(forms.ModelForm):
+    class Meta:
+        model = Categoria
+        fields = ['nombre', 'descripcion']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. Lácteos'}),
+            'descripcion': forms.Textarea(attrs={'class': clases_comunes, 'rows': 3, 'placeholder': 'Descripción opcional...'}),
+        }
+
+
+============================================================
+ARCHIVO: ./inventario/templates/inventario/formulario.html
+============================================================
+
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="bg-gray-100 dark:bg-gray-700 border-b-4 border-purple-600 dark:border-purple-500 p-4 flex justify-between items-center">
+        <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">{{ titulo }}</h2>
+        <button onclick="cerrarModal()" class="text-gray-500 hover:text-red-500 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <form hx-post="{{ request.path }}" hx-target="body" class="p-6 space-y-4">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
+            <div class="relative">
+                {% if field.name == 'permisos' %}
+                    <div class="max-h-60 overflow-y-auto bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-4 custom-scrollbar">
+                        {{ field }}
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+            </div>
+            {% if field.errors %}
+                <p class="text-red-500 text-xs mt-1 font-bold">{{ field.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="flex gap-3 pt-4">
+            <button type="button" onclick="cerrarModal()"
+                    class="w-1/2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                Cancelar
+            </button>
+            <button type="submit"
+                    class="w-1/2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">
+                {% if is_instance %}Actualizar{% else %}Guardar{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+
+============================================================
+ARCHIVO: ./inventario/templates/inventario/lista.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Inventario - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h2 class="text-2xl sm:text-3xl font-bold">Catálogo de Productos</h2>
+
+    <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <form method="GET" class="flex items-center gap-2">
+            <label class="text-sm font-bold text-gray-600 dark:text-gray-400">Mostrar:</label>
+            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 p-2">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </form>
+
+        <button hx-get="{% url 'nuevo_producto' %}"
+                hx-target="#modal-content"
+                class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+            + Nuevo
+        </button>
+    </div>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Cód. Barras</th>
+                    <th class="p-4">Nombre</th>
+                    <th class="p-4 text-right">Precio</th>
+                    <th class="p-4 text-center">Stock</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for p in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">{{ p.codigo_barras }}</td>
+                    <td class="p-4 font-bold">{{ p.nombre }}</td>
+                    <td class="p-4 text-right text-purple-600 dark:text-purple-400 font-bold">${{ p.precio }}</td>
+                    <td class="p-4 text-center">
+                        {% if p.stock > 5 %}
+                            <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                        {% elif p.stock > 0 %}
+                            <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                        {% else %}
+                            <span class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 px-3 py-1 rounded-full text-xs font-bold">Agotado</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button hx-get="{% url 'editar_producto' p.id %}"
+                                hx-target="#modal-content"
+                                class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay productos en el inventario.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-gray-50 dark:bg-gray-800/80 p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+            Mostrando <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.start_index|default:0 }}</span>
+            a <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.end_index|default:0 }}</span>
+            de <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.paginator.count }}</span> registros
+        </div>
+
+        <div class="flex items-center gap-2">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Anterior</a>
+            {% else %}
+                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Anterior</span>
+            {% endif %}
+
+            <span class="text-sm px-2 text-gray-600 dark:text-gray-400">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Siguiente</a>
+            {% else %}
+                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Siguiente</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./inventario/templates/inventario/dashboard.html
+============================================================
+
+{% extends 'base/base.html' %}
+
+{% block title %}Módulo de Inventarios{% endblock %}
+
+{% block content %}
+<div class="text-center mb-12">
+    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-4">Administración de Catálogos</h2>
+    <p class="text-gray-500 dark:text-gray-400 text-lg">Selecciona el módulo que deseas gestionar.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <a href="{% url 'lista_inventario' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Productos</h3>
+        <p class="text-gray-500 dark:text-gray-400">Gestiona precios, códigos de barras, nombres y actualiza tus niveles de stock.</p>
+    </a>
+
+    <a href="{% url 'lista_categorias' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Categorías</h3>
+        <p class="text-gray-500 dark:text-gray-400">Crea agrupaciones para tus productos (Ej. Lácteos, Limpieza) para un mejor control.</p>
+    </a>
+</div>
+{% endblock %}
+
+
+
+============================================================
+ARCHIVO: ./inventario/templates/inventario/lista_categorias.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Categorías - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h2 class="text-2xl sm:text-3xl font-bold">Listado de Categorías</h2>
+
+    <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <form method="GET" class="flex items-center gap-2">
+            <label class="text-sm font-bold text-gray-600 dark:text-gray-400">Mostrar:</label>
+            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg p-2">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+            </select>
+        </form>
+
+        <button hx-get="{% url 'nueva_categoria' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+            + Nueva Categoría
+        </button>
+    </div>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Nombre</th>
+                    <th class="p-4">Descripción</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for c in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4 font-bold">{{ c.nombre }}</td>
+                    <td class="p-4 text-gray-600 dark:text-gray-400">{{ c.descripcion|default:"Sin descripción" }}</td>
+                    <td class="p-4 text-center">
+                        <button hx-get="{% url 'editar_categoria' c.id %}" hx-target="#modal-content" class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">Editar</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay categorías.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./inventario/views/dashboard.py
+============================================================
+
+from django.shortcuts import render
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required, permission_required
+from core.utils import get_config_context
+
+@login_required
+@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+def dashboard(request):
+    return render(request, 'inventario/dashboard.html', get_config_context('Módulo de Inventario', 'border-purple-600'))
+
+
+============================================================
+ARCHIVO: ./inventario/views/productos.py
+============================================================
+
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, permission_required
+from inventario.models import Producto
+from inventario.forms import ProductoForm
+from core.utils import get_config_context
+
+@login_required
+@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+def lista_inventario(request):
+    productos_list = Producto.objects.all().order_by('nombre')
+    per_page = request.GET.get('per_page', 10)
+
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(productos_list, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'inventario/lista.html', {
+        **get_config_context('Catálogo de Productos', 'border-purple-600'),
+        'page_obj': page_obj,
+        'per_page': per_page,
+    })
+
+@login_required
+@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+def editar_producto(request, pk=None):
+    if pk:
+        producto = get_object_or_404(Producto, pk=pk)
+        titulo = "Editar Producto"
+    else:
+        producto = None
+        titulo = "Nuevo Producto"
+
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=producto)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_inventario')
+    else:
+        form = ProductoForm(instance=producto)
+
+    return render(request, 'inventario/formulario.html', {
+        'form': form,
+        'producto': producto,
+        'titulo': titulo,
+        'is_instance': producto is not None
+    })
+
+
+============================================================
+ARCHIVO: ./inventario/views/categorias.py
+============================================================
+
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, permission_required
+from inventario.models import Categoria
+from inventario.forms import CategoriaForm
+from core.utils import get_config_context
+
+@login_required
+@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+def lista_categorias(request):
+    categorias_list = Categoria.objects.all().order_by('nombre')
+
+    per_page = request.GET.get('per_page', 10)
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(categorias_list, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'inventario/lista_categorias.html', {
+        **get_config_context('Gestión de Categorías', 'border-purple-600'),
+        'page_obj': page_obj,
+        'per_page': per_page,
+    })
+
+@login_required
+@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+def editar_categoria(request, pk=None):
+    if pk:
+        categoria = get_object_or_404(Categoria, pk=pk)
+        titulo = "Editar Categoría"
+    else:
+        categoria = None
+        titulo = "Nueva Categoría"
+
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_categorias')
+    else:
+        form = CategoriaForm(instance=categoria)
+
+    return render(request, 'inventario/formulario.html', {
+        'form': form,
+        'is_instance': categoria is not None,
+        'titulo': titulo
+    })
+
+
+============================================================
+ARCHIVO: ./inventario/views/__init__.py
+============================================================
+
+from .dashboard import dashboard
+from .productos import lista_inventario, editar_producto
+from .categorias import lista_categorias, editar_categoria
+
+
+============================================================
+ARCHIVO: ./ventas/apps.py
+============================================================
+
+from django.apps import AppConfig
+
+
+class VentasConfig(AppConfig):
+    name = 'ventas'
+
+
+============================================================
+ARCHIVO: ./ventas/tests.py
+============================================================
+
+from django.test import TestCase
+
+# Create your tests here.
+
+
+============================================================
+ARCHIVO: ./ventas/urls.py
+============================================================
+
+from django.urls import path
+from django.contrib.auth import views as auth_views
+from . import views
+
+urlpatterns = [
+    path('login/', auth_views.LoginView.as_view(template_name='ventas/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
+    path('', views.pantalla_pos, name='pantalla_pos'),
+    path('agregar/<int:producto_id>/', views.agregar_al_carrito, name='agregar_al_carrito'),
+    path('vaciar/', views.vaciar_carrito, name='vaciar_carrito'),
+    path('eliminar/<int:producto_id>/', views.eliminar_item, name='eliminar_item'),
+    path('restar/<int:producto_id>/', views.restar_item, name='restar_item'),
+    path('buscar/', views.buscar_productos, name='buscar_productos'),
+    path('cobrar/', views.procesar_venta, name='procesar_venta'),
+    path('ticket/<int:venta_id>/', views.imprimir_ticket, name='imprimir_ticket'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('abrir-caja/', views.abrir_caja, name='abrir_caja'),
+    path('cerrar-caja/', views.cerrar_caja, name='cerrar_caja'),
+]
+
+
+============================================================
+ARCHIVO: ./ventas/__init__.py
+============================================================
+
+
+
+============================================================
+ARCHIVO: ./ventas/admin.py
+============================================================
+
+from django.contrib import admin
+from .models import Venta, DetalleVenta
+
+class DetalleVentaInline(admin.TabularInline):
+    model = DetalleVenta
+    extra = 1 # Muestra una fila vacía por defecto para agregar productos
+
+@admin.register(Venta)
+class VentaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'fecha', 'cajero', 'total', 'metodo_pago')
+    list_filter = ('fecha', 'metodo_pago')
+    inlines = [DetalleVentaInline] # Aquí incrustamos los detalles dentro de la venta
+
+
+============================================================
+ARCHIVO: ./ventas/models.py
+============================================================
+
+from django.db import models
+from inventario.models import Producto
+from django.contrib.auth.models import User
+
+class SesionCaja(models.Model):
+    cajero = models.ForeignKey(User, on_delete=models.PROTECT)
+    fecha_apertura = models.DateTimeField(auto_now_add=True)
+    fecha_cierre = models.DateTimeField(null=True, blank=True)
+    fondo_inicial = models.DecimalField(max_digits=10, decimal_places=2)
+    efectivo_cierre = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    estado = models.BooleanField(default=True)
+
+    def __str__(self):
+        estado_str = "Abierta" if self.estado else "Cerrada"
+        return f"Turno {self.id} - {self.cajero.username} ({estado_str})"
+
+
+class Venta(models.Model):
+    METODOS_PAGO = [
+        ('EFE', 'Efectivo'),
+        ('TAR', 'Tarjeta'),
+        ('TRA', 'Transferencia'),
+    ]
+    sesion = models.ForeignKey(SesionCaja, on_delete=models.SET_NULL, null=True, blank=True)
+
+    fecha = models.DateTimeField(auto_now_add=True)
+    cajero = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    metodo_pago = models.CharField(max_length=3, choices=METODOS_PAGO, default='EFE')
+    pago_recibido = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    cambio = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.fecha.strftime('%d/%m/%Y')} - ${self.total}"
+
+class DetalleVenta(models.Model):
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def subtotal(self):
+        return self.cantidad * self.precio_unitario
+
+    def __str__(self):
+        return f"{self.cantidad} x {self.producto.nombre}"
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/abrir_caja.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Abrir Caja - {{ block.super }}{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-xl w-full max-w-md text-center mx-auto border border-gray-200 dark:border-gray-700">
+    <div class="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 p-4 rounded-full inline-block mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    </div>
+
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Apertura de Turno</h1>
+    <p class="text-gray-500 dark:text-gray-400 mb-8">Ingresa el fondo inicial de efectivo que tienes en el cajón para dar cambio.</p>
+
+    <form method="POST" action="{% url 'abrir_caja' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span class="text-gray-500 text-2xl font-bold">$</span>
+            </div>
+            <input type="number" name="fondo_inicial" step="0.50" min="0" required autofocus
+                   class="w-full text-center text-4xl font-black p-4 pl-10 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-blue-500 focus:ring-0 outline-none text-gray-800 dark:text-white bg-white dark:bg-gray-900 transition-colors"
+                   placeholder="0.00">
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-xl transition-colors shadow-lg hover:shadow-xl">
+            Abrir Caja y Comenzar
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/dashboard.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Panel de Ventas - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="text-center mb-10">
+    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-2">Operaciones de Ventas</h2>
+    <p class="text-gray-500 dark:text-gray-400 text-lg">Resumen del día: {{ hoy|date:"d M, Y" }}</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-8 border-green-500 transition-all hover:shadow-md">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Ventas Totales</p>
+        <p class="text-4xl font-black text-gray-900 dark:text-white">${{ total_ventas }}</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-8 border-blue-500 transition-all hover:shadow-md">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Tickets Emitidos</p>
+        <p class="text-4xl font-black text-gray-900 dark:text-white">{{ num_tickets }}</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-8 border-purple-500 transition-all hover:shadow-md">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Ticket Promedio</p>
+        <p class="text-4xl font-black text-gray-900 dark:text-white">${{ ticket_promedio|floatformat:2 }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+    <a href="{% url 'pantalla_pos' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-green-500 dark:hover:border-green-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Caja Registradora (POS)</h3>
+        <p class="text-gray-500 dark:text-gray-400">Inicia una nueva venta, escanea productos y cobra a tus clientes.</p>
+    </a>
+
+    <a href="{% url 'cerrar_caja' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Cierre de Turno</h3>
+        <p class="text-gray-500 dark:text-gray-400">Finaliza el día, cuenta el efectivo y genera el reporte de arqueo de caja.</p>
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Top 5 Productos Hoy
+        </h3>
+        <table class="w-full text-left">
+            <tbody>
+                {% for item in productos_top %}
+                <tr class="border-b dark:border-gray-700 last:border-0">
+                    <td class="py-3 font-medium">{{ item.producto__nombre }}</td>
+                    <td class="py-3 text-right text-blue-600 font-bold">{{ item.total_vendido }} u.</td>
+                </tr>
+                {% empty %}
+                <tr><td class="py-4 text-center text-gray-400 italic">Sin movimientos hoy</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            Alertas de Stock Bajo
+        </h3>
+        <div class="space-y-3">
+            {% for prod in stock_bajo %}
+            <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50">
+                <span class="font-medium text-red-800 dark:text-red-300">{{ prod.nombre }}</span>
+                <span class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">{{ prod.stock }} left</span>
+            </div>
+            {% empty %}
+            <p class="text-center py-6 text-gray-400 italic">Todo el inventario está sano ✨</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/cerrar_caja.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Corte de Caja - {{ block.super }}{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-md mx-auto border border-gray-200 dark:border-gray-700">
+    <div class="text-center mb-6">
+        <div class="bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 p-4 rounded-full inline-block mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Corte de Caja</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Turno de {{ sesion.cajero.username }}</p>
+    </div>
+
+    <div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg mb-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex justify-between text-sm mb-2 text-gray-600 dark:text-gray-400">
+            <span>Fondo Inicial:</span>
+            <span class="font-bold">${{ sesion.fondo_inicial }}</span>
+        </div>
+        <div class="flex justify-between text-sm mb-2 text-gray-600 dark:text-gray-400">
+            <span>Ventas en Efectivo:</span>
+            <span class="font-bold text-green-600 dark:text-green-400">+ ${{ ventas_efectivo|floatformat:2 }}</span>
+        </div>
+        <div class="border-t border-gray-300 dark:border-gray-600 my-2 pt-2 flex justify-between text-lg font-black text-gray-800 dark:text-white">
+            <span>Esperado en Cajón:</span>
+            <span>${{ esperado_en_caja|floatformat:2 }}</span>
+        </div>
+    </div>
+
+    <form method="POST" action="{% url 'cerrar_caja' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Efectivo Real (Billetes y monedas contados)</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span class="text-gray-500 text-xl font-bold">$</span>
+                </div>
+                <input type="number" name="efectivo_cierre" step="0.50" min="0" required autofocus
+                       class="w-full text-right text-2xl font-black p-3 pl-10 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:border-orange-500 focus:ring-0 outline-none text-gray-800 dark:text-white bg-white dark:bg-gray-900 transition-colors"
+                       placeholder="0.00">
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <a href="{% url 'pantalla_pos' %}" class="w-1/3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl text-center transition-colors">
+                Volver
+            </a>
+            <button type="submit" class="w-2/3 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">
+                Confirmar Corte
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/login.html
+============================================================
+
+{% extends "base/base.html" %}
+
+{% block title %}Iniciar Sesión - {{ block.super }}{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 mx-auto">
+
+    <div class="text-center mb-8">
+        <div class="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 p-4 rounded-full inline-block mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </div>
+        <h1 class="text-3xl font-black text-gray-800 dark:text-white tracking-tight">Bienvenido</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Ingresa tus credenciales para acceder al sistema</p>
+    </div>
+
+    {% if form.errors %}
+    <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 mb-6 rounded-r">
+        <p class="font-bold text-sm">Error de acceso</p>
+        <p class="text-sm">Usuario o contraseña incorrectos.</p>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Usuario</label>
+            <input type="text" name="username" required autofocus
+                   class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors"
+                   placeholder="Ej. admin">
+        </div>
+
+        <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Contraseña</label>
+            <input type="password" name="password" required
+                   class="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors"
+                   placeholder="••••••••">
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-lg text-lg">
+            Iniciar Sesión
+        </button>
+    </form>
+
+</div>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/ticket.html
+============================================================
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket #{{ venta.id }}</title>
+    <style>
+        /* Estilos simulando una impresora térmica de 80mm */
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            width: 300px; /* Ancho típico de ticket */
+            margin: 0 auto;
+            color: black;
+            padding: 10px;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        .bold { font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 4px 0; }
+        .border-top { border-top: 1px dashed black; }
+        .border-bottom { border-bottom: 1px dashed black; }
+
+        /* Ocultar márgenes de impresión del navegador */
+        @media print {
+            @page { margin: 0; }
+            body { margin: 0.5cm; }
+        }
+    </style>
+</head>
+<body onload="window.print();">
+
+    <div class="text-center">
+        <h2 style="margin-bottom: 5px; text-transform: uppercase;">{{ config.nombre_negocio|default:"MI NEGOCIO" }}</h2>
+
+        {% if config.ubicacion %}
+            <p style="margin: 0;">{{ config.ubicacion }}</p>
+        {% endif %}
+
+        {% if config.telefono %}
+            <p style="margin: 0;">Tel: {{ config.telefono }}</p>
+        {% endif %}
+        <p style="margin: 5px 0;" class="border-bottom pb-2">
+            Ticket: #{{ venta.id }} <br>
+            Fecha: {{ venta.fecha|date:"d/m/Y H:i" }} <br>
+            Cajero: {{ venta.cajero.username|default:"Admin" }}
+        </p>
+    </div>
+
+    <table>
+        <thead>
+            <tr class="border-bottom">
+                <th class="text-left">Cant</th>
+                <th class="text-left">Desc</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in detalles %}
+            <tr>
+                <td class="text-left" style="vertical-align: top;">{{ item.cantidad }}</td>
+                <td class="text-left">{{ item.producto.nombre|truncatechars:18 }}</td>
+                <td class="text-right">${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="border-top" style="margin-top: 10px; padding-top: 10px;">
+        <table style="width: 100%; margin-top: 0;">
+            <tr>
+                <td class="text-left bold">TOTAL:</td>
+                <td class="text-right bold" style="font-size: 18px;">${{ venta.total }}</td>
+            </tr>
+            <tr>
+                <td class="text-left">Efectivo Recibido:</td>
+                <td class="text-right">${{ venta.pago_recibido }}</td>
+            </tr>
+            <tr>
+                <td class="text-left bold">CAMBIO:</td>
+                <td class="text-right bold">${{ venta.cambio }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="text-center" style="margin-top: 20px;">
+        <p>¡Gracias por su compra!</p>
+        <p style="font-size: 10px; margin-top: 10px;">Este documento no es un comprobante fiscal.</p>
+    </div>
+
+</body>
+</html>
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/pos.html
+============================================================
+
+{% extends "base/base.html" %}
+{% load seguridad_tags %}
+
+{% block title %}Caja Registradora - {{ block.super }}{% endblock %}
+
+{% block body_class %}flex flex-col h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 overflow-hidden transition-colors duration-200{% endblock %}
+
+    {% block nav %}
+    <nav class="bg-gray-200 dark:bg-gray-800 border-b-4 border-green-600 p-4 shadow-md flex-shrink-0 transition-colors duration-200">
+        <div class="container mx-auto flex flex-wrap justify-between items-center gap-4">
+            <h1 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">Caja Registradora</h1>
+
+            <div class="flex items-center gap-4">
+                <button onclick="toggleDarkMode()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-800 dark:text-yellow-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                    </svg>
+                </button>
+
+                <a href="{% url 'portal_principal' %}" class="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-bold transition flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                    </svg>
+                    Portal
+                </a>
+
+                {% if request.user.is_superuser or request.user|tiene_rol:"Administrador" %}
+                <a href="{% url 'dashboard' %}" class="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Métricas
+                </a>
+                {% endif %}
+
+                <a href="{% url 'cerrar_caja' %}" class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Cerrar Turno
+                </a>
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+
+{% block body_extra %}{% endblock %}
+
+{% block main_class %}flex flex-grow overflow-hidden{% endblock %}
+
+{% block content %}
+    <div class="w-2/3 p-6 flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
+        <div class="relative w-full shadow-sm mb-4">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg class="h-6 w-6 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <input type="text"
+                   name="q"
+                   placeholder="Buscar nombre o escanear código de barras..."
+                   class="w-full p-4 pl-12 text-lg rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow placeholder-gray-400 dark:placeholder-gray-500"
+                   autofocus
+                   hx-get="{% url 'buscar_productos' %}"
+                   hx-trigger="keyup changed delay:300ms, search"
+                   hx-target="#resultados-busqueda">
+        </div>
+
+        <div id="resultados-busqueda" class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
+            <p class="text-gray-400 dark:text-gray-600 italic text-center py-20">Comienza a escribir para buscar productos...</p>
+        </div>
+    </div>
+
+    <div id="panel-carrito" class="w-1/3 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col shadow-2xl z-10 transition-colors">
+        {% include 'ventas/partials/carrito.html' %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* gray-300 */
+            border-radius: 20px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #475569; /* gray-600 */
+        }
+    </style>
+{% endblock %}
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/partials/venta_exitosa.html
+============================================================
+
+<div class="flex flex-col items-center justify-center h-full p-6 text-center transition-colors">
+    <div class="bg-green-100 dark:bg-green-900/30 p-4 rounded-full mb-4 transition-colors">
+        <svg class="h-12 w-12 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+    </div>
+
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">¡Venta Exitosa!</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-6 transition-colors">Ticket #{{ venta.id }} procesado correctamente.</p>
+
+    <div class="w-full space-y-3">
+        <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="w-full flex justify-center items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md">
+            Imprimir Ticket
+        </a>
+
+        <button hx-get="{% url 'pantalla_pos' %}" hx-target="body" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-sm">
+            Nueva Venta
+        </button>
+    </div>
+</div>
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/partials/carrito.html
+============================================================
+
+{% if error_stock %}
+    <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 m-4 mb-0 rounded-r-lg" role="alert">
+        <p class="font-bold text-sm">Error en la transacción</p>
+        <p class="text-sm">{{ error_stock }}</p>
+    </div>
+{% endif %}
+
+<ul id="lista-carrito" class="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar">
+    {% if carrito %}
+        {% for id, item in carrito.items %}
+            <li class="flex justify-between items-center border-b dark:border-gray-700 pb-3 group transition-colors">
+                <div class="flex-grow">
+                    <span class="font-bold text-gray-800 dark:text-gray-200">{{ item.nombre }}</span>
+
+                    <div class="flex items-center gap-2 mt-2">
+                        <button hx-post="{% url 'restar_item' id %}"
+                                hx-target="#panel-carrito"
+                                class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 w-7 h-7 rounded flex items-center justify-center font-bold transition-colors">
+                            -
+                        </button>
+
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 w-6 text-center">{{ item.cantidad }}</span>
+
+                        <button hx-post="{% url 'agregar_al_carrito' id %}"
+                                hx-target="#panel-carrito"
+                                class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 w-7 h-7 rounded flex items-center justify-center font-bold transition-colors">
+                            +
+                        </button>
+
+                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">x ${{ item.precio }}</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-end gap-2">
+                    <span class="font-bold text-blue-600 dark:text-blue-400 text-lg">${% widthratio item.cantidad 1 item.precio %}</span>
+
+                    <button hx-post="{% url 'eliminar_item' id %}"
+                            hx-target="#panel-carrito"
+                            class="text-red-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                            title="Eliminar fila completa">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            </li>
+        {% endfor %}
+    {% else %}
+        <li class="text-gray-400 dark:text-gray-500 italic text-center mt-10">El carrito está vacío</li>
+    {% endif %}
+</ul>
+
+<div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 mt-auto transition-colors">
+    <div class="flex justify-between items-end mb-4">
+        <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total a pagar</h3>
+        <h3 class="text-4xl font-black text-gray-900 dark:text-white">${{ total|default:"0.00" }}</h3>
+    </div>
+
+    {% if total > 0 %}
+    <div class="mb-4 bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Pago Recibido ($)</label>
+        <input type="number" id="pago_recibido" name="pago_recibido" min="{{ total|stringformat:'f' }}" step="0.50"
+               class="w-full p-2 text-xl font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-green-500 outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
+               placeholder="Ej. 500" oninput="calcularCambio()">
+
+        <div class="flex justify-between items-center mt-3 text-green-600 dark:text-green-400 transition-colors">
+            <span class="font-bold uppercase text-sm">Cambio a entregar:</span>
+            <span class="text-2xl font-black">$<span id="cambio_visual">0.00</span></span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="flex gap-3 mt-4">
+        <button hx-post="{% url 'vaciar_carrito' %}" hx-target="#panel-carrito"
+                class="w-1/3 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 font-bold py-4 rounded-xl text-lg transition-colors flex justify-center items-center">
+            Vaciar
+        </button>
+
+        <button hx-post="{% url 'procesar_venta' %}"
+                hx-target="#panel-carrito"
+                hx-include="#pago_recibido"
+                class="w-2/3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl transition-colors shadow-lg flex justify-center items-center">
+            Cobrar
+        </button>
+    </div>
+</div>
+
+<script>
+    function calcularCambio() {
+        const total = parseFloat("{{ total|stringformat:'f'|default:'0' }}");
+        const inputPago = document.getElementById('pago_recibido');
+        let pago = parseFloat(inputPago.value);
+
+        const spanCambio = document.getElementById('cambio_visual');
+        const contenedorCambio = spanCambio.parentElement.parentElement;
+
+        if (isNaN(pago) || pago < total) {
+            spanCambio.innerText = "0.00";
+            // Clases para cuando el pago es insuficiente (gris)
+            contenedorCambio.classList.remove('text-green-600', 'dark:text-green-400');
+            contenedorCambio.classList.add('text-gray-400', 'dark:text-gray-500');
+        } else {
+            spanCambio.innerText = (pago - total).toFixed(2);
+            // Clases para cuando el pago es correcto (verde)
+            contenedorCambio.classList.remove('text-gray-400', 'dark:text-gray-500');
+            contenedorCambio.classList.add('text-green-600', 'dark:text-green-400');
+        }
+    }
+</script>
+
+
+============================================================
+ARCHIVO: ./ventas/templates/ventas/partials/resultados_busqueda.html
+============================================================
+
+<div class="flex flex-col gap-3 mt-4">
+    {% for producto in productos %}
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-blue-500 dark:hover:border-blue-400 cursor-pointer transition-all duration-200 flex justify-between items-center"
+             hx-post="{% url 'agregar_al_carrito' producto.id %}"
+             hx-target="#panel-carrito"
+             hx-swap="innerHTML">
+
+            <div>
+                <strong class="block text-lg text-gray-800 dark:text-gray-100">{{ producto.nombre }}</strong>
+                <span class="text-sm text-gray-400 dark:text-gray-500 font-mono">Cód: {{ producto.codigo_barras }}</span>
+            </div>
+
+            <div class="text-right flex flex-col items-end">
+                <span class="text-blue-600 dark:text-blue-400 font-bold text-xl">${{ producto.precio }}</span>
+
+                {% if producto.stock > 5 %}
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 mt-1">
+                        Stock: {{ producto.stock }}
+                    </span>
+                {% elif producto.stock > 0 %}
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 mt-1">
+                        Stock: {{ producto.stock }}
+                    </span>
+                {% else %}
+                    <span class="text-xs font-bold px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 mt-1">
+                        Agotado
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        {% if request.GET.q %}
+            <p class="text-gray-500 dark:text-gray-400 text-center py-10 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 border-dashed transition-colors">
+                No se encontraron productos con "{{ request.GET.q }}".
+            </p>
+        {% endif %}
+    {% endfor %}
+</div>
+
+
+============================================================
+ARCHIVO: ./ventas/views/dashboard.py
+============================================================
+
+from django.shortcuts import render
+from django.utils import timezone
+from django.db.models import Sum
+from ventas.models import Venta, DetalleVenta, Producto
+from core.utils import get_config_context
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required(login_url='/portal/')
+def dashboard(request):
+    hoy = timezone.now().date()
+    ventas_hoy = Venta.objects.filter(fecha__date=hoy)
+    total_ventas = ventas_hoy.aggregate(Sum('total'))['total__sum'] or 0
+    num_tickets = ventas_hoy.count()
+
+    if num_tickets > 0:
+        ticket_promedio = total_ventas / num_tickets
+    else:
+        ticket_promedio = 0
+
+    productos_top = DetalleVenta.objects.filter(venta__fecha__date=hoy) \
+        .values('producto__nombre') \
+        .annotate(total_vendido=Sum('cantidad')) \
+        .order_by('-total_vendido')[:5]
+
+    stock_bajo = Producto.objects.filter(stock__lt=5)
+
+    contexto = {
+        **get_config_context('Panel de Control - Ventas', 'border-blue-600'),
+        'total_ventas': total_ventas,
+        'num_tickets': num_tickets,
+        'productos_top': productos_top,
+        'ticket_promedio': ticket_promedio,
+        'stock_bajo': stock_bajo,
+        'hoy': hoy,
+    }
+    return render(request, 'ventas/dashboard.html', contexto)
+
+
+============================================================
+ARCHIVO: ./ventas/views/caja.py
+============================================================
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.db.models import Sum
+from ventas.models import SesionCaja, Venta
+
+def abrir_caja(request):
+    if SesionCaja.objects.filter(cajero=request.user, estado=True).exists():
+        return redirect('pantalla_pos')
+
+    if request.method == 'POST':
+        fondo = request.POST.get('fondo_inicial', 0)
+        SesionCaja.objects.create(
+            cajero=request.user,
+            fondo_inicial=fondo,
+            estado=True
+        )
+        return redirect('pantalla_pos')
+
+    return render(request, 'ventas/abrir_caja.html')
+
+def cerrar_caja(request):
+    sesion = get_object_or_404(SesionCaja, cajero=request.user, estado=True)
+    ventas_efectivo = Venta.objects.filter(sesion=sesion, metodo_pago='EFE').aggregate(Sum('total'))['total__sum'] or 0
+    esperado_en_caja = float(sesion.fondo_inicial) + float(ventas_efectivo)
+
+    if request.method == 'POST':
+        efectivo_contado = request.POST.get('efectivo_cierre', 0)
+
+        sesion.efectivo_cierre = efectivo_contado
+        sesion.fecha_cierre = timezone.now()
+        sesion.estado = False
+        sesion.save()
+
+        return redirect('dashboard')
+
+    contexto = {
+        'sesion': sesion,
+        'ventas_efectivo': ventas_efectivo,
+        'esperado_en_caja': esperado_en_caja,
+    }
+    return render(request, 'ventas/cerrar_caja.html', contexto)
+
+
+============================================================
+ARCHIVO: ./ventas/views/ventas.py
+============================================================
+
+from django.shortcuts import render, get_object_or_404
+from django.db import transaction
+from ventas.models import Venta, DetalleVenta, Producto
+from configuraciones.models import ConfiguracionSistema
+
+def imprimir_ticket(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+    detalles = DetalleVenta.objects.filter(venta=venta)
+
+    config = ConfiguracionSistema.objects.first()
+    return render(request, 'ventas/ticket.html', {
+        'venta': venta,
+        'detalles': detalles,
+        'config': config,
+    })
+
+def procesar_venta(request):
+    carrito = request.session.get('carrito', {})
+
+    if not carrito:
+        return render(request, 'ventas/partials/carrito.html', {'carrito': {}, 'total': 0})
+
+    pago_str = request.POST.get('pago_recibido', '0')
+    if not pago_str:
+        pago_str = '0'
+    pago_recibido = float(pago_str)
+
+    try:
+        with transaction.atomic():
+            nueva_venta = Venta.objects.create(
+                cajero=request.user if request.user.is_authenticated else None,
+                total=0
+            )
+
+            venta_total = 0
+
+            for producto_id, datos in carrito.items():
+                producto = Producto.objects.select_for_update().get(id=producto_id)
+                cantidad_vendida = datos['cantidad']
+
+                if producto.stock < cantidad_vendida:
+                    raise ValueError(f"Stock insuficiente para {producto.nombre}. Disponible: {producto.stock}")
+
+                producto.stock -= cantidad_vendida
+                producto.save()
+
+                subtotal = float(datos['precio']) * cantidad_vendida
+                venta_total += subtotal
+
+                DetalleVenta.objects.create(
+                    venta=nueva_venta,
+                    producto=producto,
+                    cantidad=cantidad_vendida,
+                    precio_unitario=datos['precio']
+                )
+
+            if pago_recibido > 0 and pago_recibido < venta_total:
+                raise ValueError(f"El monto recibido (${pago_recibido}) es menor al total a pagar (${venta_total}).")
+
+            nueva_venta.total = venta_total
+            nueva_venta.pago_recibido = pago_recibido if pago_recibido > 0 else venta_total
+            nueva_venta.cambio = nueva_venta.pago_recibido - venta_total
+            nueva_venta.save()
+
+            request.session['carrito'] = {}
+
+            return render(request, 'ventas/partials/venta_exitosa.html', {'venta': nueva_venta})
+
+    except ValueError as e:
+        total = sum(item['precio'] * item['cantidad'] for item in carrito.values())
+        return render(request, 'ventas/partials/carrito.html', {
+            'carrito': carrito,
+            'total': total,
+            'error_stock': str(e)
+        })
+
+
+============================================================
+ARCHIVO: ./ventas/views/carrito.py
+============================================================
+
+from django.shortcuts import render, get_object_or_404
+from ventas.models import Producto
+
+def agregar_al_carrito(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+    carrito = request.session.get('carrito', {})
+    producto_id_str = str(producto_id)
+
+    if producto_id_str in carrito:
+        carrito[producto_id_str]['cantidad'] += 1
+    else:
+        carrito[producto_id_str] = {
+            'nombre': producto.nombre,
+            'precio': float(producto.precio),
+            'cantidad': 1,
+        }
+
+    request.session['carrito'] = carrito
+    total = sum(item['precio'] * item['cantidad'] for item in carrito.values())
+
+    contexto = {
+        'carrito': carrito,
+        'total': total
+    }
+    return render(request, 'ventas/partials/carrito.html', contexto)
+
+def vaciar_carrito(request):
+    request.session['carrito'] = {}
+    contexto = {
+        'carrito': {},
+        'total': 0
+    }
+    return render(request, 'ventas/partials/carrito.html', contexto)
+
+def eliminar_item(request, producto_id):
+    carrito = request.session.get('carrito', {})
+    producto_id_str = str(producto_id)
+
+    if producto_id_str in carrito:
+        del carrito[producto_id_str]
+        request.session['carrito'] = carrito
+
+    total = sum(item['precio'] * item['cantidad'] for item in carrito.values())
+    contexto = {
+        'carrito': carrito,
+        'total': total
+    }
+    return render(request, 'ventas/partials/carrito.html', contexto)
+
+def restar_item(request, producto_id):
+    carrito = request.session.get('carrito', {})
+    producto_id_str = str(producto_id)
+
+    if producto_id_str in carrito:
+        carrito[producto_id_str]['cantidad'] -= 1
+
+        if carrito[producto_id_str]['cantidad'] <= 0:
+            del carrito[producto_id_str]
+        request.session['carrito'] = carrito
+
+    total = sum(item['precio'] * item['cantidad'] for item in carrito.values())
+
+    contexto = {
+        'carrito': carrito,
+        'total': total
+    }
+    return render(request, 'ventas/partials/carrito.html', contexto)
+
+
+============================================================
+ARCHIVO: ./ventas/views/__init__.py
+============================================================
+
+from .pos import pantalla_pos, buscar_productos
+from .carrito import agregar_al_carrito, vaciar_carrito, eliminar_item, restar_item
+from .ventas import procesar_venta, imprimir_ticket
+from .caja import abrir_caja, cerrar_caja
+from .dashboard import dashboard
+
+
+============================================================
+ARCHIVO: ./ventas/views/pos.py
+============================================================
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from ventas.models import Producto, SesionCaja
+from core.utils import get_config_context
+
+@login_required
+def pantalla_pos(request):
+    sesion_abierta = SesionCaja.objects.filter(cajero=request.user, estado=True).first()
+    if not sesion_abierta:
+        return redirect('abrir_caja')
+
+    productos = Producto.objects.filter(stock__gt=0)
+    carrito = request.session.get('carrito', {})
+    total = sum(item['precio'] * item['cantidad'] for item in carrito.values())
+
+    contexto = {
+        **get_config_context('Caja Registradora', 'border-green-600', nav_items=[]),
+        'productos': productos,
+        'carrito': carrito,
+        'total': total,
+        'htmx_enabled': True,
+    }
+    return render(request, 'ventas/pos.html', contexto)
+
+def buscar_productos(request):
+    query = request.GET.get('q', '')
+
+    if query:
+        productos = Producto.objects.filter(
+            Q(nombre__icontains=query) | Q(codigo_barras__icontains=query)
+        )[:15]
+    else:
+        productos = Producto.objects.none()
+
+    return render(request, 'ventas/partials/resultados_busqueda.html', {'productos': productos})

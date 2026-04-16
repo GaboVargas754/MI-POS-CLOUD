@@ -1,0 +1,20 @@
+<div class="flex flex-col items-center justify-center h-full p-6 text-center transition-colors">
+    <div class="bg-green-100 dark:bg-green-900/30 p-4 rounded-full mb-4 transition-colors">
+        <svg class="h-12 w-12 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+    </div>
+
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">¡Venta Exitosa!</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-6 transition-colors">Ticket #{{ venta.id }} procesado correctamente.</p>
+
+    <div class="w-full space-y-3">
+        <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="w-full flex justify-center items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md">
+            Imprimir Ticket
+        </a>
+
+        <button hx-get="{% url 'pantalla_pos' %}" hx-target="body" class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-sm">
+            Nueva Venta
+        </button>
+    </div>
+</div>
