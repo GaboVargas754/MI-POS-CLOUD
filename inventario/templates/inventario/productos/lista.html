@@ -46,7 +46,9 @@
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">{{ p.codigo_barras }}</td>
                     <td class="p-4 font-bold">{{ p.nombre }}</td>
-                    <td class="p-4 text-right text-purple-600 dark:text-purple-400 font-bold">${{ p.precio }}</td>
+                    <td class="p-4 text-right">
+                        {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                    </td>
                     <td class="p-4 text-center">
                         {% if p.stock > 5 %}
                             <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>

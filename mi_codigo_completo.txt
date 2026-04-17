@@ -186,52 +186,57 @@ ARCHIVO: ./core/templates/core/portal.html
 ARCHIVO: ./templates/base/nav.html
 ============================================================
 
-<nav class="bg-gray-200 dark:bg-gray-800 border-b-4 {{ accent_color|default:'border-yellow-500' }} p-4 shadow-md flex-shrink-0 transition-colors duration-200 relative z-40">
-    <div class="container mx-auto flex flex-wrap justify-between items-center">
+<nav class="bg-gray-200 dark:bg-gray-800 border-b-4 {{ accent_color|default:'border-yellow-500' }} p-4 shadow-md flex-shrink-0 transition-colors duration-200 relative z-50">
+    <div class="container mx-auto flex justify-between items-center">
 
-        <h1 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">
-            {{ nav_title|default:'Panel de Control' }}
-        </h1>
+        <div class="flex items-center">
+            <h1 class="text-lg sm:text-xl font-black text-gray-800 dark:text-white uppercase tracking-tighter sm:tracking-wider">
+                {% if nav_title == 'Panel de Control - Ventas' or nav_title == 'Caja Registradora' %}
+                    VENTAS
+                {% elif nav_title == 'Módulo de Inventario' or nav_title == 'Catálogo de Productos' or nav_title == 'Gestión de Categorías' %}
+                    INVENTARIO
+                {% else %}
+                    SISTEMA
+                {% endif %}
+            </h1>
+        </div>
 
-        <div class="flex items-center gap-2 sm:gap-4">
+        <div class="flex items-center gap-1 sm:gap-3">
 
-            <button onclick="toggleDarkMode()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-800 dark:text-yellow-400" title="Cambiar Tema">
+            <button onclick="toggleDarkMode()" class="p-2 text-gray-600 dark:text-yellow-400 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-full transition" title="Cambiar Tema">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
             </button>
 
-            <a href="{% url 'portal_principal' %}" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400" title="Ir al Portal Principal">
+            <a href="{% url 'portal_principal' %}" class="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-full transition" title="Ir al Portal">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                 </svg>
             </a>
 
-            <div class="relative">
-                <button onclick="toggleMenu()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-700 dark:text-gray-200 flex items-center focus:outline-none focus:ring-2 focus:ring-gray-400" title="Menú de Opciones">
+            <div class="relative inline-block text-left">
+                <button onclick="toggleMenu()" class="p-2 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600 transition flex items-center focus:outline-none">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
 
-                <div id="mobile-menu" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transform origin-top-right transition-all z-50">
-                    <div class="py-2">
-
+                <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transform origin-top-right z-[100]">
+                    <div class="py-1">
                         {% for item in nav_items %}
-                        <a href="{{ item.url }}" class="block px-5 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-{{ item.hover_color|default:'yellow-600' }} transition">
+                        <a href="{{ item.url }}" class="block px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-orange-50 dark:hover:bg-gray-700 hover:text-orange-600 transition border-b border-gray-100 dark:border-gray-700 last:border-0">
                             {{ item.label }}
                         </a>
                         {% endfor %}
 
-                        <div class="px-5 py-1">
-                            {% block extra_nav %}{% endblock %}
+                        <div class="bg-gray-100 dark:bg-gray-900 px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Sesión
                         </div>
-
-                        <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
 
                         <form method="POST" action="{% url 'logout' %}" class="block w-full">
                             {% csrf_token %}
-                            <button type="submit" class="w-full text-left px-5 py-3 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-2">
+                            <button type="submit" class="w-full text-left px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
@@ -252,7 +257,6 @@ ARCHIVO: ./templates/base/nav.html
         menu.classList.toggle('hidden');
     }
 
-    // Cerrar el menú si el usuario hace clic en cualquier otro lado de la pantalla
     window.addEventListener('click', function(e) {
         const menu = document.getElementById('mobile-menu');
         const button = e.target.closest('button[onclick="toggleMenu()"]');
@@ -388,7 +392,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-)98@g-5s=)ow#)8+8^w-*s#_w(dazpc2s4p&=0$z1puz@ingnw'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -992,36 +996,53 @@ ARCHIVO: ./configuraciones/templates/configuraciones/usuarios/lista.html
 {% block title %}Gestión de Usuarios{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Usuarios del Sistema</h2>
-    <button hx-get="{% url 'nuevo_usuario' %}" hx-target="#modal-content"
-        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition">
-        + Nuevo Usuario
-    </button>
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <div class="flex items-center gap-4 w-full sm:w-auto">
+        <a href="{% url 'config_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h2 class="text-2xl sm:text-3xl font-bold">Usuarios del Sistema</h2>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <form method="GET" class="flex items-center gap-2">
+            <label class="text-sm font-bold text-gray-600 dark:text-gray-400">Mostrar:</label>
+            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 p-2">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </form>
+
+        <button hx-get="{% url 'nuevo_usuario' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+            + Nuevo Usuario
+        </button>
+    </div>
 </div>
 
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
     <div class="overflow-x-auto">
-        <table class="w-full text-left">
+        <table class="w-full text-left border-collapse min-w-[600px]">
             <thead>
                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
                     <th class="p-4">Usuario</th>
-                    <th class="p-4">Nombre Completo</th>
-                    <th class="p-4">Email</th>
                     <th class="p-4 text-center">Rol/Grupo</th>
                     <th class="p-4 text-center">Estado</th>
                     <th class="p-4 text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                {% for u in usuarios %}
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td class="p-4 font-bold">{{ u.username }}</td>
-                    <td class="p-4">{{ u.get_full_name|default:"---" }}</td>
-                    <td class="p-4 text-gray-500 dark:text-gray-400 text-sm">{{ u.email }}</td>
+                {% for u in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4">
+                        <div class="font-bold">{{ u.username }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ u.email }}</div>
+                    </td>
                     <td class="p-4 text-center">
                         {% for group in u.groups.all %}
-                            <span class="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-bold">{{ group.name }}</span>
+                            <span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-bold">{{ group.name }}</span>
                         {% empty %}
                             <span class="text-gray-400 italic text-xs">Sin Rol</span>
                         {% endfor %}
@@ -1034,16 +1055,17 @@ ARCHIVO: ./configuraciones/templates/configuraciones/usuarios/lista.html
                         {% endif %}
                     </td>
                     <td class="p-4 text-center">
-                        <button hx-get="{% url 'editar_usuario' u.id %}" hx-target="#modal-content"
-                            class="text-yellow-600 hover:underline font-bold text-sm">
-                            Editar
-                        </button>
+                        <button hx-get="{% url 'editar_usuario' u.id %}" hx-target="#modal-content" class="text-yellow-600 hover:underline font-bold text-sm">Editar</button>
                     </td>
                 </tr>
+                {% empty %}
+                <tr><td colspan="4" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay usuarios registrados.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% include "base/pagination.html" %}
 </div>
 {% endblock %}
 
@@ -1057,16 +1079,35 @@ ARCHIVO: ./configuraciones/templates/configuraciones/roles/lista.html
 {% block title %}Roles y Permisos - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Roles del Sistema</h2>
-    <button hx-get="{% url 'nuevo_rol' %}" hx-target="#modal-content" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition">
-        + Nuevo Rol
-    </button>
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <div class="flex items-center gap-4 w-full sm:w-auto">
+        <a href="{% url 'config_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h2 class="text-2xl sm:text-3xl font-bold">Roles del Sistema</h2>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <form method="GET" class="flex items-center gap-2">
+            <label class="text-sm font-bold text-gray-600 dark:text-gray-400">Mostrar:</label>
+            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 p-2">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </form>
+
+        <button hx-get="{% url 'nuevo_rol' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+            + Nuevo Rol
+        </button>
+    </div>
 </div>
 
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
     <div class="overflow-x-auto">
-        <table class="w-full text-left">
+        <table class="w-full text-left border-collapse min-w-[600px]">
             <thead>
                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
                     <th class="p-4 w-1/3">Nombre del Rol</th>
@@ -1075,8 +1116,8 @@ ARCHIVO: ./configuraciones/templates/configuraciones/roles/lista.html
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                {% for rol in roles %}
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                {% for rol in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td class="p-4 font-bold text-orange-600 dark:text-orange-400">{{ rol.name }}</td>
                     <td class="p-4 text-sm text-gray-600 dark:text-gray-400">
                         {% if rol.permissions.all %}
@@ -1094,11 +1135,13 @@ ARCHIVO: ./configuraciones/templates/configuraciones/roles/lista.html
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="3" class="p-8 text-center text-gray-500">No hay roles definidos.</td></tr>
+                <tr><td colspan="3" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay roles definidos.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    {% include "base/pagination.html" %}
 </div>
 {% endblock %}
 
@@ -1212,12 +1255,26 @@ class Producto(models.Model):
     codigo_barras = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=200)
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, related_name='productos')
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
-    costo = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.nombre} (Stock: {self.stock})"
+
+class PrecioProducto(models.Model):
+    # Relación uno a uno: cada producto tiene un registro de precio
+    producto = models.OneToOneField(Producto, on_delete=models.CASCADE, related_name='precios')
+    costo = models.DecimalField(max_digits=10, decimal_places=2)
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    margen_ganancia = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    fecha_ultimo_cambio = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Cálculo automático del margen antes de guardar
+        self.margen_ganancia = self.precio - self.costo
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Precios de {self.producto.nombre}"
 
 
 ============================================================
@@ -1225,30 +1282,35 @@ ARCHIVO: ./inventario/forms.py
 ============================================================
 
 from django import forms
-from .models import Producto, Categoria
+from .models import Producto, Categoria, PrecioProducto
 
 clases_comunes = 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors'
 
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ['codigo_barras', 'nombre', 'precio', 'stock']
+        # 👇 ¡AQUÍ ESTABA EL DETALLE! Ya no existe 'precio', ahora usamos 'categoria'
+        fields = ['codigo_barras', 'nombre', 'categoria', 'stock']
         widgets = {
-            'codigo_barras': forms.TextInput(attrs={
-                'class': clases_comunes,
-                'placeholder': 'Ej. 7501234567890'
-            }),
-            'nombre': forms.TextInput(attrs={
-                'class': clases_comunes,
-                'placeholder': 'Nombre del producto'
-            }),
-            'precio': forms.NumberInput(attrs={
-                'class': clases_comunes,
-                'step': '0.50'
-            }),
-            'stock': forms.NumberInput(attrs={
-                'class': clases_comunes
-            }),
+            'codigo_barras': forms.TextInput(attrs={'class': clases_comunes, 'id': 'id_codigo_barras', 'placeholder': 'Escanea o escribe el código'}),
+            'nombre': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Nombre del producto'}),
+            'categoria': forms.Select(attrs={'class': clases_comunes}),
+            'stock': forms.NumberInput(attrs={'class': clases_comunes}),
+        }
+
+class PrecioProductoForm(forms.ModelForm):
+    class Meta:
+        model = PrecioProducto
+        fields = ['producto', 'costo', 'precio']
+        widgets = {
+            'producto': forms.Select(attrs={'class': clases_comunes}),
+            'costo': forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.50'}),
+            'precio': forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.50'}),
+        }
+        labels = {
+            'producto': 'Selecciona el Producto',
+            'costo': 'Costo de Compra ($)',
+            'precio': 'Precio de Venta al Público ($)',
         }
 
 class CategoriaForm(forms.ModelForm):
@@ -1262,7 +1324,46 @@ class CategoriaForm(forms.ModelForm):
 
 
 ============================================================
-ARCHIVO: ./inventario/templates/inventario/formulario.html
+ARCHIVO: ./inventario/templates/inventario/dashboard.html
+============================================================
+
+{% extends 'base/base.html' %}
+
+{% block title %}Módulo de Inventarios{% endblock %}
+
+{% block content %}
+<div class="text-center mb-12">
+    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-4">Administración de Catálogos</h2>
+    <p class="text-gray-500 dark:text-gray-400 text-lg">Selecciona el módulo que deseas gestionar.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <a href="{% url 'lista_inventario' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Productos</h3>
+        <p class="text-gray-500 dark:text-gray-400">Gestiona precios, códigos de barras, nombres y actualiza tus niveles de stock.</p>
+    </a>
+
+    <a href="{% url 'lista_categorias' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1">
+        <div class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Categorías</h3>
+        <p class="text-gray-500 dark:text-gray-400">Crea agrupaciones para tus productos (Ej. Lácteos, Limpieza) para un mejor control.</p>
+    </a>
+</div>
+{% endblock %}
+
+
+
+============================================================
+ARCHIVO: ./inventario/templates/inventario/productos/formulario.html
 ============================================================
 
 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -1311,7 +1412,7 @@ ARCHIVO: ./inventario/templates/inventario/formulario.html
 
 
 ============================================================
-ARCHIVO: ./inventario/templates/inventario/lista.html
+ARCHIVO: ./inventario/templates/inventario/productos/lista.html
 ============================================================
 
 {% extends "base/base.html" %}
@@ -1320,7 +1421,14 @@ ARCHIVO: ./inventario/templates/inventario/lista.html
 
 {% block content %}
 <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-    <h2 class="text-2xl sm:text-3xl font-bold">Catálogo de Productos</h2>
+    <div class="flex items-center gap-4 w-full sm:w-auto">
+        <a href="{% url 'inventario_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h2 class="text-2xl sm:text-3xl font-bold">Catálogo de Productos</h2>
+    </div>
 
     <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
         <form method="GET" class="flex items-center gap-2">
@@ -1332,9 +1440,7 @@ ARCHIVO: ./inventario/templates/inventario/lista.html
             </select>
         </form>
 
-        <button hx-get="{% url 'nuevo_producto' %}"
-                hx-target="#modal-content"
-                class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+        <button hx-get="{% url 'nuevo_producto' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
             + Nuevo
         </button>
     </div>
@@ -1368,11 +1474,7 @@ ARCHIVO: ./inventario/templates/inventario/lista.html
                         {% endif %}
                     </td>
                     <td class="p-4 text-center">
-                        <button hx-get="{% url 'editar_producto' p.id %}"
-                                hx-target="#modal-content"
-                                class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">
-                            Editar
-                        </button>
+                        <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">Editar</button>
                     </td>
                 </tr>
                 {% empty %}
@@ -1384,77 +1486,121 @@ ARCHIVO: ./inventario/templates/inventario/lista.html
         </table>
     </div>
 
-    <div class="bg-gray-50 dark:bg-gray-800/80 p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
-
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-            Mostrando <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.start_index|default:0 }}</span>
-            a <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.end_index|default:0 }}</span>
-            de <span class="font-bold text-gray-900 dark:text-white">{{ page_obj.paginator.count }}</span> registros
-        </div>
-
-        <div class="flex items-center gap-2">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Anterior</a>
-            {% else %}
-                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Anterior</span>
-            {% endif %}
-
-            <span class="text-sm px-2 text-gray-600 dark:text-gray-400">
-                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Siguiente</a>
-            {% else %}
-                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Siguiente</span>
-            {% endif %}
-        </div>
-    </div>
+    {% include "base/pagination.html" %}
 </div>
 {% endblock %}
 
 
 ============================================================
-ARCHIVO: ./inventario/templates/inventario/dashboard.html
+ARCHIVO: ./inventario/templates/inventario/precios/lista.html
 ============================================================
 
-{% extends 'base/base.html' %}
-
-{% block title %}Módulo de Inventarios{% endblock %}
+{% extends "base/base.html" %}
 
 {% block content %}
-<div class="text-center mb-12">
-    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-4">Administración de Catálogos</h2>
-    <p class="text-gray-500 dark:text-gray-400 text-lg">Selecciona el módulo que deseas gestionar.</p>
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <div class="flex items-center gap-4">
+        <a href="{% url 'inventario_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h2 class="text-2xl font-bold uppercase">Precios y Costos</h2>
+    </div>
+    <button hx-get="{% url 'nuevo_precio' %}" hx-target="#modal-content" class="bg-purple-600 text-white font-bold py-2 px-6 rounded-lg shadow-md">+ Asignar Precios</button>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    <a href="{% url 'lista_inventario' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1">
-        <div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-        </div>
-        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Productos</h3>
-        <p class="text-gray-500 dark:text-gray-400">Gestiona precios, códigos de barras, nombres y actualiza tus niveles de stock.</p>
-    </a>
-
-    <a href="{% url 'lista_categorias' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1">
-        <div class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-            </svg>
-        </div>
-        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Categorías</h3>
-        <p class="text-gray-500 dark:text-gray-400">Crea agrupaciones para tus productos (Ej. Lácteos, Limpieza) para un mejor control.</p>
-    </a>
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-[10px] tracking-widest border-b dark:border-gray-600">
+                    <th class="p-4">Producto</th>
+                    <th class="p-4 text-center">Costo</th>
+                    <th class="p-4 text-center">Precio Venta</th>
+                    <th class="p-4 text-center">Margen Ganancia</th>
+                    <th class="p-4 text-center">Último Cambio</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for p in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4 font-bold text-gray-800 dark:text-gray-200">{{ p.producto.nombre }}</td>
+                    <td class="p-4 text-center font-mono text-red-500">${{ p.costo }}</td>
+                    <td class="p-4 text-center font-mono text-green-500 font-bold">${{ p.precio }}</td>
+                    <td class="p-4 text-center">
+                        <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full font-bold">
+                            +${{ p.margen_ganancia }}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center text-xs text-gray-400">
+                        {{ p.fecha_ultimo_cambio|date:"d/m/Y H:i" }}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button hx-get="{% url 'editar_precio' p.id %}" hx-target="#modal-content" class="text-blue-600 font-bold">Editar</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include "base/pagination.html" %}
 </div>
 {% endblock %}
 
 
+============================================================
+ARCHIVO: ./inventario/templates/inventario/categorias/formulario.html
+============================================================
+
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="bg-gray-100 dark:bg-gray-700 border-b-4 border-purple-600 dark:border-purple-500 p-4 flex justify-between items-center">
+        <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">{{ titulo }}</h2>
+        <button onclick="cerrarModal()" class="text-gray-500 hover:text-red-500 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <form hx-post="{{ request.path }}" hx-target="body" class="p-6 space-y-4">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div>
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
+            <div class="relative">
+                {% if field.name == 'permisos' %}
+                    <div class="max-h-60 overflow-y-auto bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-4 custom-scrollbar">
+                        {{ field }}
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+            </div>
+            {% if field.errors %}
+                <p class="text-red-500 text-xs mt-1 font-bold">{{ field.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="flex gap-3 pt-4">
+            <button type="button" onclick="cerrarModal()"
+                    class="w-1/2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition">
+                Cancelar
+            </button>
+            <button type="submit"
+                    class="w-1/2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">
+                {% if is_instance %}Actualizar{% else %}Guardar{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
 
 ============================================================
-ARCHIVO: ./inventario/templates/inventario/lista_categorias.html
+ARCHIVO: ./inventario/templates/inventario/categorias/lista.html
 ============================================================
 
 {% extends "base/base.html" %}
@@ -1463,14 +1609,22 @@ ARCHIVO: ./inventario/templates/inventario/lista_categorias.html
 
 {% block content %}
 <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-    <h2 class="text-2xl sm:text-3xl font-bold">Listado de Categorías</h2>
+    <div class="flex items-center gap-4 w-full sm:w-auto">
+        <a href="{% url 'inventario_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h2 class="text-2xl sm:text-3xl font-bold">Listado de Categorías</h2>
+    </div>
 
     <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
         <form method="GET" class="flex items-center gap-2">
             <label class="text-sm font-bold text-gray-600 dark:text-gray-400">Mostrar:</label>
-            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg p-2">
+            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2">
                 <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
                 <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
             </select>
         </form>
 
@@ -1505,6 +1659,8 @@ ARCHIVO: ./inventario/templates/inventario/lista_categorias.html
             </tbody>
         </table>
     </div>
+
+    {% include "base/pagination.html" %}
 </div>
 {% endblock %}
 
@@ -1550,7 +1706,7 @@ def lista_inventario(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'inventario/lista.html', {
+    return render(request, 'inventario/productos/lista.html', {
         **get_config_context('Catálogo de Productos', 'border-purple-600'),
         'page_obj': page_obj,
         'per_page': per_page,
@@ -1574,7 +1730,7 @@ def editar_producto(request, pk=None):
     else:
         form = ProductoForm(instance=producto)
 
-    return render(request, 'inventario/formulario.html', {
+    return render(request, 'inventario/productos/formulario.html', {
         'form': form,
         'producto': producto,
         'titulo': titulo,
@@ -1608,7 +1764,7 @@ def lista_categorias(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'inventario/lista_categorias.html', {
+    return render(request, 'inventario/categorias/lista.html', {
         **get_config_context('Gestión de Categorías', 'border-purple-600'),
         'page_obj': page_obj,
         'per_page': per_page,
@@ -1632,10 +1788,54 @@ def editar_categoria(request, pk=None):
     else:
         form = CategoriaForm(instance=categoria)
 
-    return render(request, 'inventario/formulario.html', {
+    return render(request, 'inventario/categorias/formulario.html', {
         'form': form,
         'is_instance': categoria is not None,
         'titulo': titulo
+    })
+
+
+============================================================
+ARCHIVO: ./inventario/views/precios.py
+============================================================
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, permission_required
+from django.core.paginator import Paginator
+from inventario.models import PrecioProducto
+from inventario.forms import PrecioProductoForm
+from core.utils import get_config_context
+
+@login_required
+@permission_required('configuraciones.acceder_inventario', login_url='/core/')
+def lista_precios(request):
+    precios_list = PrecioProducto.objects.all().select_related('producto').order_by('producto__nombre')
+
+    per_page = request.GET.get('per_page', 10)
+    paginator = Paginator(precios_list, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'inventario/precios/lista.html', {
+        **get_config_context('Gestión de Precios', 'border-purple-600'),
+        'page_obj': page_obj,
+        'per_page': per_page,
+    })
+
+@login_required
+@permission_required('configuraciones.acceder_inventario', login_url='/core/')
+def editar_precio(request, pk=None):
+    precio_obj = get_object_or_404(PrecioProducto, pk=pk) if pk else None
+    form = PrecioProductoForm(request.POST or None, instance=precio_obj)
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('lista_precios')
+
+    return render(request, 'inventario/precios/formulario.html', {
+        'form': form,
+        'titulo': "Editar Precios" if pk else "Asignar Precios",
+        'is_instance': precio_obj is not None
     })
 
 
@@ -2137,95 +2337,247 @@ ARCHIVO: ./ventas/templates/ventas/pos.html
 
 {% block title %}Caja Registradora - {{ block.super }}{% endblock %}
 
+{% block extra_head %}
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+{% endblock %}
+
 {% block body_class %}flex flex-col h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 overflow-hidden transition-colors duration-200{% endblock %}
 
-    {% block nav %}
-    <nav class="bg-gray-200 dark:bg-gray-800 border-b-4 border-green-600 p-4 shadow-md flex-shrink-0 transition-colors duration-200">
-        <div class="container mx-auto flex flex-wrap justify-between items-center gap-4">
-            <h1 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">Caja Registradora</h1>
+{% block nav %}
+<nav class="bg-gray-200 dark:bg-gray-800 border-b-4 border-green-600 p-4 shadow-md flex-shrink-0 transition-colors duration-200 z-40 relative">
+    <div class="container mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleDarkMode()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-800 dark:text-yellow-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </svg>
+            </button>
+            <h1 class="text-lg sm:text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">Caja (POS)</h1>
+        </div>
 
-            <div class="flex items-center gap-4">
-                <button onclick="toggleDarkMode()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-800 dark:text-yellow-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                    </svg>
-                </button>
+        <div class="relative">
+            <button onclick="togglePosMenu()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-700 dark:text-gray-200 flex items-center focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
 
-                <a href="{% url 'portal_principal' %}" class="text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-bold transition flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                    </svg>
-                    Portal
-                </a>
-
-                {% if request.user.is_superuser or request.user|tiene_rol:"Administrador" %}
-                <a href="{% url 'dashboard' %}" class="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Métricas
-                </a>
-                {% endif %}
-
-                <a href="{% url 'cerrar_caja' %}" class="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Cerrar Turno
-                </a>
+            <div id="pos-mobile-menu" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden origin-top-right transition-all z-50">
+                <div class="py-2">
+                    <a href="{% url 'portal_principal' %}" class="block px-5 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-green-600 transition">
+                        🏠 Ir al Portal
+                    </a>
+                    {% if request.user.is_superuser or request.user|tiene_rol:"Administrador" %}
+                    <a href="{% url 'dashboard' %}" class="block px-5 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 transition">
+                        📊 Ver Métricas
+                    </a>
+                    {% endif %}
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                    <a href="{% url 'cerrar_caja' %}" class="block px-5 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                        🔒 Cerrar Turno
+                    </a>
+                </div>
             </div>
         </div>
-    </nav>
-    {% endblock %}
+    </div>
+</nav>
+{% endblock %}
 
-{% block body_extra %}{% endblock %}
-
-{% block main_class %}flex flex-grow overflow-hidden{% endblock %}
+{% block main_class %}flex flex-col lg:flex-row flex-grow overflow-hidden relative{% endblock %}
 
 {% block content %}
-    <div class="w-2/3 p-6 flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
-        <div class="relative w-full shadow-sm mb-4">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="h-6 w-6 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+    <div class="w-full lg:w-2/3 p-4 sm:p-6 flex flex-col h-full bg-gray-50 dark:bg-gray-900 transition-colors z-0 pb-24 lg:pb-6 overflow-hidden">
+
+        <div class="flex gap-2 sm:gap-3 mb-4 w-full flex-shrink-0">
+            <div class="relative w-full shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" name="q" id="buscador_pos" placeholder="Buscar o escanear..."
+                       class="w-full p-3 sm:p-4 pl-10 sm:pl-12 text-base sm:text-lg rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none transition-shadow"
+                       autofocus autocomplete="off"
+                       hx-get="{% url 'buscar_productos' %}"
+                       hx-trigger="input changed delay:300ms, search"
+                       hx-target="#resultados-busqueda">
             </div>
-            <input type="text"
-                   name="q"
-                   placeholder="Buscar nombre o escanear código de barras..."
-                   class="w-full p-4 pl-12 text-lg rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-shadow placeholder-gray-400 dark:placeholder-gray-500"
-                   autofocus
-                   hx-get="{% url 'buscar_productos' %}"
-                   hx-trigger="keyup changed delay:300ms, search"
-                   hx-target="#resultados-busqueda">
+
+            <button onclick="abrirCamara()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 text-gray-700 dark:text-gray-200 px-4 sm:px-6 rounded-xl transition-colors shadow-sm flex items-center justify-center focus:ring-2 focus:ring-green-500 outline-none flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
         </div>
 
-        <div id="resultados-busqueda" class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
-            <p class="text-gray-400 dark:text-gray-600 italic text-center py-20">Comienza a escribir para buscar productos...</p>
+        <div id="resultados-busqueda" class="flex-grow overflow-y-auto pr-1 custom-scrollbar">
+            <p class="text-gray-400 dark:text-gray-600 italic text-center py-10 sm:py-20">Busca un producto para comenzar...</p>
         </div>
     </div>
 
-    <div id="panel-carrito" class="w-1/3 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col shadow-2xl z-10 transition-colors">
-        {% include 'ventas/partials/carrito.html' %}
+    <button onclick="toggleCartMobile()" id="btn-flotante-carrito" class="lg:hidden fixed bottom-4 left-4 right-4 bg-green-500 hover:bg-green-600 text-white p-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(34,197,94,0.5)] flex justify-between items-center font-bold z-30 transition-transform active:scale-95">
+        <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span class="text-lg">Ver Carrito</span>
+        </div>
+        <span id="mobile-cart-total-value" class="text-2xl font-black">${{ total|default:"0.00" }}</span>
+    </button>
+
+    <div id="panel-carrito-container" class="fixed inset-0 top-[72px] bg-white dark:bg-gray-800 z-40 transform translate-y-full transition-transform duration-300 lg:relative lg:top-0 lg:translate-y-0 lg:w-1/3 lg:border-l border-gray-200 dark:border-gray-700 flex flex-col shadow-2xl lg:shadow-none">
+
+        <div class="lg:hidden p-4 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-sm">
+            <h2 class="font-black text-xl text-gray-800 dark:text-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Orden Actual
+            </h2>
+            <button onclick="toggleCartMobile()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white p-2 rounded-full font-bold flex items-center gap-1 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+        </div>
+
+        <div id="panel-carrito" class="flex-grow flex flex-col h-full overflow-hidden bg-white dark:bg-gray-800">
+            {% include 'ventas/partials/carrito.html' %}
+        </div>
+    </div>
+
+    <div id="modal-escaner" class="hidden fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 p-2 sm:p-4 rounded-2xl w-full max-w-sm shadow-2xl relative">
+            <button onclick="cerrarCamara()" class="absolute -top-4 -right-4 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition transform hover:scale-110 z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="text-center mb-2 mt-2">
+                <h3 class="font-black text-gray-800 dark:text-white text-lg">Escáner Activo</h3>
+                <p class="text-xs text-gray-500">Centra el código en el cuadro.</p>
+            </div>
+            <div id="lector-qr" class="w-full rounded-xl overflow-hidden bg-black aspect-square flex items-center justify-center"></div>
+        </div>
     </div>
 {% endblock %}
 
 {% block extra_js %}
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
+<script>
+    // 1. Lógica del Menú Hamburguesa Superior
+    function togglePosMenu() {
+        const menu = document.getElementById('pos-mobile-menu');
+        menu.classList.toggle('hidden');
+    }
+    window.addEventListener('click', function(e) {
+        const menu = document.getElementById('pos-mobile-menu');
+        const button = e.target.closest('button[onclick="togglePosMenu()"]');
+        if (!button && menu && !menu.contains(e.target)) {
+            menu.classList.add('hidden');
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
+    });
+
+    // 2. Lógica del Carrito Móvil (Deslizar hacia arriba/abajo)
+    function toggleCartMobile() {
+        const panel = document.getElementById('panel-carrito-container');
+        const btnFlotante = document.getElementById('btn-flotante-carrito');
+
+        if (panel.classList.contains('translate-y-full')) {
+            // Abrir Carrito
+            panel.classList.remove('translate-y-full');
+            panel.classList.add('translate-y-0');
+            btnFlotante.classList.add('hidden'); // Ocultar botón flotante
+        } else {
+            // Cerrar Carrito
+            panel.classList.remove('translate-y-0');
+            panel.classList.add('translate-y-full');
+            btnFlotante.classList.remove('hidden'); // Mostrar botón flotante
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1; /* gray-300 */
-            border-radius: 20px;
+    }
+
+    // 3. Magia: Actualizar el total del botón flotante cuando HTMX recarga el carrito
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if(evt.detail.target.id === 'panel-carrito') {
+            // Buscamos el total dentro del carrito (el h3 que tiene el signo de peso)
+            const cartTotalEl = document.querySelector('#panel-carrito h3.text-4xl');
+            if(cartTotalEl) {
+                // Copiamos ese valor al botón flotante
+                document.getElementById('mobile-cart-total-value').innerText = cartTotalEl.innerText;
+            }
         }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #475569; /* gray-600 */
+    });
+
+    // 4. Lógica de la Cámara (Mejorada para Celulares)
+    let html5QrcodeScanner = null;
+
+    function abrirCamara() {
+        const modal = document.getElementById('modal-escaner');
+        modal.classList.remove('hidden');
+
+        // Creamos la instancia
+        html5QrcodeScanner = new Html5Qrcode("lector-qr");
+
+        // Configuración ideal para celulares en vertical
+        const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0 // Fuerza a que sea cuadrado
+        };
+
+        // start() pide los permisos e inicia el video
+        html5QrcodeScanner.start(
+            { facingMode: "environment" }, // Usa la cámara trasera siempre
+            config,
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            console.error("Error al iniciar cámara:", err);
+            alert("No se pudo encender la cámara. Revisa los permisos de tu navegador o usa https://.");
+            cerrarCamara();
+        });
+    }
+
+    function cerrarCamara() {
+        const modal = document.getElementById('modal-escaner');
+        modal.classList.add('hidden');
+
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner.clear();
+                html5QrcodeScanner = null;
+            }).catch(err => {
+                console.error("Error apagando cámara:", err);
+            });
         }
-    </style>
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        cerrarCamara(); // Apagamos la cámara de inmediato
+
+        const inputBuscador = document.getElementById('buscador_pos');
+        inputBuscador.value = decodedText; // Pegamos el código
+
+        // Disparamos el evento para que HTMX haga la búsqueda
+        inputBuscador.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // Sonido de confirmación (Opcional)
+        const audio = new Audio('https://actions.google.com/sounds/v1/ui/beep_short.ogg');
+        audio.play().catch(e => {});
+    }
+
+    function onScanFailure(error) {
+        // Ignorar en silencio hasta que detecte un código válido
+    }
+</script>
+
+<style>
+    /* Ocultar barra de scroll para un diseño más limpio estilo App */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+</style>
 {% endblock %}
 
 

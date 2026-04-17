@@ -8,7 +8,7 @@ from core.utils import get_config_context
 @login_required
 @permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
 def lista_inventario(request):
-    productos_list = Producto.objects.all().order_by('nombre')
+    productos_list = Producto.objects.select_related('precios').all().order_by('nombre')
     per_page = request.GET.get('per_page', 10)
 
     try:

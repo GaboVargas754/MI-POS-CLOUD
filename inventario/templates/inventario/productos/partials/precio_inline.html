@@ -1,0 +1,14 @@
+<div class="flex items-center justify-end gap-1" id="precio-inline-{{ p.id }}">
+    <span class="text-purple-600 dark:text-purple-400 font-bold">$</span>
+    <input type="number"
+           step="0.50"
+           min="0"
+           name="precio"
+           value="{{ p.precios.precio|default:'0.00' }}"
+           hx-post="{% url 'actualizar_precio_inline' p.id %}"
+           hx-trigger="change"
+           hx-swap="outerHTML"
+           hx-target="#precio-inline-{{ p.id }}"
+           title="Modificar precio directamente"
+           class="w-20 sm:w-24 p-1 text-right font-black text-gray-800 dark:text-white bg-transparent border-b-2 border-transparent hover:border-purple-300 dark:hover:border-purple-600 focus:border-purple-500 focus:bg-purple-50 dark:focus:bg-gray-700 outline-none transition-all cursor-pointer rounded-t">
+</div>
