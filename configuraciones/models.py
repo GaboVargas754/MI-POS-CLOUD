@@ -14,5 +14,5 @@ class ConfiguracionSistema(models.Model):
         permissions = [
             ("acceder_ventas", "Módulo de Ventas: Acceso al Punto de Venta y Cobro"),
             ("acceder_inventario", "Módulo de Inventario: Gestión de Productos y Categorías"),
-            ("acceder_configuraciones", "Módulo de Configuración: Usuarios, Roles y Ajustes"),
+            ("acceder_configuraciones", "Módulo de Sistema: Usuarios, Roles y Preferencias"),
         ]

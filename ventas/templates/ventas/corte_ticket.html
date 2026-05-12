@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Corte de Caja #{{ sesion.id }}</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; font-size: 14px; width: 300px; margin: 0 auto; color: black; padding: 10px; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .bold { font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td { padding: 4px 0; }
+        .border-top { border-top: 1px dashed black; }
+        .border-bottom { border-bottom: 1px dashed black; }
+        @media print { @page { margin: 0; } body { margin: 0.5cm; } }
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="text-center border-bottom">
+        <h2 style="margin-bottom: 5px; text-transform: uppercase;">{{ config.nombre_negocio|default:"MI NEGOCIO" }}</h2>
+        <p style="margin: 0;" class="bold">Corte de Caja</p>
+        <p style="margin: 5px 0;">
+            Turno #{{ sesion.id }}<br>
+            Cajero: {{ sesion.cajero.username }}<br>
+            Apertura: {{ sesion.fecha_apertura|date:"d/m/Y H:i" }}<br>
+            Cierre: {% if sesion.fecha_cierre %}{{ sesion.fecha_cierre|date:"d/m/Y H:i" }}{% else %}En curso{% endif %}<br>
+            Impreso: {{ fecha_impresion|date:"d/m/Y H:i" }}
+        </p>
+    </div>
+
+    <table>
+        <tr><td>Fondo inicial:</td><td class="text-right">${{ sesion.fondo_inicial }}</td></tr>
+        <tr><td>Ventas efectivo:</td><td class="text-right">${{ ventas_efectivo|floatformat:2 }}</td></tr>
+        <tr><td>Ventas tarjeta:</td><td class="text-right">${{ ventas_tarjeta|floatformat:2 }}</td></tr>
+        <tr><td>Ventas transfer.:</td><td class="text-right">${{ ventas_transferencia|floatformat:2 }}</td></tr>
+        <tr class="border-top"><td class="bold">Total ventas:</td><td class="text-right bold">${{ total_ventas|floatformat:2 }}</td></tr>
+        <tr><td>Tickets:</td><td class="text-right">{{ total_tickets }}</td></tr>
+    </table>
+
+    <table class="border-top">
+        <tr><td>Esperado caja:</td><td class="text-right">${{ esperado_en_caja|floatformat:2 }}</td></tr>
+        <tr><td>Efectivo contado:</td><td class="text-right">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre }}{% else %}-{% endif %}</td></tr>
+        <tr>
+            <td class="bold">Diferencia:</td>
+            <td class="text-right bold">
+                {% if diferencia is not None %}${{ diferencia|floatformat:2 }}{% else %}-{% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <div class="text-center" style="margin-top: 20px;">
+        <p>Fin del corte</p>
+    </div>
+</body>
+</html>

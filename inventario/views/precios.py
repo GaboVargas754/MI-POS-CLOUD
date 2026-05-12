@@ -1,16 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.views.decorators.http import require_POST
 from inventario.models import Producto
 from inventario.models import PrecioProducto
 from inventario.forms import PrecioProductoForm
-from core.utils import get_config_context
+from core.utils import get_config_context, get_querystring_without_page
 
 @login_required
 @permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def lista_precios(request):
+    query = request.GET.get('q', '').strip()
     precios_list = PrecioProducto.objects.all().select_related('producto').order_by('producto__nombre')
+
+    if query:
+        precios_list = precios_list.filter(
+            Q(producto__nombre__icontains=query) | Q(producto__codigo_barras__icontains=query)
+        )
 
     per_page = request.GET.get('per_page', 10)
     paginator = Paginator(precios_list, per_page)
@@ -18,9 +25,11 @@ def lista_precios(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'inventario/precios/lista.html', {
-        **get_config_context('Gestión de Precios', 'border-purple-600'),
+        **get_config_context('Inventario', 'border-purple-600'),
         'page_obj': page_obj,
         'per_page': per_page,
+        'query': query,
+        'querystring': get_querystring_without_page(request),
     })
 
 @login_required

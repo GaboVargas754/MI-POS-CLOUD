@@ -30,7 +30,37 @@
 </div>
 
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
-    <div class="overflow-x-auto">
+    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        {% for u in page_obj %}
+        <div class="p-4 space-y-3">
+            <div class="flex justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="font-black text-gray-900 dark:text-white">{{ u.username }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 break-all">{{ u.email|default:"Sin email" }}</p>
+                </div>
+                {% if u.is_active %}
+                    <span class="h-fit text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full font-bold text-xs uppercase">Activo</span>
+                {% else %}
+                    <span class="h-fit text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full font-bold text-xs uppercase">Inactivo</span>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-wrap gap-1">
+                {% for group in u.groups.all %}
+                    <span class="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-2 py-1 rounded text-xs font-bold">{{ group.name }}</span>
+                {% empty %}
+                    <span class="text-gray-400 italic text-xs">Sin Rol</span>
+                {% endfor %}
+            </div>
+
+            <button hx-get="{% url 'editar_usuario' u.id %}" hx-target="#modal-content" class="min-h-11 w-full rounded-xl bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 font-bold text-sm">Editar</button>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay usuarios registrados.</div>
+        {% endfor %}
+    </div>
+
+    <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[600px]">
             <thead>
                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
@@ -49,7 +79,7 @@
                     </td>
                     <td class="p-4 text-center">
                         {% for group in u.groups.all %}
-                            <span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-bold">{{ group.name }}</span>
+                            <span class="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-2 py-1 rounded text-xs font-bold">{{ group.name }}</span>
                         {% empty %}
                             <span class="text-gray-400 italic text-xs">Sin Rol</span>
                         {% endfor %}

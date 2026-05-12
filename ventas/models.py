@@ -21,6 +21,10 @@ class Venta(models.Model):
         ('TAR', 'Tarjeta'),
         ('TRA', 'Transferencia'),
     ]
+    ESTADOS = [
+        ('ACTIVA', 'Activa'),
+        ('CANCELADA', 'Cancelada'),
+    ]
     sesion = models.ForeignKey(SesionCaja, on_delete=models.SET_NULL, null=True, blank=True)
 
     fecha = models.DateTimeField(auto_now_add=True)
@@ -29,6 +33,10 @@ class Venta(models.Model):
     metodo_pago = models.CharField(max_length=3, choices=METODOS_PAGO, default='EFE')
     pago_recibido = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     cambio = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    estado = models.CharField(max_length=12, choices=ESTADOS, default='ACTIVA')
+    motivo_cancelacion = models.TextField(blank=True, null=True)
+    fecha_cancelacion = models.DateTimeField(blank=True, null=True)
+    cancelado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas_canceladas')
 
     def __str__(self):
         return f"Ticket #{self.id} - {self.fecha.strftime('%d/%m/%Y')} - ${self.total}"

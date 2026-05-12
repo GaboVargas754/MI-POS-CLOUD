@@ -1,0 +1,207 @@
+{% extends "base/base.html" %}
+
+{% block title %}Histórico de Turnos - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div class="flex items-center gap-4">
+        <a href="{% url 'dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Histórico de Turnos</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Aperturas, cierres, ventas por turno y diferencias de caja.</p>
+        </div>
+    </div>
+</div>
+
+<form method="GET" class="mb-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-3 sm:p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-3 items-end">
+        <div>
+            <label for="turnos-q" class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Buscar</label>
+            <input id="turnos-q" type="search" name="q" value="{{ query }}" placeholder="Turno o cajero"
+                   class="w-full min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ fecha_desde }}"
+                   class="w-full xl:w-40 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ fecha_hasta }}"
+                   class="w-full xl:w-40 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Estado</label>
+            <select name="estado" class="w-full xl:w-36 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="" {% if not estado %}selected{% endif %}>Todos</option>
+                <option value="abierta" {% if estado == 'abierta' %}selected{% endif %}>Abiertos</option>
+                <option value="cerrada" {% if estado == 'cerrada' %}selected{% endif %}>Cerrados</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Cajero</label>
+            <select name="cajero" class="w-full xl:w-40 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="">Todos</option>
+                {% for cajero in cajeros %}
+                    <option value="{{ cajero.id }}" {% if cajero.id|stringformat:'s' == cajero_id %}selected{% endif %}>{{ cajero.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Mostrar</label>
+            <select name="per_page" class="w-full xl:w-28 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit" class="min-h-12 flex-1 xl:flex-none rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black px-5 transition">Filtrar</button>
+            <a href="{% url 'historial_turnos' %}" class="min-h-12 flex-1 xl:flex-none rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-black px-4 transition flex items-center justify-center">Limpiar</a>
+        </div>
+    </div>
+</form>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6">
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-blue-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Turnos</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">{{ total_turnos }}</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-green-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Ventas</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">${{ total_ventas|floatformat:2 }}</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-emerald-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Efectivo</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">${{ ventas_efectivo|floatformat:2 }}</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-purple-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Tickets</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">{{ total_tickets }}</p>
+    </div>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        {% for sesion in page_obj %}
+        <div class="p-4 space-y-4">
+            <div class="flex justify-between items-start gap-3">
+                <div>
+                    <h3 class="font-black text-gray-900 dark:text-white">Turno #{{ sesion.id }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ sesion.fecha_apertura|date:"d/m/Y H:i" }} · {{ sesion.cajero.username }}</p>
+                </div>
+                {% if sesion.estado %}
+                    <span class="rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-1 text-xs font-black">Abierto</span>
+                {% else %}
+                    <span class="rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 text-xs font-black">Cerrado</span>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
+                    <p class="text-[10px] uppercase font-black text-gray-400 tracking-wider">Fondo</p>
+                    <p class="font-black text-gray-900 dark:text-white">${{ sesion.fondo_inicial }}</p>
+                </div>
+                <div class="rounded-xl bg-green-50 dark:bg-green-900/20 p-3">
+                    <p class="text-[10px] uppercase font-black text-green-500 tracking-wider">Ventas</p>
+                    <p class="font-black text-green-700 dark:text-green-300">${{ sesion.total_ventas|floatformat:2 }}</p>
+                </div>
+                <div class="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-3">
+                    <p class="text-[10px] uppercase font-black text-blue-500 tracking-wider">Esperado</p>
+                    <p class="font-black text-blue-700 dark:text-blue-300">${{ sesion.esperado_en_caja|floatformat:2 }}</p>
+                </div>
+                <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
+                    <p class="text-[10px] uppercase font-black text-gray-400 tracking-wider">Contado</p>
+                    <p class="font-black text-gray-900 dark:text-white">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre }}{% else %}-{% endif %}</p>
+                </div>
+            </div>
+
+            {% if sesion.efectivo_cierre is not None %}
+                {% if sesion.diferencia > 0 %}
+                    <p class="rounded-xl bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 p-3 text-sm font-black">Sobrante: ${{ sesion.diferencia|floatformat:2 }}</p>
+                {% elif sesion.diferencia < 0 %}
+                    <p class="rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-3 text-sm font-black">Faltante: ${{ sesion.diferencia|floatformat:2 }}</p>
+                {% else %}
+                    <p class="rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 text-sm font-black">Caja cuadrada</p>
+                {% endif %}
+            {% endif %}
+
+            <a href="{% url 'imprimir_corte' sesion.id %}" target="_blank" class="min-h-11 w-full rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-black flex items-center justify-center">Imprimir corte</a>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay turnos con esos filtros.</div>
+        {% endfor %}
+    </div>
+
+    <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[900px]">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Turno</th>
+                    <th class="p-4">Cajero</th>
+                    <th class="p-4">Apertura/Cierre</th>
+                    <th class="p-4 text-right">Fondo</th>
+                    <th class="p-4 text-right">Ventas</th>
+                    <th class="p-4 text-right">Esperado</th>
+                    <th class="p-4 text-right">Contado</th>
+                    <th class="p-4 text-right">Diferencia</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for sesion in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4">
+                        <div class="font-black text-gray-900 dark:text-white">#{{ sesion.id }}</div>
+                        {% if sesion.estado %}
+                            <span class="text-xs font-black text-green-600 dark:text-green-400">Abierto</span>
+                        {% else %}
+                            <span class="text-xs font-black text-gray-500 dark:text-gray-400">Cerrado</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 font-bold">{{ sesion.cajero.username }}</td>
+                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">
+                        <div>{{ sesion.fecha_apertura|date:"d/m/Y H:i" }}</div>
+                        <div>{% if sesion.fecha_cierre %}{{ sesion.fecha_cierre|date:"d/m/Y H:i" }}{% else %}En curso{% endif %}</div>
+                    </td>
+                    <td class="p-4 text-right font-mono">${{ sesion.fondo_inicial }}</td>
+                    <td class="p-4 text-right font-black text-green-600 dark:text-green-400">${{ sesion.total_ventas|floatformat:2 }}</td>
+                    <td class="p-4 text-right font-mono">${{ sesion.esperado_en_caja|floatformat:2 }}</td>
+                    <td class="p-4 text-right font-mono">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre }}{% else %}-{% endif %}</td>
+                    <td class="p-4 text-right font-black">
+                        {% if sesion.efectivo_cierre is not None %}
+                            {% if sesion.diferencia > 0 %}
+                                <span class="text-yellow-600 dark:text-yellow-400">+${{ sesion.diferencia|floatformat:2 }}</span>
+                            {% elif sesion.diferencia < 0 %}
+                                <span class="text-red-600 dark:text-red-400">${{ sesion.diferencia|floatformat:2 }}</span>
+                            {% else %}
+                                <span class="text-green-600 dark:text-green-400">$0.00</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-gray-400">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        <a href="{% url 'imprimir_corte' sesion.id %}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">Imprimir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay turnos con esos filtros.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "base/pagination.html" %}
+</div>
+{% endblock %}

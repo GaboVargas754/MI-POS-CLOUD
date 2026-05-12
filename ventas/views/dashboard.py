@@ -11,7 +11,7 @@ from ventas.views.carrito import VENTAS_PERMISSION
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 def dashboard(request):
     hoy = timezone.now().date()
-    ventas_hoy = Venta.objects.filter(fecha__date=hoy)
+    ventas_hoy = Venta.objects.filter(fecha__date=hoy, estado='ACTIVA')
     total_ventas = ventas_hoy.aggregate(Sum('total'))['total__sum'] or 0
     num_tickets = ventas_hoy.count()
 
@@ -20,7 +20,7 @@ def dashboard(request):
     else:
         ticket_promedio = 0
 
-    productos_top = DetalleVenta.objects.filter(venta__fecha__date=hoy) \
+    productos_top = DetalleVenta.objects.filter(venta__fecha__date=hoy, venta__estado='ACTIVA') \
         .values('producto__nombre') \
         .annotate(total_vendido=Sum('cantidad')) \
         .order_by('-total_vendido')[:5]
@@ -28,7 +28,7 @@ def dashboard(request):
     stock_bajo = Producto.objects.filter(stock__lt=5)
 
     contexto = {
-        **get_config_context('Panel de Control - Ventas', 'border-blue-600'),
+        **get_config_context('Estadísticas', 'border-blue-600'),
         'total_ventas': total_ventas,
         'num_tickets': num_tickets,
         'productos_top': productos_top,

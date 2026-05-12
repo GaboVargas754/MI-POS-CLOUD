@@ -75,7 +75,7 @@ class ConfiguracionForm(forms.ModelForm):
 class RolForm(forms.ModelForm):
     permisos = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.filter(content_type__app_label__in=['ventas', 'inventario', 'configuraciones', 'auth']).order_by('content_type__app_label', 'name'),
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'w-4 h-4 text-orange-500 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600'}),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'w-4 h-4 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 dark:bg-gray-700 dark:border-gray-600'}),
         required=False,
         label="Permisos Asignados"
     )

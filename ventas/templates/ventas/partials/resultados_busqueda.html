@@ -1,16 +1,16 @@
 <div class="flex flex-col gap-3 mt-4">
     {% for producto in productos %}
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-blue-500 dark:hover:border-blue-400 cursor-pointer transition-all duration-200 flex justify-between items-center"
+        <div class="producto-resultado bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-500 dark:hover:border-blue-400 cursor-pointer transition-all duration-200 active:scale-[0.99] flex justify-between items-stretch sm:items-center gap-3 min-h-24"
              hx-post="{% url 'agregar_al_carrito' producto.id %}"
              hx-target="#panel-carrito"
              hx-swap="innerHTML">
 
-            <div>
-                <strong class="block text-lg text-gray-800 dark:text-gray-100">{{ producto.nombre }}</strong>
+            <div class="min-w-0 flex-1">
+                <strong class="block text-lg text-gray-800 dark:text-gray-100 leading-snug">{{ producto.nombre }}</strong>
                 <span class="text-sm text-gray-400 dark:text-gray-500 font-mono">Cód: {{ producto.codigo_barras }}</span>
             </div>
 
-            <div class="text-right flex flex-col items-end">
+            <div class="text-right flex flex-col items-end justify-between gap-2">
                 <span class="text-blue-600 dark:text-blue-400 font-bold text-xl">${{ producto.precios.precio }}</span>
 
                 {% if producto.stock > 5 %}
@@ -26,6 +26,7 @@
                         Agotado
                     </span>
                 {% endif %}
+                <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-500 text-white font-black text-xl shadow-sm" aria-hidden="true">+</span>
             </div>
         </div>
     {% empty %}

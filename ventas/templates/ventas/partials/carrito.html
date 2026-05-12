@@ -5,25 +5,25 @@
     </div>
 {% endif %}
 
-<ul id="lista-carrito" class="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar">
+<ul id="lista-carrito" class="flex-grow overflow-y-auto p-4 sm:p-6 space-y-3 sm:space-y-4 custom-scrollbar">
     {% if carrito %}
         {% for id, item in carrito.items %}
-            <li class="flex justify-between items-center border-b dark:border-gray-700 pb-3 group transition-colors">
+            <li class="flex justify-between items-center rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 sm:border-0 sm:border-b sm:rounded-none sm:bg-transparent sm:dark:bg-transparent sm:pb-3 group transition-colors">
                 <div class="flex-grow">
                     <span class="font-bold text-gray-800 dark:text-gray-200">{{ item.nombre }}</span>
 
                     <div class="flex items-center gap-2 mt-2">
                         <button hx-post="{% url 'restar_item' id %}"
                                 hx-target="#panel-carrito"
-                                class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 w-7 h-7 rounded flex items-center justify-center font-bold transition-colors">
+                                class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded flex items-center justify-center font-bold transition-colors text-lg">
                             -
                         </button>
 
-                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 w-6 text-center">{{ item.cantidad }}</span>
+                        <span class="text-base sm:text-sm font-semibold text-gray-700 dark:text-gray-300 w-7 text-center">{{ item.cantidad }}</span>
 
                         <button hx-post="{% url 'agregar_al_carrito' id %}"
                                 hx-target="#panel-carrito"
-                                class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 w-7 h-7 rounded flex items-center justify-center font-bold transition-colors">
+                                class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded flex items-center justify-center font-bold transition-colors text-lg">
                             +
                         </button>
 
@@ -36,7 +36,7 @@
 
                     <button hx-post="{% url 'eliminar_item' id %}"
                             hx-target="#panel-carrito"
-                            class="text-red-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                            class="text-red-400 hover:text-red-600 dark:hover:text-red-400 min-w-10 min-h-10 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex items-center justify-center"
                             title="Eliminar fila completa">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -50,21 +50,55 @@
     {% endif %}
 </ul>
 
-<div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 mt-auto transition-colors">
+<div class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 mt-auto transition-colors">
     <div class="flex justify-between items-end mb-4">
-        <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total a pagar</h3>
-        <h3 class="text-4xl font-black text-gray-900 dark:text-white">${{ total|default:"0.00" }}</h3>
+        <h3 class="text-sm sm:text-lg font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total a pagar</h3>
+        <h3 data-cart-total class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">${{ total|default:"0.00" }}</h3>
     </div>
 
     {% if total > 0 %}
-    <div class="mb-4 bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
-        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Pago Recibido ($)</label>
-        <input type="number" id="pago_recibido" name="pago_recibido" min="{{ total|stringformat:'f' }}" step="0.50"
-               class="w-full p-2 text-xl font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-green-500 outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
+    <div id="controles-cobro" class="hidden mb-4 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+        <div class="flex items-center justify-between gap-3 mb-3">
+            <div>
+                <p class="text-xs font-black text-green-600 dark:text-green-400 uppercase tracking-wider">Cobro rápido</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Confirma método y pago antes de guardar la venta.</p>
+            </div>
+            <button type="button" onclick="ocultarCobroRapido()" class="min-h-10 px-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                Cancelar
+            </button>
+        </div>
+
+        <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Método de pago</label>
+        <div class="grid grid-cols-3 gap-2 mb-4">
+            <label class="cursor-pointer">
+                <input type="radio" name="metodo_pago" value="EFE" class="peer sr-only" checked onchange="actualizarMetodoPago()">
+                <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2 text-xs font-black text-gray-600 dark:text-gray-300 transition peer-checked:border-green-600 peer-checked:bg-green-600 peer-checked:text-white">Efectivo</span>
+            </label>
+            <label class="cursor-pointer">
+                <input type="radio" name="metodo_pago" value="TAR" class="peer sr-only" onchange="actualizarMetodoPago()">
+                <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2 text-xs font-black text-gray-600 dark:text-gray-300 transition peer-checked:border-blue-600 peer-checked:bg-blue-600 peer-checked:text-white">Tarjeta</span>
+            </label>
+            <label class="cursor-pointer">
+                <input type="radio" name="metodo_pago" value="TRA" class="peer sr-only" onchange="actualizarMetodoPago()">
+                <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2 text-xs font-black text-gray-600 dark:text-gray-300 transition peer-checked:border-purple-600 peer-checked:bg-purple-600 peer-checked:text-white">Transfer.</span>
+            </label>
+        </div>
+
+        <div id="pagos-rapidos" class="grid grid-cols-5 gap-2 mb-3">
+            <button type="button" onclick="setPagoRapido({{ total|stringformat:'f' }})" class="min-h-11 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs font-black hover:bg-green-100 dark:hover:bg-green-900/40 transition">Exacto</button>
+            <button type="button" onclick="setPagoRapido(50)" class="min-h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition">$50</button>
+            <button type="button" onclick="setPagoRapido(100)" class="min-h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition">$100</button>
+            <button type="button" onclick="setPagoRapido(200)" class="min-h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition">$200</button>
+            <button type="button" onclick="setPagoRapido(500)" class="min-h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition">$500</button>
+        </div>
+
+        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Pago recibido ($)</label>
+        <input type="number" id="pago_recibido" name="pago_recibido" min="0" step="0.50" inputmode="decimal"
+               class="w-full min-h-12 p-3 text-xl font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                placeholder="Ej. 500" oninput="calcularCambio()">
 
-        <div class="flex justify-between items-center mt-3 text-green-600 dark:text-green-400 transition-colors">
-            <span class="font-bold uppercase text-sm">Cambio a entregar:</span>
+        <div id="estado-pago" class="flex justify-between items-center mt-3 text-gray-400 dark:text-gray-500 transition-colors">
+            <span id="estado-pago-texto" class="font-bold uppercase text-sm">Pago pendiente</span>
             <span class="text-2xl font-black">$<span id="cambio_visual">0.00</span></span>
         </div>
     </div>
@@ -72,38 +106,127 @@
 
     <div class="flex gap-3 mt-4">
         <button hx-post="{% url 'vaciar_carrito' %}" hx-target="#panel-carrito"
-                class="w-1/3 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 font-bold py-4 rounded-xl text-lg transition-colors flex justify-center items-center">
+                class="w-1/3 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 font-bold py-4 rounded-xl text-base sm:text-lg transition-colors flex justify-center items-center min-h-14">
             Vaciar
         </button>
 
-        <button hx-post="{% url 'procesar_venta' %}"
-                hx-target="#panel-carrito"
-                hx-include="#pago_recibido"
-                class="w-2/3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl transition-colors shadow-lg flex justify-center items-center">
-            Cobrar
-        </button>
+        {% if total > 0 %}
+            <button type="button"
+                    onclick="mostrarCobroRapido()"
+                    id="btn-mostrar-cobro"
+                    class="w-2/3 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-lg sm:text-xl transition-colors shadow-lg flex justify-center items-center min-h-14">
+                Cobrar
+            </button>
+
+            <button hx-post="{% url 'procesar_venta' %}"
+                    hx-target="#panel-carrito"
+                    hx-include="#controles-cobro"
+                    id="btn-cobrar"
+                    class="hidden w-2/3 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:dark:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-lg sm:text-xl transition-colors shadow-lg justify-center items-center min-h-14">
+                Confirmar
+            </button>
+        {% else %}
+            <button type="button" disabled
+                    class="w-2/3 bg-gray-300 dark:bg-gray-700 text-gray-500 font-bold py-4 rounded-xl text-lg sm:text-xl transition-colors flex justify-center items-center min-h-14 cursor-not-allowed">
+                Cobrar
+            </button>
+        {% endif %}
     </div>
 </div>
 
 <script>
+    function mostrarCobroRapido() {
+        const controles = document.getElementById('controles-cobro');
+        const btnMostrar = document.getElementById('btn-mostrar-cobro');
+        const btnConfirmar = document.getElementById('btn-cobrar');
+        const inputPago = document.getElementById('pago_recibido');
+
+        if (controles) controles.classList.remove('hidden');
+        if (btnMostrar) btnMostrar.classList.add('hidden');
+        if (btnConfirmar) {
+            btnConfirmar.classList.remove('hidden');
+            btnConfirmar.classList.add('flex');
+        }
+
+        actualizarMetodoPago();
+        if (inputPago && !inputPago.readOnly) inputPago.focus();
+    }
+
+    function ocultarCobroRapido() {
+        const controles = document.getElementById('controles-cobro');
+        const btnMostrar = document.getElementById('btn-mostrar-cobro');
+        const btnConfirmar = document.getElementById('btn-cobrar');
+
+        if (controles) controles.classList.add('hidden');
+        if (btnMostrar) btnMostrar.classList.remove('hidden');
+        if (btnConfirmar) {
+            btnConfirmar.classList.add('hidden');
+            btnConfirmar.classList.remove('flex');
+        }
+    }
+
     function calcularCambio() {
         const total = parseFloat("{{ total|stringformat:'f'|default:'0' }}");
         const inputPago = document.getElementById('pago_recibido');
-        let pago = parseFloat(inputPago.value);
+        const metodoSeleccionado = document.querySelector('input[name="metodo_pago"]:checked');
+        const metodoPago = metodoSeleccionado ? metodoSeleccionado.value : 'EFE';
+        const btnCobrar = document.getElementById('btn-cobrar');
+        let pago = parseFloat(inputPago ? inputPago.value : '0');
 
         const spanCambio = document.getElementById('cambio_visual');
-        const contenedorCambio = spanCambio.parentElement.parentElement;
+        const contenedorCambio = document.getElementById('estado-pago');
+        const textoEstado = document.getElementById('estado-pago-texto');
+
+        if (!inputPago || !spanCambio || !contenedorCambio || !textoEstado) return;
+
+        if (metodoPago !== 'EFE') {
+            inputPago.value = total.toFixed(2);
+            inputPago.readOnly = true;
+            spanCambio.innerText = '0.00';
+            textoEstado.innerText = 'Cobro exacto';
+            contenedorCambio.classList.remove('text-gray-400', 'dark:text-gray-500', 'text-red-600', 'dark:text-red-400');
+            contenedorCambio.classList.add('text-green-600', 'dark:text-green-400');
+            if (btnCobrar) btnCobrar.disabled = false;
+            return;
+        }
+
+        inputPago.readOnly = false;
 
         if (isNaN(pago) || pago < total) {
             spanCambio.innerText = "0.00";
-            // Clases para cuando el pago es insuficiente (gris)
-            contenedorCambio.classList.remove('text-green-600', 'dark:text-green-400');
-            contenedorCambio.classList.add('text-gray-400', 'dark:text-gray-500');
+            textoEstado.innerText = 'Pago insuficiente';
+            contenedorCambio.classList.remove('text-green-600', 'dark:text-green-400', 'text-gray-400', 'dark:text-gray-500');
+            contenedorCambio.classList.add('text-red-600', 'dark:text-red-400');
+            if (btnCobrar) btnCobrar.disabled = true;
         } else {
             spanCambio.innerText = (pago - total).toFixed(2);
-            // Clases para cuando el pago es correcto (verde)
-            contenedorCambio.classList.remove('text-gray-400', 'dark:text-gray-500');
+            textoEstado.innerText = 'Cambio a entregar';
+            contenedorCambio.classList.remove('text-gray-400', 'dark:text-gray-500', 'text-red-600', 'dark:text-red-400');
             contenedorCambio.classList.add('text-green-600', 'dark:text-green-400');
+            if (btnCobrar) btnCobrar.disabled = false;
         }
     }
+
+    function setPagoRapido(monto) {
+        const efectivo = document.querySelector('input[name="metodo_pago"][value="EFE"]');
+        const inputPago = document.getElementById('pago_recibido');
+
+        if (efectivo) efectivo.checked = true;
+        if (inputPago) inputPago.value = Number(monto).toFixed(2);
+        actualizarMetodoPago();
+    }
+
+    function actualizarMetodoPago() {
+        const metodoSeleccionado = document.querySelector('input[name="metodo_pago"]:checked');
+        const pagosRapidos = document.getElementById('pagos-rapidos');
+        const inputPago = document.getElementById('pago_recibido');
+        const esEfectivo = !metodoSeleccionado || metodoSeleccionado.value === 'EFE';
+
+        if (pagosRapidos) pagosRapidos.classList.toggle('hidden', !esEfectivo);
+        if (esEfectivo && inputPago) inputPago.readOnly = false;
+
+        calcularCambio();
+    }
+
+    actualizarMetodoPago();
 </script>

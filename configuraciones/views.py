@@ -10,7 +10,7 @@ from core.utils import get_config_context
 @login_required
 @permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def dashboard_configuracion(request):
-    return render(request, 'configuraciones/dashboard.html', get_config_context('Panel de Control', 'border-yellow-500'))
+    return render(request, 'configuraciones/dashboard.html', get_config_context('Sistema', 'border-yellow-500'))
 
 @login_required
 @permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
@@ -27,7 +27,7 @@ def lista_usuarios(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'configuraciones/usuarios/lista.html', {
-        **get_config_context('Gestión de Usuarios', 'border-yellow-500'),
+        **get_config_context('Sistema', 'border-yellow-500'),
         'page_obj': page_obj,
         'per_page': per_page,
     })
@@ -90,7 +90,7 @@ def lista_roles(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'configuraciones/roles/lista.html', {
-        **get_config_context('Gestión de Roles', 'border-orange-500'),
+        **get_config_context('Sistema', 'border-yellow-500'),
         'page_obj': page_obj,
         'per_page': per_page,
     })

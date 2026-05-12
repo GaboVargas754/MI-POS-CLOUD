@@ -22,3 +22,14 @@ class ConfiguracionViewsTests(TestCase):
         self.assertContains(response, 'Preferencias del Sistema')
         self.assertContains(response, 'Nombre de la Tienda')
         self.assertNotContains(response, 'Usuario Activo')
+
+    def test_lista_usuarios_incluye_tarjetas_moviles(self):
+        response = self.client.get(reverse('lista_usuarios'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'SISTEMA')
+        self.assertContains(response, 'border-yellow-500')
+        self.assertContains(response, 'nav-desktop-link')
+        self.assertNotContains(response, 'mobile-menu')
+        self.assertContains(response, 'md:hidden divide-y')
+        self.assertContains(response, 'admin')

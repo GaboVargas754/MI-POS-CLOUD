@@ -1,14 +1,36 @@
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
-from inventario.models import Producto
+from django.db.models import Q
+from inventario.models import Categoria, Producto
 from inventario.forms import ProductoForm
-from core.utils import get_config_context
+from core.utils import get_config_context, get_querystring_without_page
 
 @login_required
 @permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def lista_inventario(request):
-    productos_list = Producto.objects.select_related('precios').all().order_by('nombre')
+    query = request.GET.get('q', '').strip()
+    categoria_id = request.GET.get('categoria', '').strip()
+    stock = request.GET.get('stock', '').strip()
+    productos_list = Producto.objects.select_related('categoria', 'precios').all().order_by('nombre')
+
+    if query:
+        productos_list = productos_list.filter(
+            Q(nombre__icontains=query)
+            | Q(codigo_barras__icontains=query)
+            | Q(categoria__nombre__icontains=query)
+        )
+
+    if categoria_id:
+        productos_list = productos_list.filter(categoria_id=categoria_id)
+
+    if stock == 'con_stock':
+        productos_list = productos_list.filter(stock__gt=0)
+    elif stock == 'bajo':
+        productos_list = productos_list.filter(stock__gt=0, stock__lte=5)
+    elif stock == 'agotado':
+        productos_list = productos_list.filter(stock__lte=0)
+
     per_page = request.GET.get('per_page', 10)
 
     try:
@@ -21,9 +43,14 @@ def lista_inventario(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'inventario/productos/lista.html', {
-        **get_config_context('Catálogo de Productos', 'border-purple-600'),
+        **get_config_context('Inventario', 'border-purple-600'),
         'page_obj': page_obj,
         'per_page': per_page,
+        'query': query,
+        'categoria_id': categoria_id,
+        'stock': stock,
+        'categorias': Categoria.objects.all().order_by('nombre'),
+        'querystring': get_querystring_without_page(request),
     })
 
 @login_required

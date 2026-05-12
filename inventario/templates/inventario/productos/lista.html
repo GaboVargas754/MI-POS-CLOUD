@@ -3,7 +3,7 @@
 {% block title %}Inventario - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+<div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
     <div class="flex items-center gap-4 w-full sm:w-auto">
         <a href="{% url 'inventario_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -13,24 +13,99 @@
         <h2 class="text-2xl sm:text-3xl font-bold">Catálogo de Productos</h2>
     </div>
 
-    <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-        <form method="GET" class="flex items-center gap-2">
-            <label class="text-sm font-bold text-gray-600 dark:text-gray-400">Mostrar:</label>
-            <select name="per_page" onchange="this.form.submit()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 p-2">
-                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
-                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
-                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
-            </select>
-        </form>
-
+    <div class="w-full sm:w-auto">
         <button hx-get="{% url 'nuevo_producto' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
             + Nuevo
         </button>
     </div>
 </div>
 
+<form id="filtros-inventario-form" method="GET" class="mb-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-3 sm:p-4">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto_auto_auto] gap-3 items-end">
+        <div>
+            <label for="filtro-inventario-q" class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Buscar producto</label>
+            <div class="flex gap-2">
+                <input id="filtro-inventario-q" type="search" name="q" value="{{ query }}" placeholder="Nombre, código o categoría"
+                       class="w-full min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none">
+                <button type="button" onclick="abrirEscanerFiltroInventario()" class="min-h-12 min-w-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition flex items-center justify-center" title="Escanear código">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Categoría</label>
+            <select name="categoria" class="w-full lg:w-48 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 outline-none">
+                <option value="">Todas</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria.id|stringformat:'s' == categoria_id %}selected{% endif %}>{{ categoria.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Stock</label>
+            <select name="stock" class="w-full lg:w-40 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 outline-none">
+                <option value="" {% if not stock %}selected{% endif %}>Todos</option>
+                <option value="con_stock" {% if stock == 'con_stock' %}selected{% endif %}>Con stock</option>
+                <option value="bajo" {% if stock == 'bajo' %}selected{% endif %}>Stock bajo</option>
+                <option value="agotado" {% if stock == 'agotado' %}selected{% endif %}>Agotados</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Mostrar</label>
+            <select name="per_page" class="w-full lg:w-28 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 outline-none">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit" class="min-h-12 flex-1 lg:flex-none rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black px-5 transition">Filtrar</button>
+            <a href="{% url 'lista_inventario' %}" class="min-h-12 flex-1 lg:flex-none rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-black px-4 transition flex items-center justify-center">Limpiar</a>
+        </div>
+    </div>
+</form>
+
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
-    <div class="overflow-x-auto">
+    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        {% for p in page_obj %}
+        <div class="p-4 space-y-3">
+            <div class="flex justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="font-black text-gray-900 dark:text-white leading-tight">{{ p.nombre }}</h3>
+                    <p class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1 break-all">{{ p.codigo_barras }}</p>
+                </div>
+                <div class="flex-shrink-0">
+                    {% if p.stock > 5 %}
+                        <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                    {% elif p.stock > 0 %}
+                        <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                    {% else %}
+                        <span class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 px-3 py-1 rounded-full text-xs font-bold">Agotado</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs uppercase font-black text-gray-400 tracking-wider mb-1">Precio</p>
+                    {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                </div>
+                <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="min-h-11 px-4 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 font-bold text-sm">Editar</button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay productos en el inventario.</div>
+        {% endfor %}
+    </div>
+
+    <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[600px]">
             <thead>
                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 uppercase text-xs tracking-wider border-b dark:border-gray-600">
@@ -59,7 +134,7 @@
                         {% endif %}
                     </td>
                     <td class="p-4 text-center">
-                        <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">Editar</button>
+                        <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="text-purple-600 dark:text-purple-400 hover:underline font-bold text-sm">Editar</button>
                     </td>
                 </tr>
                 {% empty %}
@@ -73,4 +148,172 @@
 
     {% include "base/pagination.html" %}
 </div>
+
+<div id="modal-escaner-filtro-inventario" class="hidden fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl w-full max-w-sm shadow-2xl relative">
+        <button type="button" onclick="cerrarEscanerFiltroInventario()" class="absolute -top-4 -right-4 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition z-10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        <div class="text-center mb-3 mt-2">
+            <h3 class="font-black text-gray-800 dark:text-white text-lg">Buscar por código</h3>
+            <p id="estado-escaner-filtro-inventario" class="text-xs text-gray-500">Centra el código de barras para filtrar la tabla.</p>
+        </div>
+        <div class="relative w-full rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+            <video id="video-escaner-filtro-inventario" class="hidden w-full h-full object-cover" playsinline muted></video>
+            <div id="lector-escaner-filtro-inventario" class="hidden w-full h-full"></div>
+            <div class="pointer-events-none absolute inset-x-8 top-1/2 -translate-y-1/2 h-24 border-2 border-purple-400 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let streamFiltroInventario = null;
+    let detectorFiltroInventario = null;
+    let rafFiltroInventario = null;
+    let html5FiltroInventario = null;
+    const formatosFiltroInventario = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar'];
+
+    function abrirEscanerFiltroInventario() {
+        const modal = document.getElementById('modal-escaner-filtro-inventario');
+        modal.classList.remove('hidden');
+        actualizarEstadoEscanerFiltroInventario('Iniciando cámara...');
+
+        if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            iniciarEscanerNativoFiltroInventario().catch(function(err) {
+                console.warn('No se pudo usar BarcodeDetector para inventario:', err);
+                iniciarEscanerFallbackFiltroInventario().catch(function(errorFallback) {
+                    console.error('No se pudo iniciar escáner:', errorFallback);
+                    alert('No se pudo encender la cámara. Revisa permisos o usa https://.');
+                    cerrarEscanerFiltroInventario();
+                });
+            });
+            return;
+        }
+
+        iniciarEscanerFallbackFiltroInventario().catch(function(err) {
+            console.error('No se pudo iniciar escáner:', err);
+            alert('No se pudo encender la cámara. Revisa permisos o usa https://.');
+            cerrarEscanerFiltroInventario();
+        });
+    }
+
+    async function iniciarEscanerNativoFiltroInventario() {
+        const formatosSoportados = BarcodeDetector.getSupportedFormats ? await BarcodeDetector.getSupportedFormats() : formatosFiltroInventario;
+        const formatos = formatosFiltroInventario.filter(function(formato) { return formatosSoportados.includes(formato); });
+        if (!formatos.length) throw new Error('Sin formatos nativos soportados.');
+
+        detectorFiltroInventario = new BarcodeDetector({ formats: formatos });
+        streamFiltroInventario = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+
+        const video = document.getElementById('video-escaner-filtro-inventario');
+        const fallback = document.getElementById('lector-escaner-filtro-inventario');
+        fallback.classList.add('hidden');
+        video.classList.remove('hidden');
+        video.srcObject = streamFiltroInventario;
+        await video.play();
+        actualizarEstadoEscanerFiltroInventario('Apunta al código para buscar.');
+        escanearNativoFiltroInventario();
+    }
+
+    async function escanearNativoFiltroInventario() {
+        if (!streamFiltroInventario || !detectorFiltroInventario) return;
+        const video = document.getElementById('video-escaner-filtro-inventario');
+
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+            try {
+                const codigos = await detectorFiltroInventario.detect(video);
+                if (codigos.length && codigos[0].rawValue) {
+                    aplicarCodigoFiltroInventario(codigos[0].rawValue);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Error leyendo código:', err);
+            }
+        }
+
+        rafFiltroInventario = requestAnimationFrame(escanearNativoFiltroInventario);
+    }
+
+    function iniciarEscanerFallbackFiltroInventario() {
+        const video = document.getElementById('video-escaner-filtro-inventario');
+        const fallback = document.getElementById('lector-escaner-filtro-inventario');
+        video.classList.add('hidden');
+        fallback.classList.remove('hidden');
+        actualizarEstadoEscanerFiltroInventario('Usando lector de respaldo...');
+
+        return cargarHtml5QrcodeFiltroInventario().then(function() {
+            html5FiltroInventario = new Html5Qrcode('lector-escaner-filtro-inventario');
+            return html5FiltroInventario.start(
+                { facingMode: 'environment' },
+                { fps: 15, qrbox: function(w, h) { return { width: Math.min(w * 0.9, 340), height: Math.min(h * 0.55, 180) }; }, disableFlip: true },
+                aplicarCodigoFiltroInventario,
+                function() {}
+            );
+        });
+    }
+
+    function cargarHtml5QrcodeFiltroInventario() {
+        return new Promise(function(resolve, reject) {
+            if (window.Html5Qrcode) {
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/html5-qrcode';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    function aplicarCodigoFiltroInventario(codigo) {
+        const input = document.getElementById('filtro-inventario-q');
+        const form = document.getElementById('filtros-inventario-form');
+        cerrarEscanerFiltroInventario();
+        if (input) input.value = (codigo || '').trim();
+        if (form) form.submit();
+    }
+
+    function cerrarEscanerFiltroInventario() {
+        const modal = document.getElementById('modal-escaner-filtro-inventario');
+        if (modal) modal.classList.add('hidden');
+
+        if (rafFiltroInventario) {
+            cancelAnimationFrame(rafFiltroInventario);
+            rafFiltroInventario = null;
+        }
+
+        if (streamFiltroInventario) {
+            streamFiltroInventario.getTracks().forEach(function(track) { track.stop(); });
+            streamFiltroInventario = null;
+        }
+
+        const video = document.getElementById('video-escaner-filtro-inventario');
+        if (video) {
+            video.pause();
+            video.srcObject = null;
+            video.classList.add('hidden');
+        }
+
+        if (html5FiltroInventario) {
+            html5FiltroInventario.stop().then(function() {
+                html5FiltroInventario.clear();
+                html5FiltroInventario = null;
+            }).catch(function() {
+                html5FiltroInventario = null;
+            });
+        }
+
+        detectorFiltroInventario = null;
+    }
+
+    function actualizarEstadoEscanerFiltroInventario(mensaje) {
+        const estado = document.getElementById('estado-escaner-filtro-inventario');
+        if (estado) estado.innerText = mensaje;
+    }
+</script>
 {% endblock %}

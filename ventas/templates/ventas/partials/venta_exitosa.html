@@ -6,7 +6,24 @@
     </div>
 
     <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">¡Venta Exitosa!</h2>
-    <p class="text-gray-600 dark:text-gray-400 mb-6 transition-colors">Ticket #{{ venta.id }} procesado correctamente.</p>
+    <p class="text-gray-600 dark:text-gray-400 mb-4 transition-colors">Ticket #{{ venta.id }} procesado correctamente.</p>
+
+    <div class="w-full mb-6 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-4 text-left">
+        <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+            <span class="font-bold">Método</span>
+            <span class="font-black text-gray-800 dark:text-white">{{ venta.get_metodo_pago_display }}</span>
+        </div>
+        <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
+            <span class="font-bold">Total</span>
+            <span class="font-black text-green-600 dark:text-green-400">${{ venta.total }}</span>
+        </div>
+        {% if venta.cambio > 0 %}
+        <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
+            <span class="font-bold">Cambio</span>
+            <span class="font-black text-blue-600 dark:text-blue-400">${{ venta.cambio }}</span>
+        </div>
+        {% endif %}
+    </div>
 
     <div class="w-full space-y-3">
         <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="w-full flex justify-center items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md">

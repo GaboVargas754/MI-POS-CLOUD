@@ -3,52 +3,76 @@
 
 {% block title %}Caja Registradora - {{ block.super }}{% endblock %}
 
-{% block body_class %}flex flex-col h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 overflow-hidden transition-colors duration-200{% endblock %}
+{% block body_class %}flex flex-col h-[100dvh] bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 overflow-hidden transition-colors duration-200{% endblock %}
 
 {% block nav %}
-<nav class="bg-gray-200 dark:bg-gray-800 border-b-4 border-green-600 p-4 shadow-md flex-shrink-0 transition-colors duration-200 z-40 relative">
-    <div class="container mx-auto flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <button onclick="toggleDarkMode()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-800 dark:text-yellow-400">
+<nav class="bg-gray-200 dark:bg-gray-800 border-b-4 border-green-600 p-3 sm:p-4 shadow-md flex-shrink-0 transition-colors duration-200 z-40 relative">
+    <div class="container mx-auto flex justify-between items-center gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+            <button onclick="toggleDarkMode()" class="min-h-11 min-w-11 p-2 bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-800 dark:text-yellow-400" aria-label="Cambiar tema">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
             </button>
-            <h1 class="text-lg sm:text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">Caja (POS)</h1>
-        </div>
-
-        <div class="relative">
-            <button onclick="togglePosMenu()" class="p-2 bg-gray-300 dark:bg-gray-700 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600 transition text-gray-700 dark:text-gray-200 flex items-center focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-
-            <div id="pos-mobile-menu" class="hidden absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden origin-top-right transition-all z-50">
-                <div class="py-2">
-                    <a href="{% url 'portal_principal' %}" class="block px-5 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-green-600 transition">
-                        🏠 Ir al Portal
-                    </a>
-                    {% if request.user.is_superuser or request.user|tiene_rol:"Administrador" %}
-                    <a href="{% url 'dashboard' %}" class="block px-5 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 transition">
-                        📊 Ver Métricas
-                    </a>
-                    {% endif %}
-                    <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                    <a href="{% url 'cerrar_caja' %}" class="block px-5 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-                        🔒 Cerrar Turno
-                    </a>
-                </div>
+            <div class="min-w-0">
+                <h1 class="text-lg sm:text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider leading-tight">POS</h1>
+                <p class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-green-600 dark:text-green-400">Turno abierto</p>
             </div>
         </div>
+
+        <div class="hidden md:flex items-center gap-2">
+            <a href="{% url 'portal_principal' %}" class="pos-nav-link inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-700 hover:text-green-600 dark:hover:text-green-400 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                Inicio
+            </a>
+            <a href="{% url 'dashboard' %}" class="pos-nav-link inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+                Estadísticas
+            </a>
+            {% if perms.configuraciones.acceder_inventario or request.user.is_superuser %}
+            <a href="{% url 'inventario_dashboard' %}" class="pos-nav-link inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                Inventario
+            </a>
+            {% endif %}
+            {% if perms.configuraciones.acceder_configuraciones or request.user.is_superuser %}
+            <a href="{% url 'config_dashboard' %}" class="pos-nav-link inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Sistema
+            </a>
+            {% endif %}
+            <a href="{% url 'cerrar_caja' %}" class="pos-nav-link inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-black text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Cerrar turno
+            </a>
+        </div>
+
+        <a href="{% url 'cerrar_caja' %}" class="md:hidden inline-flex min-h-11 items-center gap-2 rounded-xl bg-red-50 dark:bg-red-900/20 px-3 text-sm font-black text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition" aria-label="Cerrar turno">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Cerrar
+        </a>
     </div>
 </nav>
 {% endblock %}
 
-{% block main_class %}flex flex-col lg:flex-row flex-grow overflow-hidden relative{% endblock %}
+{% block main_class %}flex flex-col lg:flex-row flex-grow min-h-0 overflow-hidden relative{% endblock %}
 
 {% block content %}
-    <div class="w-full lg:w-2/3 p-4 sm:p-6 flex flex-col h-full bg-gray-50 dark:bg-gray-900 transition-colors z-0 pb-24 lg:pb-6 overflow-hidden">
+    <div class="w-full lg:w-2/3 p-3 sm:p-6 flex flex-col h-full min-h-0 bg-gray-50 dark:bg-gray-900 transition-colors z-0 pb-40 lg:pb-6 overflow-hidden">
 
         <div class="flex gap-2 sm:gap-3 mb-4 w-full flex-shrink-0">
             <div class="relative w-full shadow-sm">
@@ -58,14 +82,14 @@
                     </svg>
                 </div>
                 <input type="text" name="q" id="buscador_pos" placeholder="Buscar o escanear..."
-                       class="w-full p-3 sm:p-4 pl-10 sm:pl-12 text-base sm:text-lg rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none transition-shadow"
+                       class="w-full min-h-14 p-3 sm:p-4 pl-10 sm:pl-12 text-base sm:text-lg rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none transition-shadow"
                        autofocus autocomplete="off"
                        hx-get="{% url 'buscar_productos' %}"
                        hx-trigger="input changed delay:300ms, search"
                        hx-target="#resultados-busqueda">
             </div>
 
-            <button onclick="abrirCamara()" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 text-gray-700 dark:text-gray-200 px-4 sm:px-6 rounded-xl transition-colors shadow-sm flex items-center justify-center focus:ring-2 focus:ring-green-500 outline-none flex-shrink-0">
+            <button onclick="abrirCamara()" class="min-h-14 min-w-14 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 text-gray-700 dark:text-gray-200 px-4 sm:px-6 rounded-xl transition-colors shadow-sm flex items-center justify-center focus:ring-2 focus:ring-green-500 outline-none flex-shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -78,7 +102,13 @@
         </div>
     </div>
 
-    <button onclick="toggleCartMobile()" id="btn-flotante-carrito" class="lg:hidden fixed bottom-4 left-4 right-4 bg-green-500 hover:bg-green-600 text-white p-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(34,197,94,0.5)] flex justify-between items-center font-bold z-30 transition-transform active:scale-95">
+    <div id="toast-carrito" class="lg:hidden fixed bottom-40 left-4 right-4 z-30 pointer-events-none translate-y-4 opacity-0 transition-all duration-200">
+        <div data-toast-text class="mx-auto w-fit rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 text-sm font-black shadow-xl">
+            Producto agregado
+        </div>
+    </div>
+
+    <button onclick="toggleCartMobile()" id="btn-flotante-carrito" class="lg:hidden fixed bottom-20 left-4 right-4 bg-green-500 hover:bg-green-600 text-white p-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(34,197,94,0.5)] flex justify-between items-center font-bold z-30 transition-transform active:scale-95 min-h-16">
         <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -88,7 +118,7 @@
         <span id="mobile-cart-total-value" class="text-2xl font-black">${{ total|default:"0.00" }}</span>
     </button>
 
-    <div id="panel-carrito-container" class="fixed inset-0 top-[72px] bg-white dark:bg-gray-800 z-40 transform translate-y-full transition-transform duration-300 lg:relative lg:top-0 lg:translate-y-0 lg:w-1/3 lg:border-l border-gray-200 dark:border-gray-700 flex flex-col shadow-2xl lg:shadow-none">
+    <div id="panel-carrito-container" class="fixed inset-x-0 bottom-20 top-[68px] bg-white dark:bg-gray-800 z-30 transform translate-y-full transition-transform duration-300 lg:relative lg:inset-auto lg:translate-y-0 lg:w-1/3 lg:border-l border-gray-200 dark:border-gray-700 flex flex-col shadow-2xl lg:shadow-none min-h-0">
 
         <div class="lg:hidden p-4 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-sm">
             <h2 class="font-black text-xl text-gray-800 dark:text-white flex items-center gap-2">
@@ -97,7 +127,7 @@
                 </svg>
                 Orden Actual
             </h2>
-            <button onclick="toggleCartMobile()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white p-2 rounded-full font-bold flex items-center gap-1 transition-colors">
+            <button onclick="toggleCartMobile()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white min-h-11 min-w-11 p-2 rounded-full font-bold flex items-center justify-center gap-1 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -139,18 +169,6 @@
 
 {% block extra_js %}
 <script>
-    function togglePosMenu() {
-        const menu = document.getElementById('pos-mobile-menu');
-        menu.classList.toggle('hidden');
-    }
-    window.addEventListener('click', function(e) {
-        const menu = document.getElementById('pos-mobile-menu');
-        const button = e.target.closest('button[onclick="togglePosMenu()"]');
-        if (!button && menu && !menu.contains(e.target)) {
-            menu.classList.add('hidden');
-        }
-    });
-
     function toggleCartMobile() {
         const panel = document.getElementById('panel-carrito-container');
         const btnFlotante = document.getElementById('btn-flotante-carrito');
@@ -168,12 +186,166 @@
 
     document.body.addEventListener('htmx:afterSwap', function(evt) {
         if(evt.detail.target.id === 'panel-carrito') {
-            const cartTotalEl = document.querySelector('#panel-carrito h3.text-4xl');
-            if(cartTotalEl) {
-                document.getElementById('mobile-cart-total-value').innerText = cartTotalEl.innerText;
+            actualizarTotalCarritoMovil();
+
+            const disparador = evt.detail.elt;
+            const hxPost = disparador ? disparador.getAttribute('hx-post') || '' : '';
+            const resultado = evt.detail.xhr ? evt.detail.xhr.getResponseHeader('X-Carrito-Resultado') : null;
+            if (resultado) {
+                manejarResultadoCarrito(resultado);
+            } else if (hxPost.includes('/agregar/')) {
+                mostrarFeedbackCarrito('Producto agregado');
             }
         }
     });
+
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        const tarjeta = evt.detail.elt ? evt.detail.elt.closest('.producto-resultado') : null;
+        if (tarjeta) {
+            tarjeta.classList.add('producto-agregando');
+        }
+    });
+
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        const tarjeta = evt.detail.elt ? evt.detail.elt.closest('.producto-resultado') : null;
+        if (tarjeta) {
+            const resultado = evt.detail.xhr ? evt.detail.xhr.getResponseHeader('X-Carrito-Resultado') : null;
+            tarjeta.classList.remove('producto-agregando');
+            if (!resultado || resultado === 'agregado') {
+                tarjeta.classList.add('producto-agregado');
+                window.setTimeout(function() {
+                    tarjeta.classList.remove('producto-agregado');
+                }, 450);
+            }
+        }
+    });
+
+    function manejarResultadoCarrito(resultado) {
+        const mensajes = {
+            agregado: 'Producto agregado',
+            stock: 'Stock insuficiente',
+            sin_precio: 'Sin precio asignado',
+            no_encontrado: 'Código no encontrado',
+            sin_turno: 'Abre caja antes de vender'
+        };
+
+        mostrarFeedbackCarrito(mensajes[resultado] || 'No se pudo agregar');
+    }
+
+    function actualizarTotalCarritoMovil() {
+        const cartTotalEl = document.querySelector('#panel-carrito [data-cart-total]');
+        const mobileTotalEl = document.getElementById('mobile-cart-total-value');
+
+        if (cartTotalEl && mobileTotalEl) {
+            mobileTotalEl.innerText = cartTotalEl.innerText;
+        }
+    }
+
+    function mostrarFeedbackCarrito(mensaje) {
+        const boton = document.getElementById('btn-flotante-carrito');
+        const toast = document.getElementById('toast-carrito');
+        const textoToast = toast ? toast.querySelector('[data-toast-text]') : null;
+
+        if (boton) {
+            boton.classList.remove('cart-pulse');
+            void boton.offsetWidth;
+            boton.classList.add('cart-pulse');
+        }
+
+        if (toast) {
+            if (textoToast && mensaje) {
+                textoToast.innerText = mensaje;
+            }
+            toast.classList.add('toast-visible');
+            window.clearTimeout(window.toastCarritoTimer);
+            window.toastCarritoTimer = window.setTimeout(function() {
+                toast.classList.remove('toast-visible');
+            }, 1200);
+        }
+    }
+
+    async function agregarCodigoEscaneado(codigoBarras) {
+        const codigo = (codigoBarras || '').trim();
+        if (!codigo) return;
+
+        try {
+            const response = await fetch('{% url "agregar_por_codigo" %}', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    'X-CSRFToken': obtenerCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({ codigo_barras: codigo })
+            });
+
+            if (!response.ok) {
+                throw new Error('Respuesta inválida al agregar código escaneado.');
+            }
+
+            const html = await response.text();
+            const resultado = response.headers.get('X-Carrito-Resultado');
+
+            actualizarPanelCarrito(html);
+            actualizarTotalCarritoMovil();
+
+            manejarResultadoCarrito(resultado);
+
+            if (resultado !== 'agregado') {
+                buscarCodigoEscaneado(codigo);
+            }
+        } catch (err) {
+            console.error('No se pudo agregar el código escaneado:', err);
+            mostrarFeedbackCarrito('Buscando código escaneado');
+            buscarCodigoEscaneado(codigo);
+        }
+    }
+
+    function actualizarPanelCarrito(html) {
+        const panelCarrito = document.getElementById('panel-carrito');
+        if (!panelCarrito) return;
+
+        panelCarrito.innerHTML = html;
+        panelCarrito.querySelectorAll('script').forEach(function(scriptOriginal) {
+            const scriptNuevo = document.createElement('script');
+            Array.from(scriptOriginal.attributes).forEach(function(attr) {
+                scriptNuevo.setAttribute(attr.name, attr.value);
+            });
+            scriptNuevo.textContent = scriptOriginal.textContent;
+            scriptOriginal.replaceWith(scriptNuevo);
+        });
+
+        if (window.htmx) {
+            htmx.process(panelCarrito);
+        }
+    }
+
+    function buscarCodigoEscaneado(codigo) {
+        const inputBuscador = document.getElementById('buscador_pos');
+        if (!inputBuscador) return;
+
+        inputBuscador.value = codigo;
+        inputBuscador.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function obtenerCsrfToken() {
+        const headers = document.body ? document.body.getAttribute('hx-headers') : '';
+        if (headers) {
+            try {
+                const parsedHeaders = JSON.parse(headers);
+                if (parsedHeaders['X-CSRFToken']) return parsedHeaders['X-CSRFToken'];
+            } catch (err) {}
+        }
+
+        const match = document.cookie.match(/(^|;\s*)csrftoken=([^;]+)/);
+        return match ? decodeURIComponent(match[2]) : '';
+    }
+
+    function reproducirBeepEscaner() {
+        const audio = new Audio('https://actions.google.com/sounds/v1/ui/beep_short.ogg');
+        audio.play().catch(function() {});
+    }
 
     let html5QrcodeScanner = null;
     let streamBarrasPos = null;
@@ -395,13 +567,8 @@
 
     function onScanSuccess(decodedText, decodedResult) {
         cerrarCamara();
-
-        const inputBuscador = document.getElementById('buscador_pos');
-        inputBuscador.value = decodedText;
-        inputBuscador.dispatchEvent(new Event('input', { bubbles: true }));
-
-        const audio = new Audio('https://actions.google.com/sounds/v1/ui/beep_short.ogg');
-        audio.play().catch(e => {});
+        reproducirBeepEscaner();
+        agregarCodigoEscaneado(decodedText);
     }
 
     function onScanFailure(error) {
@@ -563,6 +730,17 @@
 </script>
 
 <style>
+    @keyframes cartPulse {
+        0% { transform: scale(1); box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.5); }
+        45% { transform: scale(1.04); box-shadow: 0 18px 35px -8px rgba(34, 197, 94, 0.9); }
+        100% { transform: scale(1); box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.5); }
+    }
+
+    .cart-pulse { animation: cartPulse 450ms ease; }
+    #toast-carrito.toast-visible { opacity: 1; transform: translateY(0); }
+    .producto-resultado.producto-agregando { opacity: 0.68; transform: scale(0.985); }
+    .producto-resultado.producto-agregado { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25); }
+
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }

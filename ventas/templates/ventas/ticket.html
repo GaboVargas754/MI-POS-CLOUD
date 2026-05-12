@@ -46,6 +46,20 @@
             Fecha: {{ venta.fecha|date:"d/m/Y H:i" }} <br>
             Cajero: {{ venta.cajero.username|default:"Admin" }}
         </p>
+        {% if venta.estado == 'CANCELADA' %}
+        <div class="border-bottom" style="margin: 8px 0; padding: 8px 0;">
+            <p class="bold" style="font-size: 18px; margin: 0;">TICKET CANCELADO</p>
+            {% if venta.fecha_cancelacion %}
+                <p style="margin: 4px 0 0;">Cancelado: {{ venta.fecha_cancelacion|date:"d/m/Y H:i" }}</p>
+            {% endif %}
+            {% if venta.cancelado_por %}
+                <p style="margin: 4px 0 0;">Por: {{ venta.cancelado_por.username }}</p>
+            {% endif %}
+            {% if venta.motivo_cancelacion %}
+                <p style="margin: 4px 0 0;">Motivo: {{ venta.motivo_cancelacion }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <table>

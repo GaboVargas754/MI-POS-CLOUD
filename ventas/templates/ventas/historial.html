@@ -1,0 +1,185 @@
+{% extends "base/base.html" %}
+
+{% block title %}Histórico de Ventas - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div class="flex items-center gap-4">
+        <a href="{% url 'dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Histórico de Ventas</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Consulta tickets, métodos de pago y reimpresiones.</p>
+        </div>
+    </div>
+</div>
+
+<form method="GET" class="mb-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-3 sm:p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-3 items-end">
+        <div>
+            <label for="historial-q" class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Buscar</label>
+            <input id="historial-q" type="search" name="q" value="{{ query }}" placeholder="Ticket, producto o cajero"
+                   class="w-full min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Desde</label>
+            <input type="date" name="desde" value="{{ fecha_desde }}"
+                   class="w-full xl:w-40 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Hasta</label>
+            <input type="date" name="hasta" value="{{ fecha_hasta }}"
+                   class="w-full xl:w-40 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Método</label>
+            <select name="metodo_pago" class="w-full xl:w-40 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="">Todos</option>
+                {% for valor, etiqueta in metodos_pago %}
+                    <option value="{{ valor }}" {% if metodo_pago == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Estado</label>
+            <select name="estado" class="w-full xl:w-36 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="">Todos</option>
+                {% for valor, etiqueta in estados_venta %}
+                    <option value="{{ valor }}" {% if estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Mostrar</label>
+            <select name="per_page" class="w-full xl:w-28 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit" class="min-h-12 flex-1 xl:flex-none rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black px-5 transition">Filtrar</button>
+            <a href="{% url 'historial_ventas' %}" class="min-h-12 flex-1 xl:flex-none rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-black px-4 transition flex items-center justify-center">Limpiar</a>
+        </div>
+    </div>
+</form>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-green-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Total del rango</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">${{ total_vendido|floatformat:2 }}</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-blue-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Tickets</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">{{ total_tickets }}</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-purple-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Ticket promedio</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">${{ ticket_promedio|floatformat:2 }}</p>
+    </div>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        {% for venta in page_obj %}
+        <div class="p-4 space-y-3">
+            <div class="flex justify-between items-start gap-3">
+                <div>
+                    <h3 class="font-black text-gray-900 dark:text-white">Ticket #{{ venta.id }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.cajero.username|default:"Sin cajero" }}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <span class="rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 text-xs font-black">{{ venta.get_metodo_pago_display }}</span>
+                    {% if venta.estado == 'CANCELADA' %}
+                        <span class="rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-3 py-1 text-xs font-black">Cancelada</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end gap-3">
+                <div class="min-w-0">
+                    <p class="text-xs uppercase font-black text-gray-400 tracking-wider">Productos</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {% for detalle in venta.detalles.all %}{{ detalle.cantidad }}x {{ detalle.producto.nombre }}{% if not forloop.last %}, {% endif %}{% empty %}Sin detalle{% endfor %}
+                    </p>
+                </div>
+                <p class="text-2xl font-black {% if venta.estado == 'CANCELADA' %}text-red-500 line-through{% else %}text-green-600 dark:text-green-400{% endif %}">${{ venta.total }}</p>
+            </div>
+
+            {% if venta.estado == 'CANCELADA' and venta.motivo_cancelacion %}
+                <p class="rounded-xl bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300"><span class="font-black">Motivo:</span> {{ venta.motivo_cancelacion }}</p>
+            {% endif %}
+
+            <div class="grid grid-cols-1 gap-2">
+                <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="min-h-11 w-full rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-black flex items-center justify-center">Reimprimir ticket</a>
+                {% if venta.estado == 'ACTIVA' %}
+                    <a href="{% url 'cancelar_venta' venta.id %}" class="min-h-11 w-full rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-black flex items-center justify-center">Cancelar ticket</a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay ventas con esos filtros.</div>
+        {% endfor %}
+    </div>
+
+    <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[760px]">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Ticket</th>
+                    <th class="p-4">Fecha</th>
+                    <th class="p-4">Cajero</th>
+                    <th class="p-4">Método</th>
+                    <th class="p-4">Productos</th>
+                    <th class="p-4 text-right">Total</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for venta in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4">
+                        <div class="font-black text-gray-900 dark:text-white">#{{ venta.id }}</div>
+                        {% if venta.estado == 'CANCELADA' %}
+                            <span class="text-xs font-black text-red-600 dark:text-red-400">Cancelada</span>
+                        {% else %}
+                            <span class="text-xs font-black text-green-600 dark:text-green-400">Activa</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                    <td class="p-4 font-bold">{{ venta.cajero.username|default:"Sin cajero" }}</td>
+                    <td class="p-4">
+                        <span class="rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 text-xs font-black">{{ venta.get_metodo_pago_display }}</span>
+                    </td>
+                    <td class="p-4 max-w-xs text-sm text-gray-600 dark:text-gray-400">
+                        {% for detalle in venta.detalles.all %}{{ detalle.cantidad }}x {{ detalle.producto.nombre }}{% if not forloop.last %}, {% endif %}{% empty %}Sin detalle{% endfor %}
+                    </td>
+                    <td class="p-4 text-right font-black {% if venta.estado == 'CANCELADA' %}text-red-500 line-through{% else %}text-green-600 dark:text-green-400{% endif %}">${{ venta.total }}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex flex-col gap-2 items-center">
+                            <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">Reimprimir</a>
+                            {% if venta.estado == 'ACTIVA' %}
+                                <a href="{% url 'cancelar_venta' venta.id %}" class="text-red-600 dark:text-red-400 hover:underline font-bold text-sm">Cancelar</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay ventas con esos filtros.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "base/pagination.html" %}
+</div>
+{% endblock %}

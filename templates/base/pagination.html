@@ -7,7 +7,7 @@
 
     <div class="flex items-center gap-2">
         {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Anterior</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% else %}&per_page={{ per_page }}{% endif %}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Anterior</a>
         {% else %}
             <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Anterior</span>
         {% endif %}
@@ -17,7 +17,7 @@
         </span>
 
         {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Siguiente</a>
+            <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% else %}&per_page={{ per_page }}{% endif %}" class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition shadow-sm text-sm font-bold">Siguiente</a>
         {% else %}
             <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-md shadow-sm text-sm font-bold cursor-not-allowed">Siguiente</span>
         {% endif %}

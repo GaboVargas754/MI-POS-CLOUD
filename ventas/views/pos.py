@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
 from inventario.models import Producto
@@ -11,6 +12,7 @@ from ventas.views.carrito import VENTAS_PERMISSION, calcular_total_carrito
 def pantalla_pos(request):
     sesion_abierta = SesionCaja.objects.filter(cajero=request.user, estado=True).first()
     if not sesion_abierta:
+        messages.warning(request, 'Abre caja antes de entrar al POS.')
         return redirect('abrir_caja')
 
     productos = Producto.objects.select_related('precios').filter(stock__gt=0, precios__isnull=False)

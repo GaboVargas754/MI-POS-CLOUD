@@ -1,49 +1,77 @@
 {% extends "base/base.html" %}
 
-{% block title %}Panel de Ventas - {{ block.super }}{% endblock %}
+{% block title %}Estadísticas - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="text-center mb-10">
-    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-2">Operaciones de Ventas</h2>
-    <p class="text-gray-500 dark:text-gray-400 text-lg">Resumen del día: {{ hoy|date:"d M, Y" }}</p>
+<div class="text-center mb-8 sm:mb-10">
+    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-2">Estadísticas de Ventas</h2>
+    <p class="text-gray-500 dark:text-gray-400 text-base sm:text-lg">Resumen del día: {{ hoy|date:"d M, Y" }}</p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-8 border-green-500 transition-all hover:shadow-md">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+    <div class="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 border-green-500 transition-all hover:shadow-md">
         <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Ventas Totales</p>
-        <p class="text-4xl font-black text-gray-900 dark:text-white">${{ total_ventas }}</p>
+        <p class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">${{ total_ventas }}</p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-8 border-blue-500 transition-all hover:shadow-md">
+    <div class="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 border-blue-500 transition-all hover:shadow-md">
         <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Tickets Emitidos</p>
-        <p class="text-4xl font-black text-gray-900 dark:text-white">{{ num_tickets }}</p>
+        <p class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">{{ num_tickets }}</p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-8 border-purple-500 transition-all hover:shadow-md">
+    <div class="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 border-purple-500 transition-all hover:shadow-md">
         <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Ticket Promedio</p>
-        <p class="text-4xl font-black text-gray-900 dark:text-white">${{ ticket_promedio|floatformat:2 }}</p>
+        <p class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">${{ ticket_promedio|floatformat:2 }}</p>
     </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-    <a href="{% url 'pantalla_pos' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-green-500 dark:hover:border-green-500 transition-all duration-300 transform hover:-translate-y-1">
-        <div class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-8 mb-8 sm:mb-12">
+    <a href="{% url 'pantalla_pos' %}" class="group bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-green-500 dark:hover:border-green-500 transition-all duration-300 transform hover:-translate-y-1 flex items-center md:block gap-4">
+        <div class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 w-16 h-16 rounded-full flex items-center justify-center md:mb-6 group-hover:scale-110 transition-transform flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
         </div>
-        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Caja Registradora (POS)</h3>
-        <p class="text-gray-500 dark:text-gray-400">Inicia una nueva venta, escanea productos y cobra a tus clientes.</p>
+        <div class="min-w-0">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-1 md:mb-2">Caja Registradora</h3>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">Escanea productos y cobra ventas.</p>
+        </div>
     </a>
 
-    <a href="{% url 'cerrar_caja' %}" class="group block bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 transform hover:-translate-y-1">
-        <div class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 w-16 h-16 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+    <a href="{% url 'historial_ventas' %}" class="group bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 flex items-center md:block gap-4">
+        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-16 h-16 rounded-full flex items-center justify-center md:mb-6 group-hover:scale-110 transition-transform flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </div>
+        <div class="min-w-0">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-1 md:mb-2">Histórico</h3>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">Consulta ventas, filtros y tickets.</p>
+        </div>
+    </a>
+
+    <a href="{% url 'historial_turnos' %}" class="group bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1 flex items-center md:block gap-4">
+        <div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-16 h-16 rounded-full flex items-center justify-center md:mb-6 group-hover:scale-110 transition-transform flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <div class="min-w-0">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-1 md:mb-2">Turnos</h3>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">Aperturas, cierres y cortes.</p>
+        </div>
+    </a>
+
+    <a href="{% url 'cerrar_caja' %}" class="group bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-3xl shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 transform hover:-translate-y-1 flex items-center md:block gap-4">
+        <div class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 w-16 h-16 rounded-full flex items-center justify-center md:mb-6 group-hover:scale-110 transition-transform flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
         </div>
-        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Cierre de Turno</h3>
-        <p class="text-gray-500 dark:text-gray-400">Finaliza el día, cuenta el efectivo y genera el reporte de arqueo de caja.</p>
+        <div class="min-w-0">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-1 md:mb-2">Cierre de Turno</h3>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">Cuenta efectivo y cierra caja.</p>
+        </div>
     </a>
 </div>
 

@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#111827">
     <title>{% block title %}Sistema POS{% endblock %}</title>
+    <link rel="manifest" href="{% url 'pwa_manifest' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.11"></script>
     <script>
@@ -25,22 +27,36 @@
     </script>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-200 h-screen flex flex-col{% endblock %}" {% block body_extra %}{% endblock %} hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="{% block body_class %}bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-200 min-h-[100dvh] flex flex-col{% endblock %}" {% block body_extra %}{% endblock %} hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
     {% block nav %}
     {% include "base/nav.html" %}
     {% endblock %}
 
+    {% if messages %}
+    <div class="container mx-auto px-4 pt-4 max-w-5xl space-y-2">
+        {% for message in messages %}
+        <div class="rounded-2xl border px-4 py-3 text-sm font-bold shadow-sm {% if 'error' in message.tags %}border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-900/30 dark:text-red-300{% elif 'success' in message.tags %}border-green-200 bg-green-50 text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300{% else %}border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-900/30 dark:text-yellow-300{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% block main_container %}
-    <main class="{% block main_class %}container mx-auto p-4 sm:p-8 flex-grow flex flex-col justify-center max-w-5xl{% endblock %}">
+    <main class="{% block main_class %}container mx-auto p-4 pb-24 sm:p-8 flex-grow flex flex-col justify-center max-w-5xl{% endblock %}">
         {% block content %}
         {% endblock %}
     </main>
     {% endblock %}
 
+    {% block bottom_nav %}
+    {% include "base/bottom_nav.html" %}
+    {% endblock %}
+
     <!-- Modal Global -->
-    <div id="modal-container" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div id="modal-content" class="w-full max-w-2xl transform transition-all"></div>
+    <div id="modal-container" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+        <div id="modal-content" class="w-full sm:max-w-2xl max-h-[100dvh] sm:max-h-[90dvh] overflow-y-auto transform transition-all"></div>
     </div>
 
     <script>
@@ -72,6 +88,14 @@
 
         // También cerrar modal si la respuesta de HTMX indica éxito en un formulario (opcional)
         // O si se redirige la página completa.
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('{% url "service_worker" %}').catch((error) => {
+                    console.warn('No se pudo registrar el service worker:', error);
+                });
+            });
+        }
     </script>
 
     {% block extra_body %}{% endblock %}

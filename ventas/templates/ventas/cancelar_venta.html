@@ -1,0 +1,81 @@
+{% extends "base/base.html" %}
+
+{% block title %}Cancelar Ticket #{{ venta.id }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-3xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div class="bg-gradient-to-br from-red-500 to-rose-600 p-6 sm:p-8 text-white">
+            <div class="flex items-center gap-4">
+                <div class="bg-white/20 p-4 rounded-2xl shadow-lg flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 sm:h-12 sm:w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.667 1.73-3L13.73 4c-.77-1.333-2.69-1.333-3.46 0L3.34 16c-.77 1.333.19 3 1.73 3z" />
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-xs font-black uppercase tracking-[0.25em] text-red-100">Acción irreversible</p>
+                    <h1 class="text-3xl sm:text-4xl font-black">Cancelar Ticket #{{ venta.id }}</h1>
+                    <p class="text-red-50 text-sm sm:text-base mt-1">Se reintegrará el stock de todos los productos vendidos.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-5 sm:p-8 space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="rounded-2xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-700">
+                    <p class="text-[10px] uppercase font-black text-gray-500 dark:text-gray-400 tracking-wider">Fecha</p>
+                    <p class="font-black text-gray-900 dark:text-white">{{ venta.fecha|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="rounded-2xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-700">
+                    <p class="text-[10px] uppercase font-black text-gray-500 dark:text-gray-400 tracking-wider">Método</p>
+                    <p class="font-black text-gray-900 dark:text-white">{{ venta.get_metodo_pago_display }}</p>
+                </div>
+                <div class="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-900/40">
+                    <p class="text-[10px] uppercase font-black text-red-500 tracking-wider">Total a cancelar</p>
+                    <p class="font-black text-red-700 dark:text-red-300 text-2xl">${{ venta.total }}</p>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">Productos a reintegrar</div>
+                <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for detalle in detalles %}
+                    <div class="p-4 flex justify-between gap-3">
+                        <div>
+                            <p class="font-bold text-gray-900 dark:text-white">{{ detalle.producto.nombre }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ detalle.cantidad }} x ${{ detalle.precio_unitario }}</p>
+                        </div>
+                        <p class="font-black text-green-600 dark:text-green-400">+{{ detalle.cantidad }} stock</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 rounded-r">
+                <p class="font-bold text-sm">No se pudo cancelar</p>
+                <p class="text-sm">{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'cancelar_venta' venta.id %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="motivo_cancelacion" class="block text-sm font-black uppercase tracking-wider text-gray-600 dark:text-gray-300 mb-2">Motivo de cancelación</label>
+                    <textarea id="motivo_cancelacion" name="motivo_cancelacion" required rows="3" placeholder="Ej. Error de cobro, ticket duplicado, cliente canceló..."
+                              class="w-full rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"></textarea>
+                </div>
+
+                <div class="flex gap-3">
+                    <a href="{% url 'historial_ventas' %}" class="w-1/3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-4 rounded-2xl text-center transition-colors min-h-14">
+                        Volver
+                    </a>
+                    <button type="submit" class="w-2/3 bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl transition-colors shadow-lg shadow-red-500/20 min-h-14">
+                        Cancelar y Reintegrar Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
