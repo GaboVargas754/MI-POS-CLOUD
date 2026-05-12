@@ -5,8 +5,10 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.db.models import Sum
+from django.db.models import Q
 from django.views.decorators.http import require_http_methods
 from core.utils import get_config_context
+from configuraciones.utils import get_punto_venta_actual, get_tienda_actual
 from ventas.models import SesionCaja, Venta
 from ventas.views.carrito import VENTAS_PERMISSION
 
@@ -21,7 +23,9 @@ def _contexto_pos(**extra_context):
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def abrir_caja(request):
-    if SesionCaja.objects.filter(cajero=request.user, estado=True).exists():
+    tienda_actual = get_tienda_actual(request)
+    filtro_tienda = Q(tienda=tienda_actual) | Q(tienda__isnull=True)
+    if SesionCaja.objects.filter(filtro_tienda, cajero=request.user, estado=True).exists():
         messages.info(request, 'Ya tienes un turno abierto. Continúa desde el POS.')
         return redirect('pantalla_pos')
 
@@ -33,6 +37,8 @@ def abrir_caja(request):
 
         SesionCaja.objects.create(
             cajero=request.user,
+            tienda=tienda_actual,
+            punto_venta=get_punto_venta_actual(request),
             fondo_inicial=fondo,
             estado=True
         )
@@ -45,12 +51,14 @@ def abrir_caja(request):
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def cerrar_caja(request):
-    sesion = SesionCaja.objects.filter(cajero=request.user, estado=True).first()
+    tienda_actual = get_tienda_actual(request)
+    filtro_tienda = Q(tienda=tienda_actual) | Q(tienda__isnull=True)
+    sesion = SesionCaja.objects.filter(filtro_tienda, cajero=request.user, estado=True).first()
     if not sesion:
         messages.warning(request, 'No hay un turno abierto. Abre caja antes de continuar.')
         return redirect('abrir_caja')
 
-    ventas_efectivo = Venta.objects.filter(sesion=sesion, metodo_pago='EFE', estado='ACTIVA').aggregate(Sum('total'))['total__sum'] or Decimal('0.00')
+    ventas_efectivo = Venta.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), sesion=sesion, metodo_pago='EFE', estado='ACTIVA').aggregate(Sum('total'))['total__sum'] or Decimal('0.00')
     esperado_en_caja = sesion.fondo_inicial + ventas_efectivo
 
     if request.method == 'POST':

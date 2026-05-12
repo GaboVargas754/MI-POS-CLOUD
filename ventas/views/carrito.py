@@ -1,8 +1,10 @@
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
+from configuraciones.utils import get_tienda_actual
 from inventario.models import Producto
 from ventas.models import SesionCaja
 
@@ -43,7 +45,8 @@ def _render_carrito_con_resultado(request, carrito, resultado, **extra_context):
 
 
 def _respuesta_si_no_hay_turno(request, carrito):
-    if SesionCaja.objects.filter(cajero=request.user, estado=True).exists():
+    tienda_actual = get_tienda_actual(request)
+    if SesionCaja.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), cajero=request.user, estado=True).exists():
         return None
 
     return _render_carrito_con_resultado(
@@ -57,6 +60,9 @@ def _respuesta_si_no_hay_turno(request, carrito):
 def _agregar_producto_a_carrito(carrito, producto):
     producto_id_str = str(producto.id)
     cantidad_actual = carrito.get(producto_id_str, {}).get('cantidad', 0)
+
+    if not producto.activo:
+        return 'inactivo', f"{producto.nombre} está inactivo y no puede venderse."
 
     if producto.stock <= 0 or cantidad_actual >= producto.stock:
         return 'stock', f"Stock insuficiente para {producto.nombre}. Disponible: {producto.stock}"
@@ -88,6 +94,7 @@ def agregar_al_carrito(request, producto_id):
     producto = get_object_or_404(
         Producto.objects.select_related('precios'),
         id=producto_id,
+        activo=True,
     )
     resultado, error = _agregar_producto_a_carrito(carrito, producto)
 
@@ -112,7 +119,7 @@ def agregar_por_codigo(request):
     if respuesta_sin_turno is not None:
         return respuesta_sin_turno
 
-    producto = Producto.objects.select_related('precios').filter(codigo_barras=codigo_barras).first()
+    producto = Producto.objects.select_related('precios').filter(codigo_barras=codigo_barras, activo=True).first()
     if not producto:
         return _render_carrito_con_resultado(request, carrito, 'no_encontrado')
 

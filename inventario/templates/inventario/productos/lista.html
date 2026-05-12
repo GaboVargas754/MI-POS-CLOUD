@@ -13,21 +13,25 @@
         <h2 class="text-2xl sm:text-3xl font-bold">Catálogo de Productos</h2>
     </div>
 
-    <div class="w-full sm:w-auto">
-        <button hx-get="{% url 'nuevo_producto' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+    <div class="w-full sm:w-auto grid grid-cols-2 sm:flex gap-2">
+        <a href="{% url 'entrada_rapida' %}" class="text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">Entrada</a>
+        <a href="{% url 'importar_productos_csv' %}" class="text-center bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors">Importar</a>
+        <a href="{% url 'exportar_productos_csv' %}{% if querystring %}?{{ querystring }}{% endif %}" class="text-center bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors">Exportar</a>
+        <a href="{% url 'imprimir_etiquetas' %}{% if querystring %}?{{ querystring }}{% endif %}" target="_blank" class="text-center bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors">Etiquetas</a>
+        <button hx-get="{% url 'nuevo_producto' %}" hx-target="#modal-content" class="col-span-2 sm:col-span-1 text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
             + Nuevo
         </button>
     </div>
 </div>
 
 <form id="filtros-inventario-form" method="GET" class="mb-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-3 sm:p-4">
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto_auto_auto] gap-3 items-end">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto_auto_auto_auto] gap-3 items-end">
         <div>
             <label for="filtro-inventario-q" class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Buscar producto</label>
             <div class="flex gap-2">
                 <input id="filtro-inventario-q" type="search" name="q" value="{{ query }}" placeholder="Nombre, código o categoría"
                        class="w-full min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none">
-                <button type="button" onclick="abrirEscanerFiltroInventario()" class="min-h-12 min-w-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition flex items-center justify-center" title="Escanear código">
+                <button type="button" onclick="abrirEscanerFiltroInventario()" class="min-h-12 min-w-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition flex items-center justify-center" title="Escanear y abrir producto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -53,6 +57,16 @@
                 <option value="con_stock" {% if stock == 'con_stock' %}selected{% endif %}>Con stock</option>
                 <option value="bajo" {% if stock == 'bajo' %}selected{% endif %}>Stock bajo</option>
                 <option value="agotado" {% if stock == 'agotado' %}selected{% endif %}>Agotados</option>
+                <option value="sin_precio" {% if stock == 'sin_precio' %}selected{% endif %}>Sin precio</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Estado</label>
+            <select name="estado" class="w-full lg:w-36 min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-3 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-purple-500 outline-none">
+                <option value="activos" {% if estado == 'activos' %}selected{% endif %}>Activos</option>
+                <option value="inactivos" {% if estado == 'inactivos' %}selected{% endif %}>Inactivos</option>
+                <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option>
             </select>
         </div>
 
@@ -80,9 +94,13 @@
                 <div class="min-w-0">
                     <h3 class="font-black text-gray-900 dark:text-white leading-tight">{{ p.nombre }}</h3>
                     <p class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1 break-all">{{ p.codigo_barras }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ p.categoria.nombre|default:"Sin categoría" }} · mínimo {{ p.stock_minimo }}</p>
+                    {% if not p.activo %}
+                        <span class="inline-flex mt-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 text-xs font-black">Inactivo</span>
+                    {% endif %}
                 </div>
                 <div class="flex-shrink-0">
-                    {% if p.stock > 5 %}
+                    {% if p.stock > p.stock_minimo %}
                         <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
                     {% elif p.stock > 0 %}
                         <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
@@ -96,8 +114,19 @@
                 <div>
                     <p class="text-xs uppercase font-black text-gray-400 tracking-wider mb-1">Precio</p>
                     {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                    {% if not p.precios %}
+                        <p class="text-[10px] font-black text-red-500 mt-1">Sin precio</p>
+                    {% endif %}
                 </div>
-                <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="min-h-11 px-4 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 font-bold text-sm">Editar</button>
+                <div class="flex flex-col gap-2 flex-shrink-0">
+                    <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="min-h-10 px-4 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 font-bold text-sm">Editar</button>
+                    <button hx-get="{% url 'ajustar_stock' p.id %}" hx-target="#modal-content" class="min-h-10 px-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 font-bold text-sm">Ajustar</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <a href="{% url 'movimientos_producto' p.id %}" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Movimientos</a>
+                <a href="{% url 'historial_precios_producto' p.id %}" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Precios</a>
+                <a href="{% url 'imprimir_etiquetas' %}?ids={{ p.id }}" target="_blank" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Etiqueta</a>
             </div>
         </div>
         {% empty %}
@@ -106,13 +135,15 @@
     </div>
 
     <div class="hidden md:block overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[600px]">
+        <table class="w-full text-left border-collapse min-w-[820px]">
             <thead>
                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 uppercase text-xs tracking-wider border-b dark:border-gray-600">
                     <th class="p-4">Cód. Barras</th>
                     <th class="p-4">Nombre</th>
+                    <th class="p-4">Categoría</th>
                     <th class="p-4 text-right">Precio</th>
                     <th class="p-4 text-center">Stock</th>
+                    <th class="p-4 text-center">Mínimo</th>
                     <th class="p-4 text-center">Acciones</th>
                 </tr>
             </thead>
@@ -120,12 +151,21 @@
                 {% for p in page_obj %}
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">{{ p.codigo_barras }}</td>
-                    <td class="p-4 font-bold">{{ p.nombre }}</td>
+                    <td class="p-4">
+                        <p class="font-bold">{{ p.nombre }}</p>
+                        {% if not p.activo %}
+                            <p class="text-xs font-black text-gray-500 dark:text-gray-400 mt-1">Inactivo</p>
+                        {% endif %}
+                        {% if not p.precios %}
+                            <p class="text-xs font-black text-red-500 mt-1">Sin precio asignado</p>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ p.categoria.nombre|default:"Sin categoría" }}</td>
                     <td class="p-4 text-right">
                         {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
                     </td>
                     <td class="p-4 text-center">
-                        {% if p.stock > 5 %}
+                        {% if p.stock > p.stock_minimo %}
                             <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
                         {% elif p.stock > 0 %}
                             <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
@@ -133,13 +173,20 @@
                             <span class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 px-3 py-1 rounded-full text-xs font-bold">Agotado</span>
                         {% endif %}
                     </td>
+                    <td class="p-4 text-center text-sm font-bold text-gray-500 dark:text-gray-400">{{ p.stock_minimo }}</td>
                     <td class="p-4 text-center">
-                        <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="text-purple-600 dark:text-purple-400 hover:underline font-bold text-sm">Editar</button>
+                        <div class="flex items-center justify-center gap-3">
+                            <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="text-purple-600 dark:text-purple-400 hover:underline font-bold text-sm">Editar</button>
+                            <button hx-get="{% url 'ajustar_stock' p.id %}" hx-target="#modal-content" class="text-green-600 dark:text-green-400 hover:underline font-bold text-sm">Ajustar</button>
+                            <a href="{% url 'movimientos_producto' p.id %}" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Movimientos</a>
+                            <a href="{% url 'historial_precios_producto' p.id %}" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Precios</a>
+                            <a href="{% url 'imprimir_etiquetas' %}?ids={{ p.id }}" target="_blank" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Etiqueta</a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay productos en el inventario.</td>
+                    <td colspan="7" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay productos en el inventario.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -158,7 +205,7 @@
         </button>
         <div class="text-center mb-3 mt-2">
             <h3 class="font-black text-gray-800 dark:text-white text-lg">Buscar por código</h3>
-            <p id="estado-escaner-filtro-inventario" class="text-xs text-gray-500">Centra el código de barras para filtrar la tabla.</p>
+            <p id="estado-escaner-filtro-inventario" class="text-xs text-gray-500">Centra el código: si existe se editará; si no, se creará uno nuevo.</p>
         </div>
         <div class="relative w-full rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
             <video id="video-escaner-filtro-inventario" class="hidden w-full h-full object-cover" playsinline muted></video>
@@ -271,11 +318,37 @@
     }
 
     function aplicarCodigoFiltroInventario(codigo) {
+        codigo = (codigo || '').trim();
         const input = document.getElementById('filtro-inventario-q');
-        const form = document.getElementById('filtros-inventario-form');
         cerrarEscanerFiltroInventario();
-        if (input) input.value = (codigo || '').trim();
-        if (form) form.submit();
+        if (input) input.value = codigo;
+        if (codigo) abrirProductoPorCodigoInventario(codigo);
+    }
+
+    function abrirProductoPorCodigoInventario(codigo) {
+        const url = "{% url 'resolver_codigo_producto' %}?codigo_barras=" + encodeURIComponent(codigo);
+        const content = document.getElementById('modal-content');
+        const modal = document.getElementById('modal-container');
+
+        if (window.htmx && content) {
+            htmx.ajax('GET', url, { target: '#modal-content', swap: 'innerHTML' });
+            return;
+        }
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(response) {
+                if (!response.ok) throw new Error('No se pudo resolver el producto.');
+                return response.text();
+            })
+            .then(function(html) {
+                if (content) content.innerHTML = html;
+                if (modal) modal.classList.remove('hidden');
+            })
+            .catch(function(error) {
+                console.error(error);
+                const form = document.getElementById('filtros-inventario-form');
+                if (form) form.submit();
+            });
     }
 
     function cerrarEscanerFiltroInventario() {

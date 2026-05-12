@@ -3,12 +3,40 @@
 {% block title %}Módulo de Inventarios{% endblock %}
 
 {% block content %}
-<div class="text-center mb-8 sm:mb-12">
-    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-3 sm:mb-4">Administración de Catálogos</h2>
-    <p class="text-gray-500 dark:text-gray-400 text-base sm:text-lg">Selecciona el módulo que deseas gestionar.</p>
+<div class="mb-8">
+    <p class="text-xs font-black uppercase tracking-[0.25em] text-purple-600 dark:text-purple-400 mb-2">Inventario</p>
+    <h2 class="text-3xl sm:text-4xl font-black text-gray-800 dark:text-white mb-3">Control de productos</h2>
+    <p class="text-gray-500 dark:text-gray-400 text-base sm:text-lg">Productos, precios, stock mínimo y movimientos reales.</p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4 mb-8">
+    <a href="{% url 'lista_inventario' %}" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-purple-500 hover:shadow-lg transition">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Productos</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">{{ total_productos }}</p>
+    </a>
+    <a href="{% url 'lista_inventario' %}?stock=agotado" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-red-500 hover:shadow-lg transition">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Agotados</p>
+        <p class="text-3xl font-black text-red-600 dark:text-red-400">{{ agotados }}</p>
+    </a>
+    <a href="{% url 'lista_inventario' %}?stock=bajo" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-yellow-500 hover:shadow-lg transition">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Stock bajo</p>
+        <p class="text-3xl font-black text-yellow-600 dark:text-yellow-400">{{ bajo_stock }}</p>
+    </a>
+    <a href="{% url 'lista_inventario' %}?stock=sin_precio" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-blue-500 hover:shadow-lg transition">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Sin precio</p>
+        <p class="text-3xl font-black text-blue-600 dark:text-blue-400">{{ sin_precio }}</p>
+    </a>
+    <a href="{% url 'lista_inventario' %}?estado=inactivos" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-gray-500 hover:shadow-lg transition">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Inactivos</p>
+        <p class="text-3xl font-black text-gray-600 dark:text-gray-300">{{ inactivos }}</p>
+    </a>
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border-l-8 border-green-500">
+        <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Valor stock</p>
+        <p class="text-3xl font-black text-green-600 dark:text-green-400">${{ valor_inventario|floatformat:2 }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-8 mb-8">
 
     <a href="{% url 'lista_inventario' %}" class="group bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1 flex items-center md:block gap-4">
         <div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center md:mb-6 group-hover:scale-110 transition-transform flex-shrink-0">
@@ -46,5 +74,81 @@
         </div>
     </a>
 
+    <a href="{% url 'entrada_rapida' %}" class="group bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-green-500 dark:hover:border-green-500 transition-all duration-300 transform hover:-translate-y-1 flex items-center md:block gap-4">
+        <div class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center md:mb-6 group-hover:scale-110 transition-transform flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        </div>
+        <div class="min-w-0">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-1 md:mb-2">Entrada Rápida</h3>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">Recibe mercancía escaneando códigos.</p>
+        </div>
+    </a>
+
+    <a href="{% url 'importar_productos_csv' %}" class="group bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-2xl shadow-sm hover:shadow-xl border border-transparent dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1 flex items-center md:block gap-4">
+        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center md:mb-6 group-hover:scale-110 transition-transform flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+        </div>
+        <div class="min-w-0">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-1 md:mb-2">CSV</h3>
+            <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">Importa o exporta el catálogo.</p>
+        </div>
+    </a>
+
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3">
+            <div>
+                <h3 class="font-black text-gray-900 dark:text-white">Productos que requieren atención</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Agotados, bajo mínimo o sin precio.</p>
+            </div>
+            <a href="{% url 'lista_inventario' %}" class="text-sm font-bold text-purple-600 dark:text-purple-400 hover:underline">Ver todos</a>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            {% for producto in productos_alerta %}
+            <div class="p-4 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="font-black text-gray-900 dark:text-white truncate">{{ producto.nombre }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ producto.categoria.nombre|default:"Sin categoría" }} · mínimo {{ producto.stock_minimo }}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                    {% if producto.stock <= 0 %}
+                        <span class="rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-3 py-1 text-xs font-black">Agotado</span>
+                    {% elif producto.stock <= producto.stock_minimo %}
+                        <span class="rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-3 py-1 text-xs font-black">Stock {{ producto.stock }}</span>
+                    {% endif %}
+                    {% if not producto.precios %}
+                        <span class="rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 text-xs font-black">Sin precio</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">Inventario sin alertas críticas.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="font-black text-gray-900 dark:text-white">Movimientos recientes</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Ventas, cancelaciones, entradas y ajustes.</p>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            {% for movimiento in movimientos_recientes %}
+            <a href="{% url 'movimientos_producto' movimiento.producto.id %}" class="p-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                <div class="min-w-0">
+                    <p class="font-black text-gray-900 dark:text-white truncate">{{ movimiento.producto.nombre }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ movimiento.get_tipo_display }} · {{ movimiento.fecha|date:"d/m/Y H:i" }}</p>
+                </div>
+                <span class="rounded-full px-3 py-1 text-xs font-black flex-shrink-0 {% if movimiento.cantidad > 0 %}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300{% else %}bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300{% endif %}">
+                    {{ movimiento.cantidad|floatformat:0 }}
+                </span>
+            </a>
+            {% empty %}
+            <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">Aún no hay movimientos registrados.</div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 {% endblock %}

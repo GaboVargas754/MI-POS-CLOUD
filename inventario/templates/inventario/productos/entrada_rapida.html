@@ -1,0 +1,182 @@
+{% extends "base/base.html" %}
+
+{% block title %}Entrada Rápida - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-3xl mx-auto">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'lista_inventario' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div>
+            <p class="text-xs font-black uppercase tracking-wider text-green-600 dark:text-green-400">Recepción de mercancía</p>
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Entrada rápida</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Escanea, captura cantidad y registra el movimiento.</p>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 sm:p-8 space-y-6">
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ form.codigo_barras.label }}</label>
+                <div class="flex gap-2">
+                    {{ form.codigo_barras }}
+                    <button type="button" onclick="abrirCamaraEntrada()" class="min-h-12 min-w-12 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50 transition flex items-center justify-center" title="Escanear código">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                </div>
+                {% if form.codigo_barras.errors %}
+                    <p class="text-red-500 text-xs mt-1 font-bold">{{ form.codigo_barras.errors.0 }}</p>
+                    <a href="{% url 'resolver_codigo_producto' %}?codigo_barras={{ form.codigo_barras.value|urlencode }}" hx-get="{% url 'resolver_codigo_producto' %}?codigo_barras={{ form.codigo_barras.value|urlencode }}" hx-target="#modal-content" class="inline-flex mt-2 text-sm font-bold text-purple-600 dark:text-purple-400 hover:underline">Crear producto con este código</a>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ form.cantidad.label }}</label>
+                    {{ form.cantidad }}
+                    {% if form.cantidad.errors %}<p class="text-red-500 text-xs mt-1 font-bold">{{ form.cantidad.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ form.motivo.label }}</label>
+                    {{ form.motivo }}
+                    {% if form.motivo.errors %}<p class="text-red-500 text-xs mt-1 font-bold">{{ form.motivo.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="w-full min-h-14 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-black text-lg shadow-lg shadow-green-500/20 transition">Registrar Entrada</button>
+        </form>
+    </div>
+</div>
+
+<div id="modal-escaner-entrada" class="hidden fixed inset-0 z-[60] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl w-full max-w-sm shadow-2xl relative">
+        <button type="button" onclick="cerrarCamaraEntrada()" class="absolute -top-4 -right-4 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition z-10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        <div class="text-center mb-3 mt-2">
+            <h3 class="font-black text-gray-800 dark:text-white text-lg">Escanear entrada</h3>
+            <p id="estado-escaner-entrada" class="text-xs text-gray-500">Centra el código de barras del producto recibido.</p>
+        </div>
+        <div class="relative w-full rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+            <video id="video-escaner-entrada" class="hidden w-full h-full object-cover" playsinline muted></video>
+            <div id="lector-escaner-entrada" class="hidden w-full h-full"></div>
+            <div class="pointer-events-none absolute inset-x-8 top-1/2 -translate-y-1/2 h-24 border-2 border-green-400 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let streamEntrada = null;
+    let detectorEntrada = null;
+    let rafEntrada = null;
+    let html5Entrada = null;
+    const formatosEntrada = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar'];
+
+    function abrirCamaraEntrada() {
+        document.getElementById('modal-escaner-entrada').classList.remove('hidden');
+        actualizarEstadoEntrada('Iniciando cámara...');
+        if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            iniciarNativoEntrada().catch(function() { iniciarFallbackEntrada().catch(errorCamaraEntrada); });
+            return;
+        }
+        iniciarFallbackEntrada().catch(errorCamaraEntrada);
+    }
+
+    async function iniciarNativoEntrada() {
+        const soportados = BarcodeDetector.getSupportedFormats ? await BarcodeDetector.getSupportedFormats() : formatosEntrada;
+        const formatos = formatosEntrada.filter(function(formato) { return soportados.includes(formato); });
+        if (!formatos.length) throw new Error('Sin formatos soportados.');
+        detectorEntrada = new BarcodeDetector({ formats: formatos });
+        streamEntrada = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+        const video = document.getElementById('video-escaner-entrada');
+        document.getElementById('lector-escaner-entrada').classList.add('hidden');
+        video.classList.remove('hidden');
+        video.srcObject = streamEntrada;
+        await video.play();
+        actualizarEstadoEntrada('Apunta al código para capturarlo.');
+        escanearNativoEntrada();
+    }
+
+    async function escanearNativoEntrada() {
+        if (!streamEntrada || !detectorEntrada) return;
+        const video = document.getElementById('video-escaner-entrada');
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+            const codigos = await detectorEntrada.detect(video);
+            if (codigos.length && codigos[0].rawValue) {
+                aplicarCodigoEntrada(codigos[0].rawValue);
+                return;
+            }
+        }
+        rafEntrada = requestAnimationFrame(escanearNativoEntrada);
+    }
+
+    function iniciarFallbackEntrada() {
+        document.getElementById('video-escaner-entrada').classList.add('hidden');
+        document.getElementById('lector-escaner-entrada').classList.remove('hidden');
+        actualizarEstadoEntrada('Usando lector de respaldo...');
+        return cargarHtml5Entrada().then(function() {
+            html5Entrada = new Html5Qrcode('lector-escaner-entrada');
+            return html5Entrada.start({ facingMode: 'environment' }, { fps: 15, qrbox: function(w, h) { return { width: Math.min(w * 0.9, 340), height: Math.min(h * 0.55, 180) }; }, disableFlip: true }, aplicarCodigoEntrada, function() {});
+        });
+    }
+
+    function cargarHtml5Entrada() {
+        return new Promise(function(resolve, reject) {
+            if (window.Html5Qrcode) return resolve();
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/html5-qrcode';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    function aplicarCodigoEntrada(codigo) {
+        const input = document.getElementById('id_entrada_codigo_barras');
+        cerrarCamaraEntrada();
+        if (input) {
+            input.value = (codigo || '').trim();
+            input.focus();
+        }
+    }
+
+    function cerrarCamaraEntrada() {
+        const modal = document.getElementById('modal-escaner-entrada');
+        if (modal) modal.classList.add('hidden');
+        if (rafEntrada) cancelAnimationFrame(rafEntrada);
+        rafEntrada = null;
+        if (streamEntrada) streamEntrada.getTracks().forEach(function(track) { track.stop(); });
+        streamEntrada = null;
+        const video = document.getElementById('video-escaner-entrada');
+        if (video) {
+            video.pause();
+            video.srcObject = null;
+            video.classList.add('hidden');
+        }
+        if (html5Entrada) {
+            html5Entrada.stop().then(function() { html5Entrada.clear(); html5Entrada = null; }).catch(function() { html5Entrada = null; });
+        }
+        detectorEntrada = null;
+    }
+
+    function actualizarEstadoEntrada(mensaje) {
+        const estado = document.getElementById('estado-escaner-entrada');
+        if (estado) estado.innerText = mensaje;
+    }
+
+    function errorCamaraEntrada(error) {
+        console.error(error);
+        alert('No se pudo encender la cámara. Revisa permisos o usa https://.');
+        cerrarCamaraEntrada();
+    }
+</script>
+{% endblock %}

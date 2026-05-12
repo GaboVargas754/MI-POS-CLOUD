@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.shortcuts import render
 from core.utils import get_config_context, get_querystring_without_page
+from configuraciones.utils import get_tienda_actual
 from ventas.models import Venta
 from ventas.views.carrito import VENTAS_PERMISSION
 
@@ -12,6 +13,7 @@ from ventas.views.carrito import VENTAS_PERMISSION
 @login_required
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 def historial_ventas(request):
+    tienda_actual = get_tienda_actual(request)
     query = request.GET.get('q', '').strip()
     fecha_desde = request.GET.get('desde', '').strip()
     fecha_hasta = request.GET.get('hasta', '').strip()
@@ -19,7 +21,7 @@ def historial_ventas(request):
     estado = request.GET.get('estado', '').strip()
     per_page = request.GET.get('per_page', 20)
 
-    ventas = Venta.objects.select_related('cajero', 'sesion').prefetch_related('detalles__producto').order_by('-fecha', '-id')
+    ventas = Venta.objects.select_related('cajero', 'sesion', 'tienda').prefetch_related('detalles__producto').filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)).order_by('-fecha', '-id')
 
     if fecha_desde:
         ventas = ventas.filter(fecha__date__gte=fecha_desde)

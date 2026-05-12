@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Permission, User
 from django.test import TestCase
 from django.urls import reverse
+from configuraciones.models import PerfilUsuario, PuntoVenta, Tienda
 
 
 class ConfiguracionViewsTests(TestCase):
@@ -33,3 +34,36 @@ class ConfiguracionViewsTests(TestCase):
         self.assertNotContains(response, 'mobile-menu')
         self.assertContains(response, 'md:hidden divide-y')
         self.assertContains(response, 'admin')
+        self.assertContains(response, 'Sucursal Principal')
+
+    def test_usuario_se_asigna_a_tienda_y_punto_venta(self):
+        tienda = Tienda.objects.create(nombre='Sucursal Norte', codigo='NORTE')
+        punto = PuntoVenta.objects.create(tienda=tienda, nombre='Caja Norte', codigo='CAJA-N')
+
+        response = self.client.post(reverse('nuevo_usuario'), {
+            'username': 'cajero-norte',
+            'password': 'testpass123',
+            'first_name': 'Cajero',
+            'last_name': 'Norte',
+            'email': 'norte@example.com',
+            'is_active': 'on',
+            'tienda': tienda.id,
+            'punto_venta': punto.id,
+        })
+
+        self.assertRedirects(response, reverse('lista_usuarios'))
+        usuario = User.objects.get(username='cajero-norte')
+        self.assertEqual(usuario.perfil.tienda, tienda)
+        self.assertEqual(usuario.perfil.punto_venta, punto)
+
+    def test_lista_tiendas_y_formulario(self):
+        response = self.client.get(reverse('lista_tiendas'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tiendas y Puntos de Venta')
+        self.assertContains(response, 'Sucursal Principal')
+
+        response = self.client.get(reverse('nueva_tienda'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nueva Tienda')

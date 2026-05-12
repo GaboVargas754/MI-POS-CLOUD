@@ -53,6 +53,11 @@
                 {% endfor %}
             </div>
 
+            <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3 text-sm">
+                <p class="font-black text-gray-900 dark:text-white">{{ u.perfil.tienda.nombre|default:"Sin tienda" }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ u.perfil.punto_venta.nombre|default:"Sin punto fijo" }}</p>
+            </div>
+
             <button hx-get="{% url 'editar_usuario' u.id %}" hx-target="#modal-content" class="min-h-11 w-full rounded-xl bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 font-bold text-sm">Editar</button>
         </div>
         {% empty %}
@@ -65,6 +70,7 @@
             <thead>
                 <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
                     <th class="p-4">Usuario</th>
+                    <th class="p-4">Tienda</th>
                     <th class="p-4 text-center">Rol/Grupo</th>
                     <th class="p-4 text-center">Estado</th>
                     <th class="p-4 text-center">Acciones</th>
@@ -76,6 +82,10 @@
                     <td class="p-4">
                         <div class="font-bold">{{ u.username }}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">{{ u.email }}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="font-bold text-sm">{{ u.perfil.tienda.nombre|default:"Sin tienda" }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ u.perfil.punto_venta.nombre|default:"Sin punto fijo" }}</div>
                     </td>
                     <td class="p-4 text-center">
                         {% for group in u.groups.all %}
@@ -96,7 +106,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay usuarios registrados.</td></tr>
+                <tr><td colspan="5" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay usuarios registrados.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

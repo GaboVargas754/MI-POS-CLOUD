@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User, Group, Permission
-from .models import ConfiguracionSistema
+from .models import ConfiguracionSistema, PerfilUsuario, PuntoVenta, Tienda
+from .utils import get_tienda_principal
 
 # Clases base para el estilo amarillo
 clases_comunes = 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors'
@@ -19,6 +20,23 @@ class UsuarioForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={'class': clases_comunes, 'placeholder': 'Dejar en blanco para no cambiar'}),
         required=False,
         label="Contraseña"
+    )
+    tienda = forms.ModelChoiceField(
+        queryset=Tienda.objects.filter(activa=True).order_by('nombre'),
+        widget=forms.Select(attrs={'class': clases_comunes}),
+        label='Tienda / sucursal'
+    )
+    punto_venta = forms.ModelChoiceField(
+        queryset=PuntoVenta.objects.filter(activo=True).select_related('tienda').order_by('tienda__nombre', 'nombre'),
+        required=False,
+        empty_label='--- Sin punto fijo ---',
+        widget=forms.Select(attrs={'class': clases_comunes}),
+        label='Punto de venta'
+    )
+    puede_ver_todas_las_tiendas = forms.BooleanField(
+        required=False,
+        label='Puede ver todas las tiendas',
+        widget=forms.CheckboxInput(attrs={'class': 'w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500'}),
     )
 
     class Meta:
@@ -39,6 +57,23 @@ class UsuarioForm(forms.ModelForm):
             self.fields['password'].required = True
             self.fields['password'].widget.attrs['placeholder'] = 'Contraseña obligatoria'
 
+        tienda_principal = get_tienda_principal()
+        self.fields['tienda'].initial = tienda_principal
+        if self.instance.pk:
+            perfil = getattr(self.instance, 'perfil', None)
+            if perfil:
+                self.fields['tienda'].initial = perfil.tienda
+                self.fields['punto_venta'].initial = perfil.punto_venta
+                self.fields['puede_ver_todas_las_tiendas'].initial = perfil.puede_ver_todas_las_tiendas
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tienda = cleaned_data.get('tienda')
+        punto_venta = cleaned_data.get('punto_venta')
+        if tienda and punto_venta and punto_venta.tienda_id != tienda.id:
+            self.add_error('punto_venta', 'El punto de venta debe pertenecer a la tienda seleccionada.')
+        return cleaned_data
+
     def save(self, commit=True):
         # Guardamos el usuario pero pausamos el envío a la base de datos
         user = super().save(commit=False)
@@ -55,7 +90,38 @@ class UsuarioForm(forms.ModelForm):
             user.groups.clear() # Limpiamos roles anteriores
             if rol:
                 user.groups.add(rol)
+            tienda = self.cleaned_data.get('tienda') or get_tienda_principal()
+            perfil, _ = PerfilUsuario.objects.get_or_create(usuario=user, defaults={'tienda': tienda})
+            perfil.tienda = tienda
+            perfil.punto_venta = self.cleaned_data.get('punto_venta')
+            perfil.puede_ver_todas_las_tiendas = self.cleaned_data.get('puede_ver_todas_las_tiendas')
+            perfil.save()
         return user
+
+
+class TiendaForm(forms.ModelForm):
+    class Meta:
+        model = Tienda
+        fields = ['nombre', 'codigo', 'direccion', 'telefono', 'activa']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. Sucursal Centro'}),
+            'codigo': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. CENTRO'}),
+            'direccion': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Dirección de la sucursal'}),
+            'telefono': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Teléfono'}),
+            'activa': forms.CheckboxInput(attrs={'class': 'w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500'}),
+        }
+
+
+class PuntoVentaForm(forms.ModelForm):
+    class Meta:
+        model = PuntoVenta
+        fields = ['tienda', 'nombre', 'codigo', 'activo']
+        widgets = {
+            'tienda': forms.Select(attrs={'class': clases_comunes}),
+            'nombre': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. Caja 1'}),
+            'codigo': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. CAJA-1'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500'}),
+        }
 
 class ConfiguracionForm(forms.ModelForm):
     class Meta:

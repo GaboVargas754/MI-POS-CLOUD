@@ -7,6 +7,7 @@ from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from core.utils import get_config_context, get_querystring_without_page
+from configuraciones.utils import get_tienda_actual
 from configuraciones.models import ConfiguracionSistema
 from ventas.models import SesionCaja, Venta
 from ventas.views.carrito import VENTAS_PERMISSION
@@ -17,7 +18,7 @@ def _decimal(value):
 
 
 def _totales_turno(sesion):
-    ventas = Venta.objects.filter(sesion=sesion, estado='ACTIVA')
+    ventas = Venta.objects.filter(Q(tienda=sesion.tienda) | Q(tienda__isnull=True), sesion=sesion, estado='ACTIVA')
     ventas_efectivo = _decimal(ventas.filter(metodo_pago='EFE').aggregate(total=Sum('total'))['total'])
     ventas_tarjeta = _decimal(ventas.filter(metodo_pago='TAR').aggregate(total=Sum('total'))['total'])
     ventas_transferencia = _decimal(ventas.filter(metodo_pago='TRA').aggregate(total=Sum('total'))['total'])
@@ -48,6 +49,7 @@ def _enriquecer_turno(sesion):
 @login_required
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 def historial_turnos(request):
+    tienda_actual = get_tienda_actual(request)
     query = request.GET.get('q', '').strip()
     fecha_desde = request.GET.get('desde', '').strip()
     fecha_hasta = request.GET.get('hasta', '').strip()
@@ -55,7 +57,7 @@ def historial_turnos(request):
     cajero_id = request.GET.get('cajero', '').strip()
     per_page = request.GET.get('per_page', 20)
 
-    turnos = SesionCaja.objects.select_related('cajero').order_by('-fecha_apertura', '-id')
+    turnos = SesionCaja.objects.select_related('cajero', 'tienda', 'punto_venta').filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)).order_by('-fecha_apertura', '-id')
 
     if query:
         filtros = Q(cajero__username__icontains=query)
@@ -115,7 +117,8 @@ def historial_turnos(request):
 @login_required
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 def imprimir_corte(request, sesion_id):
-    sesion = get_object_or_404(SesionCaja.objects.select_related('cajero'), id=sesion_id)
+    tienda_actual = get_tienda_actual(request)
+    sesion = get_object_or_404(SesionCaja.objects.select_related('cajero', 'tienda', 'punto_venta').filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)), id=sesion_id)
     totales = _totales_turno(sesion)
     config = ConfiguracionSistema.objects.first()
 

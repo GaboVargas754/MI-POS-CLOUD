@@ -1,0 +1,55 @@
+{% extends "base/base.html" %}
+
+{% block title %}Importar Productos - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-3xl mx-auto">
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{% url 'lista_inventario' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div>
+            <p class="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400">Carga masiva</p>
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Importar productos CSV</h2>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 sm:p-8 space-y-6">
+        <div class="rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-900/40 p-4 text-sm text-purple-800 dark:text-purple-200">
+            Columnas recomendadas: <span class="font-mono font-bold">codigo_barras,nombre,categoria,stock,stock_minimo,costo,precio,activo</span>. El archivo actualiza productos existentes por código y crea los nuevos.
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ form.archivo.label }}</label>
+                {{ form.archivo }}
+                {% if form.archivo.errors %}
+                    <p class="text-red-500 text-xs mt-1 font-bold">{{ form.archivo.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <button type="submit" class="w-full min-h-12 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black transition">Importar CSV</button>
+        </form>
+
+        {% if resultado %}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="rounded-2xl bg-green-50 dark:bg-green-900/20 p-4 text-center"><p class="text-xs font-black uppercase text-green-600">Creados</p><p class="text-2xl font-black">{{ resultado.creados }}</p></div>
+            <div class="rounded-2xl bg-blue-50 dark:bg-blue-900/20 p-4 text-center"><p class="text-xs font-black uppercase text-blue-600">Actualizados</p><p class="text-2xl font-black">{{ resultado.actualizados }}</p></div>
+            <div class="rounded-2xl bg-purple-50 dark:bg-purple-900/20 p-4 text-center"><p class="text-xs font-black uppercase text-purple-600">Movimientos</p><p class="text-2xl font-black">{{ resultado.movimientos }}</p></div>
+            <div class="rounded-2xl bg-yellow-50 dark:bg-yellow-900/20 p-4 text-center"><p class="text-xs font-black uppercase text-yellow-600">Precios</p><p class="text-2xl font-black">{{ resultado.precios }}</p></div>
+        </div>
+        {% endif %}
+
+        {% if errores %}
+        <div class="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 p-4">
+            <p class="font-black text-red-700 dark:text-red-300 mb-2">Filas con error</p>
+            <div class="space-y-1 text-sm text-red-600 dark:text-red-300">
+                {% for error in errores %}<p>{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

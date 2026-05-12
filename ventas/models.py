@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 
 class SesionCaja(models.Model):
     cajero = models.ForeignKey(User, on_delete=models.PROTECT)
+    tienda = models.ForeignKey('configuraciones.Tienda', on_delete=models.PROTECT, null=True, blank=True)
+    punto_venta = models.ForeignKey('configuraciones.PuntoVenta', on_delete=models.SET_NULL, null=True, blank=True)
     fecha_apertura = models.DateTimeField(auto_now_add=True)
     fecha_cierre = models.DateTimeField(null=True, blank=True)
     fondo_inicial = models.DecimalField(max_digits=10, decimal_places=2)
@@ -26,6 +28,7 @@ class Venta(models.Model):
         ('CANCELADA', 'Cancelada'),
     ]
     sesion = models.ForeignKey(SesionCaja, on_delete=models.SET_NULL, null=True, blank=True)
+    tienda = models.ForeignKey('configuraciones.Tienda', on_delete=models.PROTECT, null=True, blank=True)
 
     fecha = models.DateTimeField(auto_now_add=True)
     cajero = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

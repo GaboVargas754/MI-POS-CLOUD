@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
@@ -12,6 +13,25 @@ class Producto(models.Model):
     nombre = models.CharField(max_length=200)
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, related_name='productos')
     stock = models.IntegerField(default=0)
+    stock_minimo = models.PositiveIntegerField(default=5)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=models.Q(stock__gte=0), name='producto_stock_no_negativo'),
+            models.CheckConstraint(condition=models.Q(stock_minimo__gte=0), name='producto_stock_minimo_no_negativo'),
+        ]
+
+    def clean(self):
+        if self.codigo_barras:
+            self.codigo_barras = self.codigo_barras.strip()
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+
+        if self.stock < 0:
+            raise ValidationError({'stock': 'El stock no puede ser negativo.'})
+        if self.stock_minimo < 0:
+            raise ValidationError({'stock_minimo': 'El stock mínimo no puede ser negativo.'})
 
     def __str__(self):
         return f"{self.nombre} (Stock: {self.stock})"
@@ -30,3 +50,60 @@ class PrecioProducto(models.Model):
 
     def __str__(self):
         return f"Precios de {self.producto.nombre}"
+
+
+class HistorialPrecio(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='historial_precios')
+    tienda = models.ForeignKey('configuraciones.Tienda', on_delete=models.SET_NULL, null=True, blank=True)
+    costo_anterior = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    costo_nuevo = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_anterior = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    precio_nuevo = models.DecimalField(max_digits=10, decimal_places=2)
+    usuario = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+    motivo = models.CharField(max_length=200, blank=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"Precio {self.producto.nombre}: ${self.precio_nuevo}"
+
+
+class MovimientoInventario(models.Model):
+    class Tipo(models.TextChoices):
+        ENTRADA = 'ENTRADA', 'Entrada'
+        VENTA = 'VENTA', 'Venta'
+        CANCELACION = 'CANCELACION', 'Cancelación'
+        AJUSTE = 'AJUSTE', 'Ajuste manual'
+
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name='movimientos')
+    tienda = models.ForeignKey('configuraciones.Tienda', on_delete=models.SET_NULL, null=True, blank=True)
+    tipo = models.CharField(max_length=12, choices=Tipo.choices)
+    cantidad = models.IntegerField()
+    stock_antes = models.IntegerField()
+    stock_despues = models.IntegerField()
+    usuario = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+    venta = models.ForeignKey('ventas.Venta', on_delete=models.SET_NULL, null=True, blank=True, related_name='movimientos_inventario')
+    motivo = models.TextField(blank=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha', '-id']
+
+    @classmethod
+    def registrar(cls, *, producto, tipo, cantidad, stock_antes, stock_despues, usuario=None, venta=None, tienda=None, motivo=''):
+        return cls.objects.create(
+            producto=producto,
+            tienda=tienda,
+            tipo=tipo,
+            cantidad=cantidad,
+            stock_antes=stock_antes,
+            stock_despues=stock_despues,
+            usuario=usuario,
+            venta=venta,
+            motivo=motivo,
+        )
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.producto.nombre} ({self.cantidad:+d})"

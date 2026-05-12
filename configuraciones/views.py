@@ -3,8 +3,9 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
-from .forms import UsuarioForm, ConfiguracionForm, RolForm
-from .models import ConfiguracionSistema
+from .forms import ConfiguracionForm, PuntoVentaForm, RolForm, TiendaForm, UsuarioForm
+from .models import ConfiguracionSistema, PuntoVenta, Tienda
+from .utils import get_perfil_usuario
 from core.utils import get_config_context
 
 @login_required
@@ -15,7 +16,7 @@ def dashboard_configuracion(request):
 @login_required
 @permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def lista_usuarios(request):
-    usuarios_list = User.objects.all().order_by('username')
+    usuarios_list = User.objects.select_related('perfil__tienda', 'perfil__punto_venta').all().order_by('username')
     per_page = request.GET.get('per_page', 10)
     try:
         per_page = int(per_page)
@@ -25,6 +26,8 @@ def lista_usuarios(request):
     paginator = Paginator(usuarios_list, per_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    for usuario in page_obj:
+        get_perfil_usuario(usuario)
 
     return render(request, 'configuraciones/usuarios/lista.html', {
         **get_config_context('Sistema', 'border-yellow-500'),
@@ -117,4 +120,63 @@ def editar_rol(request, pk=None):
         'form': form,
         'titulo': titulo,
         'is_instance': rol is not None
+    })
+
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+def lista_tiendas(request):
+    tiendas_list = Tienda.objects.prefetch_related('puntos_venta').order_by('nombre')
+    per_page = request.GET.get('per_page', 10)
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(tiendas_list, per_page)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'configuraciones/tiendas/lista.html', {
+        **get_config_context('Sistema', 'border-yellow-500'),
+        'page_obj': page_obj,
+        'per_page': per_page,
+    })
+
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+def editar_tienda(request, pk=None):
+    tienda = get_object_or_404(Tienda, pk=pk) if pk else None
+    form = TiendaForm(request.POST or None, instance=tienda)
+
+    if request.method == 'POST' and form.is_valid():
+        tienda = form.save()
+        PuntoVenta.objects.get_or_create(
+            tienda=tienda,
+            codigo='CAJA-1',
+            defaults={'nombre': 'Caja 1', 'activo': True},
+        )
+        return redirect('lista_tiendas')
+
+    return render(request, 'configuraciones/tiendas/formulario_tienda.html', {
+        'form': form,
+        'titulo': 'Editar Tienda' if tienda else 'Nueva Tienda',
+        'is_instance': tienda is not None,
+    })
+
+
+@login_required
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+def editar_punto_venta(request, pk=None):
+    punto = get_object_or_404(PuntoVenta, pk=pk) if pk else None
+    form = PuntoVentaForm(request.POST or None, instance=punto)
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('lista_tiendas')
+
+    return render(request, 'configuraciones/tiendas/formulario_punto_venta.html', {
+        'form': form,
+        'titulo': 'Editar Punto de Venta' if punto else 'Nuevo Punto de Venta',
+        'is_instance': punto is not None,
     })

@@ -4,7 +4,8 @@ from django.contrib.auth.models import Permission, User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from inventario.models import Categoria, PrecioProducto, Producto
+from configuraciones.utils import get_tienda_actual
+from inventario.models import Categoria, MovimientoInventario, PrecioProducto, Producto
 from ventas.models import DetalleVenta, SesionCaja, Venta
 
 
@@ -100,6 +101,7 @@ class FlujoVentasTests(TestCase):
         self.assertEqual(response.status_code, 200)
         venta = Venta.objects.get()
         self.assertEqual(venta.sesion, self.sesion)
+        self.assertEqual(venta.tienda, get_tienda_actual(response.wsgi_request))
         self.assertEqual(venta.metodo_pago, 'EFE')
         self.assertEqual(venta.total, Decimal('25.00'))
         self.assertEqual(venta.pago_recibido, Decimal('30.00'))
@@ -112,6 +114,14 @@ class FlujoVentasTests(TestCase):
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 3)
         self.assertEqual(self.client.session.get('carrito'), {})
+
+        movimiento = MovimientoInventario.objects.get(producto=self.producto, tipo=MovimientoInventario.Tipo.VENTA)
+        self.assertEqual(movimiento.cantidad, -2)
+        self.assertEqual(movimiento.stock_antes, 5)
+        self.assertEqual(movimiento.stock_despues, 3)
+        self.assertEqual(movimiento.venta, venta)
+        self.assertEqual(movimiento.tienda, venta.tienda)
+        self.assertEqual(movimiento.usuario, self.user)
 
     def test_procesar_venta_guarda_metodo_tarjeta_como_cobro_exacto(self):
         self.client.post(reverse('agregar_al_carrito', args=[self.producto.id]))
@@ -231,6 +241,25 @@ class FlujoVentasTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Abre caja antes de cobrar una venta')
+        self.assertFalse(Venta.objects.exists())
+
+    def test_procesar_venta_rechaza_producto_inactivo(self):
+        self.producto.activo = False
+        self.producto.save(update_fields=['activo'])
+        session = self.client.session
+        session['carrito'] = {
+            str(self.producto.id): {
+                'nombre': self.producto.nombre,
+                'precio': '12.50',
+                'cantidad': 1,
+            }
+        }
+        session.save()
+
+        response = self.client.post(reverse('procesar_venta'), {'pago_recibido': '20.00'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'está inactivo y no puede venderse')
         self.assertFalse(Venta.objects.exists())
 
     def test_pos_muestra_lector_nativo_con_enfoque(self):
@@ -493,6 +522,14 @@ class FlujoVentasTests(TestCase):
         self.assertIsNotNone(venta.fecha_cancelacion)
         self.assertEqual(self.producto.stock, 5)
 
+        movimiento = MovimientoInventario.objects.get(producto=self.producto, tipo=MovimientoInventario.Tipo.CANCELACION)
+        self.assertEqual(movimiento.cantidad, 2)
+        self.assertEqual(movimiento.stock_antes, 3)
+        self.assertEqual(movimiento.stock_despues, 5)
+        self.assertEqual(movimiento.venta, venta)
+        self.assertEqual(movimiento.usuario, self.user)
+        self.assertEqual(movimiento.motivo, 'Error de cobro')
+
     def test_cancelar_venta_no_reintegra_dos_veces(self):
         venta = self.crear_venta_con_detalle(estado='CANCELADA')
         venta.motivo_cancelacion = 'Ya cancelado'
@@ -510,6 +547,7 @@ class FlujoVentasTests(TestCase):
         venta.refresh_from_db()
         self.assertEqual(self.producto.stock, 5)
         self.assertEqual(venta.motivo_cancelacion, 'Ya cancelado')
+        self.assertFalse(MovimientoInventario.objects.filter(producto=self.producto).exists())
 
     def test_ticket_cancelado_muestra_estado_y_motivo(self):
         venta = self.crear_venta_con_detalle(estado='CANCELADA')
@@ -531,3 +569,12 @@ class FlujoVentasTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'producto-resultado')
         self.assertContains(response, reverse('agregar_al_carrito', args=[self.producto.id]))
+
+    def test_busqueda_no_muestra_productos_inactivos(self):
+        self.producto.activo = False
+        self.producto.save(update_fields=['activo'])
+
+        response = self.client.get(reverse('buscar_productos'), {'q': 'Agua'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'producto-resultado')

@@ -1,6 +1,13 @@
 <div class="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
     <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-700 border-b-4 border-purple-600 dark:border-purple-500 p-4 flex justify-between items-center">
-        <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">{{ titulo }}</h2>
+        <div>
+            {% if codigo_resuelto %}
+                <p class="text-xs font-black uppercase tracking-wider {% if producto_encontrado %}text-green-600 dark:text-green-400{% else %}text-purple-600 dark:text-purple-400{% endif %}">
+                    {% if producto_encontrado %}Código encontrado{% else %}Código nuevo{% endif %}: {{ codigo_resuelto }}
+                </p>
+            {% endif %}
+            <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">{{ titulo }}</h2>
+        </div>
         <button onclick="cerrarCamaraProducto(); cerrarModal()" class="text-gray-500 hover:text-red-500 transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -8,7 +15,7 @@
         </button>
     </div>
 
-    <form hx-post="{{ request.path }}" hx-target="body" class="p-4 sm:p-6 space-y-4 pb-6">
+    <form hx-post="{{ form_action|default:request.path }}" hx-target="body" class="p-4 sm:p-6 space-y-4 pb-6">
         {% csrf_token %}
 
         {% for field in form %}

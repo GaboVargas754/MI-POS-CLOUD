@@ -1,0 +1,55 @@
+<div class="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="sticky top-0 z-10 bg-gray-100 dark:bg-gray-700 border-b-4 border-green-600 dark:border-green-500 p-4 flex justify-between items-center">
+        <div>
+            <p class="text-xs font-black uppercase tracking-wider text-green-600 dark:text-green-400">Ajuste de inventario</p>
+            <h2 class="text-xl font-black text-gray-800 dark:text-white">{{ producto.nombre }}</h2>
+        </div>
+        <button type="button" onclick="cerrarModal()" class="text-gray-500 hover:text-red-500 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <div class="p-4 sm:p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-700">
+                <p class="text-[10px] uppercase font-black text-gray-500 dark:text-gray-400 tracking-wider">Stock actual</p>
+                <p class="text-3xl font-black text-gray-900 dark:text-white">{{ producto.stock }}</p>
+            </div>
+            <div class="rounded-2xl bg-purple-50 dark:bg-purple-900/20 p-4 border border-purple-100 dark:border-purple-900/40">
+                <p class="text-[10px] uppercase font-black text-purple-500 tracking-wider">Mínimo</p>
+                <p class="text-3xl font-black text-purple-700 dark:text-purple-300">{{ producto.stock_minimo }}</p>
+            </div>
+        </div>
+
+        <form hx-post="{{ request.path }}" hx-target="body" class="space-y-4">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <p class="text-red-500 text-xs mt-1 font-bold">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="rounded-2xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/40 p-3 text-sm text-yellow-800 dark:text-yellow-200">
+                Este cambio quedará registrado en movimientos con usuario, fecha, stock anterior y stock nuevo.
+            </div>
+
+            <div class="flex gap-3 pt-2 sticky bottom-0 bg-white dark:bg-gray-800 py-3">
+                <button type="button" onclick="cerrarModal()"
+                        class="w-1/2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition min-h-12">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="w-1/2 bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl transition-colors shadow-lg min-h-12">
+                    Guardar Ajuste
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

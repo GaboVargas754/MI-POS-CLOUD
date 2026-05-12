@@ -27,6 +27,15 @@ class PwaAndMobileNavigationTests(TestCase):
         self.assertEqual(response['Content-Type'], 'application/javascript')
         self.assertContains(response, 'CACHE_NAME')
 
+    def test_pwa_icon_usa_logo_personalizado(self):
+        response = self.client.get(reverse('pwa_icon'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/svg+xml')
+        self.assertContains(response, '#111827')
+        self.assertContains(response, '#22C55E')
+        self.assertContains(response, 'M122 188H158')
+
     def test_portal_incluye_navegacion_inferior_movil(self):
         self.client.force_login(self.user)
 
@@ -38,5 +47,7 @@ class PwaAndMobileNavigationTests(TestCase):
         self.assertContains(response, 'Estadísticas')
         self.assertContains(response, 'Inventario')
         self.assertContains(response, 'Sistema')
+        self.assertContains(response, 'rel="icon"')
+        self.assertContains(response, reverse('pwa_icon'))
         self.assertContains(response, reverse('pantalla_pos'))
         self.assertContains(response, reverse('dashboard'))

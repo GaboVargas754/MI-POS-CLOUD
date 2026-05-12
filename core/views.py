@@ -38,13 +38,34 @@ def pwa_manifest(request):
 
 
 def pwa_icon(request):
-    svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#111827"/>
-<rect x="96" y="128" width="320" height="256" rx="40" fill="#22c55e"/>
-<rect x="128" y="168" width="256" height="64" rx="18" fill="#ecfdf5"/>
-<circle cx="168" cy="300" r="22" fill="#052e16"/>
-<circle cx="256" cy="300" r="22" fill="#052e16"/>
-<circle cx="344" cy="300" r="22" fill="#052e16"/>
+    svg = '''<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="90" fill="#111827"/>
+
+  <path
+    d="M122 188H158L190 312C194 328 208 340 225 340H354"
+    stroke="#22C55E"
+    stroke-width="24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <path
+    d="M196 286H354C384 286 408 262 408 232C408 204 386 181 358 179C348 142 314 116 274 116C232 116 197 146 190 186"
+    stroke="#22C55E"
+    stroke-width="24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <path
+    d="M210 340H360"
+    stroke="#22C55E"
+    stroke-width="10"
+    stroke-linecap="round"
+  />
+
+  <circle cx="226" cy="386" r="20" stroke="#22C55E" stroke-width="22"/>
+  <circle cx="338" cy="386" r="20" stroke="#22C55E" stroke-width="22"/>
 </svg>'''
     return HttpResponse(svg, content_type='image/svg+xml')
 

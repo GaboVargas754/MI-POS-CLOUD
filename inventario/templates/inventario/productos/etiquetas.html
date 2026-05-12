@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Etiquetas de Productos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 12px; color: #111; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .etiqueta { border: 1px dashed #999; border-radius: 8px; padding: 8px; min-height: 108px; display: flex; flex-direction: column; justify-content: space-between; break-inside: avoid; }
+        .nombre { font-size: 12px; font-weight: 700; line-height: 1.2; min-height: 28px; }
+        .precio { font-size: 20px; font-weight: 900; margin: 4px 0; }
+        .codigo { font-family: 'Courier New', monospace; font-size: 10px; text-align: center; }
+        svg { width: 100%; height: 42px; }
+        @media print {
+            @page { margin: 8mm; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="grid">
+        {% for producto in productos %}
+        <div class="etiqueta">
+            <div>
+                <div class="nombre">{{ producto.nombre }}</div>
+                <div class="precio">${{ producto.precios.precio|default:"0.00" }}</div>
+            </div>
+            <div>
+                <svg class="barcode" data-code="{{ producto.codigo_barras }}"></svg>
+                <div class="codigo">{{ producto.codigo_barras }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <script>
+        document.querySelectorAll('.barcode').forEach(function(el) {
+            JsBarcode(el, el.dataset.code, {
+                format: 'CODE128',
+                displayValue: false,
+                margin: 0,
+                height: 38,
+                width: 1.2
+            });
+        });
+    </script>
+</body>
+</html>

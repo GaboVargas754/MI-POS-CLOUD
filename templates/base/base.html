@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#111827">
     <title>{% block title %}Sistema POS{% endblock %}</title>
+    <link rel="icon" href="{% url 'pwa_icon' %}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{% url 'pwa_icon' %}">
     <link rel="manifest" href="{% url 'pwa_manifest' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.11"></script>

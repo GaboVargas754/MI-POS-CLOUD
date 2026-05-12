@@ -4,10 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import redirect, render, get_object_or_404
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 from core.utils import get_config_context
-from inventario.models import Producto
+from configuraciones.utils import get_tienda_actual
+from inventario.models import MovimientoInventario, Producto
 from ventas.models import DetalleVenta, SesionCaja, Venta
 from configuraciones.models import ConfiguracionSistema
 from ventas.views.carrito import VENTAS_PERMISSION, calcular_total_carrito
@@ -16,7 +18,8 @@ from ventas.views.carrito import VENTAS_PERMISSION, calcular_total_carrito
 @login_required
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 def imprimir_ticket(request, venta_id):
-    venta = get_object_or_404(Venta, id=venta_id)
+    tienda_actual = get_tienda_actual(request)
+    venta = get_object_or_404(Venta.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)), id=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
 
     config = ConfiguracionSistema.objects.first()
@@ -31,8 +34,9 @@ def imprimir_ticket(request, venta_id):
 @permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def cancelar_venta(request, venta_id):
+    tienda_actual = get_tienda_actual(request)
     venta = get_object_or_404(
-        Venta.objects.select_related('cajero', 'sesion').prefetch_related('detalles__producto'),
+        Venta.objects.select_related('cajero', 'sesion').prefetch_related('detalles__producto').filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)),
         id=venta_id,
     )
 
@@ -59,8 +63,20 @@ def cancelar_venta(request, venta_id):
             detalles = DetalleVenta.objects.select_related('producto').filter(venta=venta)
             for detalle in detalles:
                 producto = Producto.objects.select_for_update().get(id=detalle.producto_id)
+                stock_antes = producto.stock
                 producto.stock += detalle.cantidad
                 producto.save(update_fields=['stock'])
+                MovimientoInventario.registrar(
+                    producto=producto,
+                    tipo=MovimientoInventario.Tipo.CANCELACION,
+                    cantidad=detalle.cantidad,
+                    stock_antes=stock_antes,
+                    stock_despues=producto.stock,
+                    usuario=request.user,
+                    venta=venta,
+                    tienda=tienda_actual,
+                    motivo=motivo,
+                )
 
             venta.estado = 'CANCELADA'
             venta.motivo_cancelacion = motivo
@@ -83,7 +99,8 @@ def cancelar_venta(request, venta_id):
 @require_POST
 def procesar_venta(request):
     carrito = request.session.get('carrito', {})
-    sesion_abierta = SesionCaja.objects.filter(cajero=request.user, estado=True).exists()
+    tienda_actual = get_tienda_actual(request)
+    sesion_abierta = SesionCaja.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), cajero=request.user, estado=True).exists()
     if not sesion_abierta:
         total = calcular_total_carrito(carrito)
         request.session['carrito'] = carrito
@@ -110,13 +127,14 @@ def procesar_venta(request):
                 raise ValueError("El pago recibido no puede ser negativo.")
 
         with transaction.atomic():
-            sesion = SesionCaja.objects.select_for_update().filter(cajero=request.user, estado=True).first()
+            sesion = SesionCaja.objects.select_for_update().filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), cajero=request.user, estado=True).first()
             if not sesion:
                 raise ValueError("No hay una caja abierta para procesar la venta.")
 
             nueva_venta = Venta.objects.create(
                 cajero=request.user,
                 sesion=sesion,
+                tienda=tienda_actual,
                 metodo_pago=metodo_pago,
                 total=Decimal('0.00'),
             )
@@ -135,11 +153,15 @@ def procesar_venta(request):
                 if cantidad_vendida <= 0:
                     raise ValueError(f"Cantidad inválida para {producto.nombre}.")
 
+                if not producto.activo:
+                    raise ValueError(f"{producto.nombre} está inactivo y no puede venderse.")
+
                 if producto.stock < cantidad_vendida:
                     raise ValueError(f"Stock insuficiente para {producto.nombre}. Disponible: {producto.stock}")
 
+                stock_antes = producto.stock
                 producto.stock -= cantidad_vendida
-                producto.save()
+                producto.save(update_fields=['stock'])
 
                 subtotal = precio_unitario * cantidad_vendida
                 venta_total += subtotal
@@ -149,6 +171,17 @@ def procesar_venta(request):
                     producto=producto,
                     cantidad=cantidad_vendida,
                     precio_unitario=precio_unitario,
+                )
+                MovimientoInventario.registrar(
+                    producto=producto,
+                    tipo=MovimientoInventario.Tipo.VENTA,
+                    cantidad=-cantidad_vendida,
+                    stock_antes=stock_antes,
+                    stock_despues=producto.stock,
+                    usuario=request.user,
+                    venta=nueva_venta,
+                    tienda=tienda_actual,
+                    motivo=f'Venta ticket #{nueva_venta.id}',
                 )
 
             if metodo_pago == 'EFE':
