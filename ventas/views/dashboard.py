@@ -1,11 +1,14 @@
 from django.shortcuts import render
 from django.utils import timezone
 from django.db.models import Sum
-from ventas.models import Venta, DetalleVenta, Producto
+from django.contrib.auth.decorators import login_required, permission_required
+from inventario.models import Producto
+from ventas.models import Venta, DetalleVenta
 from core.utils import get_config_context
-from django.contrib.admin.views.decorators import staff_member_required
+from ventas.views.carrito import VENTAS_PERMISSION
 
-@staff_member_required(login_url='/portal/')
+@login_required
+@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
 def dashboard(request):
     hoy = timezone.now().date()
     ventas_hoy = Venta.objects.filter(fecha__date=hoy)

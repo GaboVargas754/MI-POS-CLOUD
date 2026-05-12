@@ -15,6 +15,13 @@
     <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Apertura de Turno</h1>
     <p class="text-gray-500 dark:text-gray-400 mb-8">Ingresa el fondo inicial de efectivo que tienes en el cajón para dar cambio.</p>
 
+    {% if error %}
+    <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 mb-6 rounded-r text-left">
+        <p class="font-bold text-sm">No se pudo abrir caja</p>
+        <p class="text-sm">{{ error }}</p>
+    </div>
+    {% endif %}
+
     <form method="POST" action="{% url 'abrir_caja' %}" class="space-y-6">
         {% csrf_token %}
 

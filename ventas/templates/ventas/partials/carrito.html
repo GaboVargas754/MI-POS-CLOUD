@@ -32,7 +32,7 @@
                 </div>
 
                 <div class="flex flex-col items-end gap-2">
-                    <span class="font-bold text-blue-600 dark:text-blue-400 text-lg">${% widthratio item.cantidad 1 item.precio %}</span>
+                    <span class="font-bold text-blue-600 dark:text-blue-400 text-lg">${{ item.subtotal }}</span>
 
                     <button hx-post="{% url 'eliminar_item' id %}"
                             hx-target="#panel-carrito"

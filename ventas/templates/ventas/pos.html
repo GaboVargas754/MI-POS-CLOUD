@@ -3,10 +3,6 @@
 
 {% block title %}Caja Registradora - {{ block.super }}{% endblock %}
 
-{% block extra_head %}
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-{% endblock %}
-
 {% block body_class %}flex flex-col h-screen bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 overflow-hidden transition-colors duration-200{% endblock %}
 
 {% block nav %}
@@ -121,10 +117,22 @@
                 </svg>
             </button>
             <div class="text-center mb-2 mt-2">
-                <h3 class="font-black text-gray-800 dark:text-white text-lg">Escáner Activo</h3>
-                <p class="text-xs text-gray-500">Centra el código en el cuadro.</p>
+                <h3 class="font-black text-gray-800 dark:text-white text-lg">Lector de Código de Barras</h3>
+                <p id="estado-camara-pos" class="text-xs text-gray-500">Centra el código de barras y toca la imagen si necesitas enfocar.</p>
             </div>
-            <div id="lector-qr" class="w-full rounded-xl overflow-hidden bg-black aspect-square flex items-center justify-center"></div>
+            <div class="relative w-full rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+                <video id="video-barras-pos" class="hidden w-full h-full object-cover" playsinline muted onclick="enfocarCamaraPos(event)"></video>
+                <div id="lector-barras-pos" class="hidden w-full h-full"></div>
+                <div class="pointer-events-none absolute inset-x-8 top-1/2 -translate-y-1/2 h-24 border-2 border-green-400 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]"></div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+                <button type="button" onclick="enfocarCamaraPos()" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Enfocar
+                </button>
+                <button type="button" id="btn-linterna-pos" onclick="toggleLinternaPos()" class="hidden bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 font-bold py-3 rounded-xl hover:bg-yellow-200 dark:hover:bg-yellow-900/70 transition">
+                    Linterna
+                </button>
+            </div>
         </div>
     </div>
 {% endblock %}
@@ -168,42 +176,221 @@
     });
 
     let html5QrcodeScanner = null;
+    let streamBarrasPos = null;
+    let detectorBarrasPos = null;
+    let rafBarrasPos = null;
+    let linternaPosActiva = false;
+    let configBarrasPos = null;
+    let erroresDetectorPos = 0;
+
+    const formatosBarrasNativos = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar'];
 
     function abrirCamara() {
         const modal = document.getElementById('modal-escaner');
         modal.classList.remove('hidden');
+        actualizarEstadoCamaraPos('Iniciando cámara...');
 
-        html5QrcodeScanner = new Html5Qrcode("lector-qr");
-        const config = {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
-        };
+        configBarrasPos = obtenerConfigCodigoBarras();
 
-        html5QrcodeScanner.start(
-            { facingMode: "environment" },
+        if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            iniciarCamaraNativaPos().catch(function(errorNativo) {
+                console.warn('No se pudo usar BarcodeDetector, usando lector de respaldo:', errorNativo);
+                iniciarCamaraHtml5Pos(configBarrasPos).catch(function(err) {
+                    console.error('Error al iniciar cámara:', err);
+                    alert('No se pudo encender la cámara. Revisa los permisos de tu navegador o usa https://.');
+                    cerrarCamara();
+                });
+            });
+            return;
+        }
+
+        iniciarCamaraHtml5Pos(configBarrasPos).catch(function(err) {
+            console.error('Error al iniciar cámara:', err);
+            alert('No se pudo encender la cámara. Revisa los permisos de tu navegador o usa https://.');
+            cerrarCamara();
+        });
+    }
+
+    async function iniciarCamaraNativaPos() {
+        const formatosSoportados = BarcodeDetector.getSupportedFormats
+            ? await BarcodeDetector.getSupportedFormats()
+            : formatosBarrasNativos;
+        const formatos = formatosBarrasNativos.filter(function(formato) {
+            return formatosSoportados.includes(formato);
+        });
+
+        if (!formatos.length) {
+            throw new Error('El navegador no soporta formatos de código de barras nativos.');
+        }
+
+        detectorBarrasPos = new BarcodeDetector({ formats: formatos });
+        erroresDetectorPos = 0;
+
+        streamBarrasPos = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        });
+
+        const video = document.getElementById('video-barras-pos');
+        const fallback = document.getElementById('lector-barras-pos');
+        fallback.classList.add('hidden');
+        video.classList.remove('hidden');
+        video.srcObject = streamBarrasPos;
+        await video.play();
+
+        const track = streamBarrasPos.getVideoTracks()[0];
+        await aplicarMejorasCamaraPos(track, false);
+        actualizarBotonLinternaPos(track);
+        actualizarEstadoCamaraPos('Apunta al código. Toca la imagen para intentar enfocar.');
+        escanearConDetectorNativoPos();
+    }
+
+    function iniciarCamaraHtml5Pos(config) {
+        const video = document.getElementById('video-barras-pos');
+        const fallback = document.getElementById('lector-barras-pos');
+        video.classList.add('hidden');
+        fallback.classList.remove('hidden');
+        actualizarEstadoCamaraPos('Usando lector de respaldo...');
+
+        return cargarHtml5QrcodePos().then(function() {
+            config = agregarFormatosHtml5Pos(config);
+            html5QrcodeScanner = new Html5Qrcode('lector-barras-pos');
+            return iniciarHtml5ConFallbackPos(config);
+        });
+    }
+
+    function iniciarHtml5ConFallbackPos(config) {
+        return html5QrcodeScanner.start(
+            { facingMode: 'environment' },
             config,
             onScanSuccess,
             onScanFailure
-        ).catch(err => {
-            console.error("Error al iniciar cámara:", err);
-            alert("No se pudo encender la cámara. Revisa los permisos de tu navegador o usa https://.");
-            cerrarCamara();
+        ).catch(function(errorInicial) {
+            console.warn('No se pudo abrir la cámara trasera directa, intentando por dispositivo:', errorInicial);
+
+            if (!window.Html5Qrcode || !Html5Qrcode.getCameras) {
+                throw errorInicial;
+            }
+
+            return Html5Qrcode.getCameras().then(function(camaras) {
+                if (!camaras || camaras.length === 0) {
+                    throw errorInicial;
+                }
+
+                const camaraTrasera = camaras.find(function(camara) {
+                    return /back|rear|environment|trasera|posterior/i.test(camara.label || '');
+                }) || camaras[camaras.length - 1];
+
+                return html5QrcodeScanner.start(
+                    camaraTrasera.id,
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                );
+            });
         });
+    }
+
+    function cargarHtml5QrcodePos() {
+        return new Promise(function(resolve, reject) {
+            if (window.Html5Qrcode) {
+                resolve();
+                return;
+            }
+
+            const scriptExistente = document.querySelector('script[data-html5-qrcode="true"]');
+            if (scriptExistente) {
+                scriptExistente.addEventListener('load', resolve, { once: true });
+                scriptExistente.addEventListener('error', reject, { once: true });
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/html5-qrcode';
+            script.dataset.html5Qrcode = 'true';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    async function escanearConDetectorNativoPos() {
+        if (!streamBarrasPos || !detectorBarrasPos) return;
+
+        const video = document.getElementById('video-barras-pos');
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+            try {
+                const codigos = await detectorBarrasPos.detect(video);
+                erroresDetectorPos = 0;
+
+                if (codigos.length && codigos[0].rawValue) {
+                    onScanSuccess(codigos[0].rawValue);
+                    return;
+                }
+            } catch (err) {
+                erroresDetectorPos += 1;
+                if (erroresDetectorPos >= 3) {
+                    console.warn('El detector nativo falló, cambiando a lector de respaldo:', err);
+                    detenerCamaraNativaPos();
+                    iniciarCamaraHtml5Pos(configBarrasPos).catch(function(errorFallback) {
+                        console.error('Error al iniciar lector de respaldo:', errorFallback);
+                        alert('No se pudo encender la cámara. Revisa los permisos de tu navegador o usa https://.');
+                        cerrarCamara();
+                    });
+                    return;
+                }
+            }
+        }
+
+        rafBarrasPos = requestAnimationFrame(escanearConDetectorNativoPos);
     }
 
     function cerrarCamara() {
         const modal = document.getElementById('modal-escaner');
         modal.classList.add('hidden');
+        detenerCamaraNativaPos();
 
         if (html5QrcodeScanner) {
             html5QrcodeScanner.stop().then(() => {
                 html5QrcodeScanner.clear();
                 html5QrcodeScanner = null;
             }).catch(err => {
-                console.error("Error apagando cámara:", err);
+                console.error('Error apagando cámara:', err);
+                try {
+                    html5QrcodeScanner.clear();
+                } catch (clearErr) {}
+                html5QrcodeScanner = null;
             });
         }
+    }
+
+    function detenerCamaraNativaPos() {
+        if (rafBarrasPos) {
+            cancelAnimationFrame(rafBarrasPos);
+            rafBarrasPos = null;
+        }
+
+        if (streamBarrasPos) {
+            streamBarrasPos.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            streamBarrasPos = null;
+        }
+
+        const video = document.getElementById('video-barras-pos');
+        if (video) {
+            video.pause();
+            video.srcObject = null;
+            video.classList.add('hidden');
+        }
+
+        detectorBarrasPos = null;
+        linternaPosActiva = false;
+        actualizarBotonLinternaPos(null);
     }
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -218,6 +405,160 @@
     }
 
     function onScanFailure(error) {
+    }
+
+    function actualizarEstadoCamaraPos(mensaje) {
+        const estado = document.getElementById('estado-camara-pos');
+        if (estado) estado.innerText = mensaje;
+    }
+
+    async function aplicarMejorasCamaraPos(track, mostrarEstado) {
+        if (!track || !track.getCapabilities || !track.applyConstraints) return;
+
+        const capabilities = track.getCapabilities();
+        const ajustes = [];
+
+        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+            ajustes.push({ focusMode: 'continuous' });
+        }
+        if (capabilities.exposureMode && capabilities.exposureMode.includes('continuous')) {
+            ajustes.push({ exposureMode: 'continuous' });
+        }
+        if (capabilities.whiteBalanceMode && capabilities.whiteBalanceMode.includes('continuous')) {
+            ajustes.push({ whiteBalanceMode: 'continuous' });
+        }
+
+        if (!ajustes.length) return;
+
+        try {
+            await track.applyConstraints({ advanced: ajustes });
+            if (mostrarEstado) actualizarEstadoCamaraPos('Enfoque solicitado. Mantén el código estable.');
+        } catch (err) {
+            console.warn('No se pudieron aplicar mejoras de cámara:', err);
+        }
+    }
+
+    function enfocarCamaraPos(event) {
+        if (!streamBarrasPos) {
+            actualizarEstadoCamaraPos('El enfoque táctil está disponible con el lector nativo.');
+            return;
+        }
+
+        const track = streamBarrasPos.getVideoTracks()[0];
+        if (!track || !track.getCapabilities || !track.applyConstraints) {
+            actualizarEstadoCamaraPos('Este navegador no permite controlar el enfoque manualmente.');
+            return;
+        }
+
+        const capabilities = track.getCapabilities();
+        const ajustes = [];
+
+        if (capabilities.focusMode && capabilities.focusMode.includes('single-shot')) {
+            ajustes.push({ focusMode: 'single-shot' });
+        } else if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+            ajustes.push({ focusMode: 'continuous' });
+        }
+
+        if (event && capabilities.pointsOfInterest) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            ajustes.push({
+                pointsOfInterest: [{
+                    x: (event.clientX - rect.left) / rect.width,
+                    y: (event.clientY - rect.top) / rect.height
+                }]
+            });
+        }
+
+        if (!ajustes.length) {
+            actualizarEstadoCamaraPos('Tu cámara no expone enfoque táctil al navegador.');
+            return;
+        }
+
+        track.applyConstraints({ advanced: ajustes }).then(function() {
+            actualizarEstadoCamaraPos('Enfoque solicitado. Mantén el código estable.');
+        }).catch(function(err) {
+            console.warn('No se pudo enfocar:', err);
+            actualizarEstadoCamaraPos('No se pudo controlar el enfoque en este dispositivo.');
+        });
+    }
+
+    function actualizarBotonLinternaPos(track) {
+        const boton = document.getElementById('btn-linterna-pos');
+        if (!boton) return;
+
+        if (!track || !track.getCapabilities || !track.getCapabilities().torch) {
+            boton.classList.add('hidden');
+            return;
+        }
+
+        boton.classList.remove('hidden');
+        boton.innerText = linternaPosActiva ? 'Apagar Luz' : 'Linterna';
+    }
+
+    function toggleLinternaPos() {
+        if (!streamBarrasPos) return;
+
+        const track = streamBarrasPos.getVideoTracks()[0];
+        if (!track || !track.applyConstraints) return;
+
+        linternaPosActiva = !linternaPosActiva;
+        track.applyConstraints({ advanced: [{ torch: linternaPosActiva }] }).then(function() {
+            actualizarBotonLinternaPos(track);
+        }).catch(function(err) {
+            console.warn('No se pudo cambiar la linterna:', err);
+            linternaPosActiva = false;
+            actualizarBotonLinternaPos(track);
+        });
+    }
+
+    function obtenerConfigCodigoBarras() {
+        const config = {
+            fps: 15,
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                const width = Math.min(Math.max(Math.floor(viewfinderWidth * 0.92), 220), 340, viewfinderWidth);
+                const height = Math.min(Math.max(Math.floor(viewfinderHeight * 0.55), 120), 180, viewfinderHeight);
+                return { width: width, height: height };
+            },
+            aspectRatio: 1.777,
+            disableFlip: true,
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            }
+        };
+
+        if (window.Html5QrcodeSupportedFormats) {
+            config.formatsToSupport = [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.ITF,
+                Html5QrcodeSupportedFormats.CODABAR
+            ].filter(Boolean);
+        }
+
+        return config;
+    }
+
+    function agregarFormatosHtml5Pos(config) {
+        if (window.Html5QrcodeSupportedFormats) {
+            config.formatsToSupport = [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.ITF,
+                Html5QrcodeSupportedFormats.CODABAR
+            ].filter(Boolean);
+        }
+
+        return config;
     }
 </script>
 

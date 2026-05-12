@@ -6,7 +6,7 @@ from inventario.forms import ProductoForm
 from core.utils import get_config_context
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def lista_inventario(request):
     productos_list = Producto.objects.select_related('precios').all().order_by('nombre')
     per_page = request.GET.get('per_page', 10)
@@ -27,7 +27,7 @@ def lista_inventario(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def editar_producto(request, pk=None):
     if pk:
         producto = get_object_or_404(Producto, pk=pk)

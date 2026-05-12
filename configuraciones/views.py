@@ -8,12 +8,12 @@ from .models import ConfiguracionSistema
 from core.utils import get_config_context
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def dashboard_configuracion(request):
     return render(request, 'configuraciones/dashboard.html', get_config_context('Panel de Control', 'border-yellow-500'))
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def lista_usuarios(request):
     usuarios_list = User.objects.all().order_by('username')
     per_page = request.GET.get('per_page', 10)
@@ -33,7 +33,7 @@ def lista_usuarios(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def editar_usuario(request, pk=None):
     if pk:
         usuario = get_object_or_404(User, pk=pk)
@@ -57,7 +57,7 @@ def editar_usuario(request, pk=None):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def ajustes_sistema(request):
     config, created = ConfiguracionSistema.objects.get_or_create(id=1)
 
@@ -69,14 +69,14 @@ def ajustes_sistema(request):
     else:
         form = ConfiguracionForm(instance=config)
 
-    return render(request, 'configuraciones/usuarios/formulario.html', {
+    return render(request, 'configuraciones/formulario_ajustes.html', {
         'form': form,
         'titulo': "Preferencias del Sistema",
         'is_instance': True
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def lista_roles(request):
     roles_list = Group.objects.all().order_by('name')
     per_page = request.GET.get('per_page', 10)
@@ -96,7 +96,7 @@ def lista_roles(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
 def editar_rol(request, pk=None):
     if pk:
         rol = get_object_or_404(Group, pk=pk)

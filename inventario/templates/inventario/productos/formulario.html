@@ -1,7 +1,7 @@
 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
     <div class="bg-gray-100 dark:bg-gray-700 border-b-4 border-purple-600 dark:border-purple-500 p-4 flex justify-between items-center">
         <h2 class="text-xl font-black text-gray-800 dark:text-white uppercase tracking-wider">{{ titulo }}</h2>
-        <button onclick="cerrarModal()" class="text-gray-500 hover:text-red-500 transition">
+        <button onclick="cerrarCamaraProducto(); cerrarModal()" class="text-gray-500 hover:text-red-500 transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -15,7 +15,21 @@
         <div>
             <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
             <div class="relative">
-                {% if field.name == 'permisos' %}
+                {% if field.name == 'codigo_barras' %}
+                    <div class="flex gap-2">
+                        {{ field }}
+                        <button type="button"
+                                onclick="abrirCamaraProducto()"
+                                class="bg-purple-100 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/70 px-4 rounded-lg transition-colors flex items-center justify-center flex-shrink-0"
+                                title="Escanear código de barras con la cámara">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 font-semibold">Puedes escribir el código manualmente o escanearlo con la cámara.</p>
+                {% elif field.name == 'permisos' %}
                     <div class="max-h-60 overflow-y-auto bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg p-4 custom-scrollbar">
                         {{ field }}
                     </div>
@@ -30,7 +44,7 @@
         {% endfor %}
 
         <div class="flex gap-3 pt-4">
-            <button type="button" onclick="cerrarModal()"
+            <button type="button" onclick="cerrarCamaraProducto(); cerrarModal()"
                     class="w-1/2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-500 transition">
                 Cancelar
             </button>
@@ -40,4 +54,410 @@
             </button>
         </div>
     </form>
+
+    <div id="modal-escaner-producto" class="hidden fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl w-full max-w-sm shadow-2xl relative border border-gray-200 dark:border-gray-700">
+            <button type="button" onclick="cerrarCamaraProducto()" class="absolute -top-4 -right-4 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition transform hover:scale-110 z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="text-center mb-3 mt-2">
+                <h3 class="font-black text-gray-800 dark:text-white text-lg">Escanear Código</h3>
+                <p id="estado-camara-producto" class="text-xs text-gray-500 dark:text-gray-400">Centra el código de barras y toca la imagen si necesitas enfocar.</p>
+            </div>
+            <div class="relative w-full rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+                <video id="video-barras-producto" class="hidden w-full h-full object-cover" playsinline muted onclick="enfocarCamaraProducto(event)"></video>
+                <div id="lector-barras-producto" class="hidden w-full h-full"></div>
+                <div class="pointer-events-none absolute inset-x-8 top-1/2 -translate-y-1/2 h-24 border-2 border-purple-400 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]"></div>
+            </div>
+            <div class="mt-4 grid grid-cols-3 gap-3">
+                <button type="button" onclick="enfocarCamaraProducto()" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Enfocar
+                </button>
+                <button type="button" id="btn-linterna-producto" onclick="toggleLinternaProducto()" class="hidden bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 font-bold py-3 rounded-xl hover:bg-yellow-200 dark:hover:bg-yellow-900/70 transition">
+                    Linterna
+                </button>
+                <button type="button" onclick="cerrarCamaraProducto()" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold py-3 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    (function() {
+        window.inventarioScannerProducto = window.inventarioScannerProducto || null;
+        window.streamBarrasProducto = window.streamBarrasProducto || null;
+        window.detectorBarrasProducto = window.detectorBarrasProducto || null;
+        window.rafBarrasProducto = window.rafBarrasProducto || null;
+        window.linternaProductoActiva = false;
+        window.configBarrasProducto = null;
+        window.erroresDetectorProducto = 0;
+        window.formatosBarrasNativosProducto = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar'];
+
+        window.abrirCamaraProducto = function() {
+            var modal = document.getElementById('modal-escaner-producto');
+            if (!modal) return;
+
+            modal.classList.remove('hidden');
+            window.actualizarEstadoCamaraProducto('Iniciando cámara...');
+            window.configBarrasProducto = window.obtenerConfigCodigoBarrasProducto();
+
+            if (window.streamBarrasProducto || window.inventarioScannerProducto) return;
+
+            if ('BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                window.iniciarCamaraNativaProducto().catch(function(errorNativo) {
+                    console.warn('No se pudo usar BarcodeDetector, usando lector de respaldo:', errorNativo);
+                    window.iniciarCamaraHtml5Producto(window.configBarrasProducto).catch(function(err) {
+                        console.error('Error al iniciar cámara:', err);
+                        alert('No se pudo encender la cámara. Revisa los permisos del navegador o usa https/localhost.');
+                        window.cerrarCamaraProducto();
+                    });
+                });
+                return;
+            }
+
+            window.iniciarCamaraHtml5Producto(window.configBarrasProducto).catch(function(err) {
+                console.error('Error al iniciar cámara:', err);
+                alert('No se pudo encender la cámara. Revisa los permisos del navegador o usa https/localhost.');
+                window.cerrarCamaraProducto();
+            });
+        };
+
+        window.iniciarCamaraNativaProducto = async function() {
+            var formatosSoportados = BarcodeDetector.getSupportedFormats
+                ? await BarcodeDetector.getSupportedFormats()
+                : window.formatosBarrasNativosProducto;
+            var formatos = window.formatosBarrasNativosProducto.filter(function(formato) {
+                return formatosSoportados.includes(formato);
+            });
+
+            if (!formatos.length) {
+                throw new Error('El navegador no soporta formatos de código de barras nativos.');
+            }
+
+            window.detectorBarrasProducto = new BarcodeDetector({ formats: formatos });
+            window.erroresDetectorProducto = 0;
+            window.streamBarrasProducto = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: {
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+
+            var video = document.getElementById('video-barras-producto');
+            var fallback = document.getElementById('lector-barras-producto');
+            fallback.classList.add('hidden');
+            video.classList.remove('hidden');
+            video.srcObject = window.streamBarrasProducto;
+            await video.play();
+
+            var track = window.streamBarrasProducto.getVideoTracks()[0];
+            await window.aplicarMejorasCamaraProducto(track, false);
+            window.actualizarBotonLinternaProducto(track);
+            window.actualizarEstadoCamaraProducto('Apunta al código. Toca la imagen para intentar enfocar.');
+            window.escanearConDetectorNativoProducto();
+        };
+
+        window.iniciarCamaraHtml5Producto = function(config) {
+            var video = document.getElementById('video-barras-producto');
+            var fallback = document.getElementById('lector-barras-producto');
+            video.classList.add('hidden');
+            fallback.classList.remove('hidden');
+            window.actualizarEstadoCamaraProducto('Usando lector de respaldo...');
+
+            return window.cargarScannerProducto().then(function() {
+                config = window.agregarFormatosHtml5Producto(config);
+                window.inventarioScannerProducto = new Html5Qrcode('lector-barras-producto');
+                return window.iniciarHtml5ConFallbackProducto(config);
+            });
+        };
+
+        window.cargarScannerProducto = function() {
+            return new Promise(function(resolve, reject) {
+                if (window.Html5Qrcode) {
+                    resolve();
+                    return;
+                }
+
+                var scriptExistente = document.querySelector('script[data-html5-qrcode="true"]');
+                if (scriptExistente) {
+                    scriptExistente.addEventListener('load', resolve, { once: true });
+                    scriptExistente.addEventListener('error', reject, { once: true });
+                    return;
+                }
+
+                var script = document.createElement('script');
+                script.src = 'https://unpkg.com/html5-qrcode';
+                script.dataset.html5Qrcode = 'true';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+
+        window.iniciarHtml5ConFallbackProducto = function(config) {
+            return window.inventarioScannerProducto.start(
+                { facingMode: 'environment' },
+                config,
+                window.onScanProductoExitoso,
+                function() {}
+            ).catch(function(errorInicial) {
+                console.warn('No se pudo abrir la cámara trasera directa, intentando por dispositivo:', errorInicial);
+
+                if (!window.Html5Qrcode || !Html5Qrcode.getCameras) {
+                    throw errorInicial;
+                }
+
+                return Html5Qrcode.getCameras().then(function(camaras) {
+                    if (!camaras || camaras.length === 0) {
+                        throw errorInicial;
+                    }
+
+                    var camaraTrasera = camaras.find(function(camara) {
+                        return /back|rear|environment|trasera|posterior/i.test(camara.label || '');
+                    }) || camaras[camaras.length - 1];
+
+                    return window.inventarioScannerProducto.start(
+                        camaraTrasera.id,
+                        config,
+                        window.onScanProductoExitoso,
+                        function() {}
+                    );
+                });
+            });
+        };
+
+        window.escanearConDetectorNativoProducto = async function() {
+            if (!window.streamBarrasProducto || !window.detectorBarrasProducto) return;
+
+            var video = document.getElementById('video-barras-producto');
+            if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+                try {
+                    var codigos = await window.detectorBarrasProducto.detect(video);
+                    window.erroresDetectorProducto = 0;
+
+                    if (codigos.length && codigos[0].rawValue) {
+                        window.onScanProductoExitoso(codigos[0].rawValue);
+                        return;
+                    }
+                } catch (err) {
+                    window.erroresDetectorProducto += 1;
+                    if (window.erroresDetectorProducto >= 3) {
+                        console.warn('El detector nativo falló, cambiando a lector de respaldo:', err);
+                        window.detenerCamaraNativaProducto();
+                        window.iniciarCamaraHtml5Producto(window.configBarrasProducto).catch(function(errorFallback) {
+                            console.error('Error al iniciar lector de respaldo:', errorFallback);
+                            alert('No se pudo encender la cámara. Revisa los permisos del navegador o usa https/localhost.');
+                            window.cerrarCamaraProducto();
+                        });
+                        return;
+                    }
+                }
+            }
+
+            window.rafBarrasProducto = requestAnimationFrame(window.escanearConDetectorNativoProducto);
+        };
+
+        window.cerrarCamaraProducto = function() {
+            var modal = document.getElementById('modal-escaner-producto');
+            if (modal) modal.classList.add('hidden');
+            window.detenerCamaraNativaProducto();
+
+            if (!window.inventarioScannerProducto) return;
+
+            var scanner = window.inventarioScannerProducto;
+            scanner.stop().then(function() {
+                scanner.clear();
+                window.inventarioScannerProducto = null;
+            }).catch(function(err) {
+                console.error('Error apagando cámara:', err);
+                try {
+                    scanner.clear();
+                } catch (clearErr) {}
+                window.inventarioScannerProducto = null;
+            });
+        };
+
+        window.detenerCamaraNativaProducto = function() {
+            if (window.rafBarrasProducto) {
+                cancelAnimationFrame(window.rafBarrasProducto);
+                window.rafBarrasProducto = null;
+            }
+
+            if (window.streamBarrasProducto) {
+                window.streamBarrasProducto.getTracks().forEach(function(track) {
+                    track.stop();
+                });
+                window.streamBarrasProducto = null;
+            }
+
+            var video = document.getElementById('video-barras-producto');
+            if (video) {
+                video.pause();
+                video.srcObject = null;
+                video.classList.add('hidden');
+            }
+
+            window.detectorBarrasProducto = null;
+            window.linternaProductoActiva = false;
+            window.actualizarBotonLinternaProducto(null);
+        };
+
+        window.actualizarEstadoCamaraProducto = function(mensaje) {
+            var estado = document.getElementById('estado-camara-producto');
+            if (estado) estado.innerText = mensaje;
+        };
+
+        window.aplicarMejorasCamaraProducto = async function(track, mostrarEstado) {
+            if (!track || !track.getCapabilities || !track.applyConstraints) return;
+
+            var capabilities = track.getCapabilities();
+            var ajustes = [];
+
+            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                ajustes.push({ focusMode: 'continuous' });
+            }
+            if (capabilities.exposureMode && capabilities.exposureMode.includes('continuous')) {
+                ajustes.push({ exposureMode: 'continuous' });
+            }
+            if (capabilities.whiteBalanceMode && capabilities.whiteBalanceMode.includes('continuous')) {
+                ajustes.push({ whiteBalanceMode: 'continuous' });
+            }
+
+            if (!ajustes.length) return;
+
+            try {
+                await track.applyConstraints({ advanced: ajustes });
+                if (mostrarEstado) window.actualizarEstadoCamaraProducto('Enfoque solicitado. Mantén el código estable.');
+            } catch (err) {
+                console.warn('No se pudieron aplicar mejoras de cámara:', err);
+            }
+        };
+
+        window.enfocarCamaraProducto = function(event) {
+            if (!window.streamBarrasProducto) {
+                window.actualizarEstadoCamaraProducto('El enfoque táctil está disponible con el lector nativo.');
+                return;
+            }
+
+            var track = window.streamBarrasProducto.getVideoTracks()[0];
+            if (!track || !track.getCapabilities || !track.applyConstraints) {
+                window.actualizarEstadoCamaraProducto('Este navegador no permite controlar el enfoque manualmente.');
+                return;
+            }
+
+            var capabilities = track.getCapabilities();
+            var ajustes = [];
+
+            if (capabilities.focusMode && capabilities.focusMode.includes('single-shot')) {
+                ajustes.push({ focusMode: 'single-shot' });
+            } else if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                ajustes.push({ focusMode: 'continuous' });
+            }
+
+            if (event && capabilities.pointsOfInterest) {
+                var rect = event.currentTarget.getBoundingClientRect();
+                ajustes.push({
+                    pointsOfInterest: [{
+                        x: (event.clientX - rect.left) / rect.width,
+                        y: (event.clientY - rect.top) / rect.height
+                    }]
+                });
+            }
+
+            if (!ajustes.length) {
+                window.actualizarEstadoCamaraProducto('Tu cámara no expone enfoque táctil al navegador.');
+                return;
+            }
+
+            track.applyConstraints({ advanced: ajustes }).then(function() {
+                window.actualizarEstadoCamaraProducto('Enfoque solicitado. Mantén el código estable.');
+            }).catch(function(err) {
+                console.warn('No se pudo enfocar:', err);
+                window.actualizarEstadoCamaraProducto('No se pudo controlar el enfoque en este dispositivo.');
+            });
+        };
+
+        window.actualizarBotonLinternaProducto = function(track) {
+            var boton = document.getElementById('btn-linterna-producto');
+            if (!boton) return;
+
+            if (!track || !track.getCapabilities || !track.getCapabilities().torch) {
+                boton.classList.add('hidden');
+                return;
+            }
+
+            boton.classList.remove('hidden');
+            boton.innerText = window.linternaProductoActiva ? 'Apagar Luz' : 'Linterna';
+        };
+
+        window.toggleLinternaProducto = function() {
+            if (!window.streamBarrasProducto) return;
+
+            var track = window.streamBarrasProducto.getVideoTracks()[0];
+            if (!track || !track.applyConstraints) return;
+
+            window.linternaProductoActiva = !window.linternaProductoActiva;
+            track.applyConstraints({ advanced: [{ torch: window.linternaProductoActiva }] }).then(function() {
+                window.actualizarBotonLinternaProducto(track);
+            }).catch(function(err) {
+                console.warn('No se pudo cambiar la linterna:', err);
+                window.linternaProductoActiva = false;
+                window.actualizarBotonLinternaProducto(track);
+            });
+        };
+
+        window.onScanProductoExitoso = function(decodedText) {
+            var inputCodigo = document.getElementById('id_codigo_barras');
+            if (inputCodigo) {
+                inputCodigo.value = decodedText;
+                inputCodigo.dispatchEvent(new Event('change', { bubbles: true }));
+                inputCodigo.focus();
+            }
+
+            window.cerrarCamaraProducto();
+
+            var audio = new Audio('https://actions.google.com/sounds/v1/ui/beep_short.ogg');
+            audio.play().catch(function() {});
+        };
+
+        window.obtenerConfigCodigoBarrasProducto = function() {
+            return {
+                fps: 15,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    var width = Math.min(Math.max(Math.floor(viewfinderWidth * 0.92), 220), 340, viewfinderWidth);
+                    var height = Math.min(Math.max(Math.floor(viewfinderHeight * 0.55), 120), 180, viewfinderHeight);
+                    return { width: width, height: height };
+                },
+                aspectRatio: 1.777,
+                disableFlip: true,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
+            };
+        };
+
+        window.agregarFormatosHtml5Producto = function(config) {
+            if (window.Html5QrcodeSupportedFormats) {
+                config.formatsToSupport = [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.CODE_93,
+                    Html5QrcodeSupportedFormats.ITF,
+                    Html5QrcodeSupportedFormats.CODABAR
+                ].filter(Boolean);
+            }
+
+            return config;
+        };
+    })();
+</script>

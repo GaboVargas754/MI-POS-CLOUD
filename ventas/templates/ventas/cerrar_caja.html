@@ -31,6 +31,13 @@
         </div>
     </div>
 
+    {% if error %}
+    <div class="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 mb-6 rounded-r">
+        <p class="font-bold text-sm">No se pudo cerrar caja</p>
+        <p class="text-sm">{{ error }}</p>
+    </div>
+    {% endif %}
+
     <form method="POST" action="{% url 'cerrar_caja' %}" class="space-y-6">
         {% csrf_token %}
 

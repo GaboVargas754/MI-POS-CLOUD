@@ -1,8 +1,15 @@
+import os
 from pathlib import Path
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'django-insecure-)98@g-5s=)ow#)8+8^w-*s#_w(dazpc2s4p&=0$z1puz@ingnw'
-DEBUG = True
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-)98@g-5s=)ow#)8+8^w-*s#_w(dazpc2s4p&=0$z1puz@ingnw')
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.trycloudflare.com",
+]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -68,8 +75,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'es-mx'
+TIME_ZONE = os.environ.get('DJANGO_TIME_ZONE', 'America/Mexico_City')
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = 'static/'

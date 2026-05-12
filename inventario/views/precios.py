@@ -8,7 +8,7 @@ from inventario.forms import PrecioProductoForm
 from core.utils import get_config_context
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='/core/')
+@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def lista_precios(request):
     precios_list = PrecioProducto.objects.all().select_related('producto').order_by('producto__nombre')
 
@@ -24,7 +24,7 @@ def lista_precios(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='/core/')
+@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def editar_precio(request, pk=None):
     precio_obj = get_object_or_404(PrecioProducto, pk=pk) if pk else None
     form = PrecioProductoForm(request.POST or None, instance=precio_obj)
@@ -40,7 +40,7 @@ def editar_precio(request, pk=None):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='/core/')
+@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 @require_POST
 def actualizar_precio_inline(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)

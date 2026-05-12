@@ -6,7 +6,7 @@ from inventario.forms import CategoriaForm
 from core.utils import get_config_context
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def lista_categorias(request):
     categorias_list = Categoria.objects.all().order_by('nombre')
 
@@ -27,7 +27,7 @@ def lista_categorias(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='/configuraciones/portal/')
+@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
 def editar_categoria(request, pk=None):
     if pk:
         categoria = get_object_or_404(Categoria, pk=pk)
