@@ -17,6 +17,7 @@ db.sqlite3
 
 # Archivos generados localmente
 mi_codigo_completo.txt
+staticfiles/
 
 # Archivos del Sistema Operativo
 .DS_Store
