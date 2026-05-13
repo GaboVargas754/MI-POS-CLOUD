@@ -122,7 +122,9 @@
             <div class="grid grid-cols-1 gap-2">
                 <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="min-h-11 w-full rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-black flex items-center justify-center">Reimprimir ticket</a>
                 {% if venta.estado == 'ACTIVA' %}
+                    {% if perms.configuraciones.cancelar_ventas or request.user.is_superuser %}
                     <a href="{% url 'cancelar_venta' venta.id %}" class="min-h-11 w-full rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 font-black flex items-center justify-center">Cancelar ticket</a>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -168,7 +170,9 @@
                         <div class="flex flex-col gap-2 items-center">
                             <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">Reimprimir</a>
                             {% if venta.estado == 'ACTIVA' %}
+                                {% if perms.configuraciones.cancelar_ventas or request.user.is_superuser %}
                                 <a href="{% url 'cancelar_venta' venta.id %}" class="text-red-600 dark:text-red-400 hover:underline font-bold text-sm">Cancelar</a>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </td>

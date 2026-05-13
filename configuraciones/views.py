@@ -6,15 +6,27 @@ from django.core.paginator import Paginator
 from .forms import ConfiguracionForm, PuntoVentaForm, RolForm, TiendaForm, UsuarioForm
 from .models import ConfiguracionSistema, PuntoVenta, Tienda
 from .utils import get_perfil_usuario
+from core.permissions import any_permission_required
 from core.utils import get_config_context
 
+GESTIONAR_USUARIOS_PERMISSION = 'configuraciones.gestionar_usuarios'
+GESTIONAR_ROLES_PERMISSION = 'configuraciones.gestionar_roles'
+GESTIONAR_TIENDAS_PERMISSION = 'configuraciones.gestionar_tiendas'
+EDITAR_PREFERENCIAS_PERMISSION = 'configuraciones.editar_preferencias'
+SISTEMA_PERMISSIONS = [
+    GESTIONAR_USUARIOS_PERMISSION,
+    GESTIONAR_ROLES_PERMISSION,
+    GESTIONAR_TIENDAS_PERMISSION,
+    EDITAR_PREFERENCIAS_PERMISSION,
+]
+
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@any_permission_required(SISTEMA_PERMISSIONS, login_url='portal_principal')
 def dashboard_configuracion(request):
     return render(request, 'configuraciones/dashboard.html', get_config_context('Sistema', 'border-yellow-500'))
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(GESTIONAR_USUARIOS_PERMISSION, login_url='portal_principal')
 def lista_usuarios(request):
     usuarios_list = User.objects.select_related('perfil__tienda', 'perfil__punto_venta').all().order_by('username')
     per_page = request.GET.get('per_page', 10)
@@ -36,7 +48,7 @@ def lista_usuarios(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(GESTIONAR_USUARIOS_PERMISSION, login_url='portal_principal')
 def editar_usuario(request, pk=None):
     if pk:
         usuario = get_object_or_404(User, pk=pk)
@@ -60,7 +72,7 @@ def editar_usuario(request, pk=None):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(EDITAR_PREFERENCIAS_PERMISSION, login_url='portal_principal')
 def ajustes_sistema(request):
     config, created = ConfiguracionSistema.objects.get_or_create(id=1)
 
@@ -79,7 +91,7 @@ def ajustes_sistema(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(GESTIONAR_ROLES_PERMISSION, login_url='portal_principal')
 def lista_roles(request):
     roles_list = Group.objects.all().order_by('name')
     per_page = request.GET.get('per_page', 10)
@@ -99,7 +111,7 @@ def lista_roles(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(GESTIONAR_ROLES_PERMISSION, login_url='portal_principal')
 def editar_rol(request, pk=None):
     if pk:
         rol = get_object_or_404(Group, pk=pk)
@@ -124,7 +136,7 @@ def editar_rol(request, pk=None):
 
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(GESTIONAR_TIENDAS_PERMISSION, login_url='portal_principal')
 def lista_tiendas(request):
     tiendas_list = Tienda.objects.prefetch_related('puntos_venta').order_by('nombre')
     per_page = request.GET.get('per_page', 10)
@@ -144,7 +156,7 @@ def lista_tiendas(request):
 
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(GESTIONAR_TIENDAS_PERMISSION, login_url='portal_principal')
 def editar_tienda(request, pk=None):
     tienda = get_object_or_404(Tienda, pk=pk) if pk else None
     form = TiendaForm(request.POST or None, instance=tienda)
@@ -166,7 +178,7 @@ def editar_tienda(request, pk=None):
 
 
 @login_required
-@permission_required('configuraciones.acceder_configuraciones', login_url='portal_principal')
+@permission_required(GESTIONAR_TIENDAS_PERMISSION, login_url='portal_principal')
 def editar_punto_venta(request, pk=None):
     punto = get_object_or_404(PuntoVenta, pk=pk) if pk else None
     form = PuntoVentaForm(request.POST or None, instance=punto)

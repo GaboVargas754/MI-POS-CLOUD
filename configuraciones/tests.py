@@ -7,7 +7,12 @@ from configuraciones.models import PerfilUsuario, PuntoVenta, Tienda
 class ConfiguracionViewsTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='admin', password='testpass')
-        self.user.user_permissions.add(Permission.objects.get(codename='acceder_configuraciones'))
+        self.user.user_permissions.add(*Permission.objects.filter(codename__in=[
+            'gestionar_usuarios',
+            'gestionar_roles',
+            'gestionar_tiendas',
+            'editar_preferencias',
+        ]))
         self.client.force_login(self.user)
 
     def test_formulario_rol_existe(self):
@@ -15,6 +20,20 @@ class ConfiguracionViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Nuevo Rol')
+        self.assertContains(response, 'data-role-permission-selector')
+        self.assertContains(response, 'Disponibles')
+        self.assertContains(response, 'Asignados')
+        self.assertContains(response, 'data-role-permissions-source')
+
+    def test_formulario_rol_requiere_permiso_granular(self):
+        usuario = User.objects.create_user(username='usuarios', password='testpass')
+        usuario.user_permissions.add(Permission.objects.get(codename='gestionar_usuarios'))
+        self.client.force_login(usuario)
+
+        response = self.client.get(reverse('nuevo_rol'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].startswith(reverse('portal_principal')))
 
     def test_formulario_ajustes_no_reutiliza_campos_de_usuario(self):
         response = self.client.get(reverse('ajustes_sistema'))

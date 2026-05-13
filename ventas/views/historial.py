@@ -7,11 +7,11 @@ from django.shortcuts import render
 from core.utils import get_config_context, get_querystring_without_page
 from configuraciones.utils import get_tienda_actual
 from ventas.models import Venta
-from ventas.views.carrito import VENTAS_PERMISSION
+VER_HISTORIAL_VENTAS_PERMISSION = 'configuraciones.ver_historial_ventas'
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(VER_HISTORIAL_VENTAS_PERMISSION, login_url='portal_principal')
 def historial_ventas(request):
     tienda_actual = get_tienda_actual(request)
     query = request.GET.get('q', '').strip()

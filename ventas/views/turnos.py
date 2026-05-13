@@ -10,7 +10,7 @@ from core.utils import get_config_context, get_querystring_without_page
 from configuraciones.utils import get_tienda_actual
 from configuraciones.models import ConfiguracionSistema
 from ventas.models import SesionCaja, Venta
-from ventas.views.carrito import VENTAS_PERMISSION
+VER_TURNOS_PERMISSION = 'configuraciones.ver_turnos'
 
 
 def _decimal(value):
@@ -47,7 +47,7 @@ def _enriquecer_turno(sesion):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(VER_TURNOS_PERMISSION, login_url='portal_principal')
 def historial_turnos(request):
     tienda_actual = get_tienda_actual(request)
     query = request.GET.get('q', '').strip()
@@ -115,7 +115,7 @@ def historial_turnos(request):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(VER_TURNOS_PERMISSION, login_url='portal_principal')
 def imprimir_corte(request, sesion_id):
     tienda_actual = get_tienda_actual(request)
     sesion = get_object_or_404(SesionCaja.objects.select_related('cajero', 'tienda', 'punto_venta').filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)), id=sesion_id)

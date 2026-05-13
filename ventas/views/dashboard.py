@@ -6,10 +6,10 @@ from inventario.models import Producto
 from ventas.models import Venta, DetalleVenta
 from core.utils import get_config_context
 from configuraciones.utils import get_tienda_actual
-from ventas.views.carrito import VENTAS_PERMISSION
+VER_ESTADISTICAS_PERMISSION = 'configuraciones.ver_estadisticas'
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(VER_ESTADISTICAS_PERMISSION, login_url='portal_principal')
 def dashboard(request):
     tienda_actual = get_tienda_actual(request)
     hoy = timezone.now().date()

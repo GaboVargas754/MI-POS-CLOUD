@@ -10,7 +10,14 @@ from inventario.models import Categoria, HistorialPrecio, MovimientoInventario, 
 class ProductoFormTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='inventario', password='testpass')
-        self.user.user_permissions.add(Permission.objects.get(codename='acceder_inventario'))
+        self.user.user_permissions.add(*Permission.objects.filter(codename__in=[
+            'ver_inventario',
+            'editar_productos',
+            'ajustar_stock',
+            'editar_precios',
+            'importar_exportar_inventario',
+            'imprimir_etiquetas',
+        ]))
         self.client.force_login(self.user)
 
     def test_formulario_producto_muestra_escaner_de_codigo(self):
@@ -217,6 +224,18 @@ class ProductoFormTests(TestCase):
         self.assertEqual(movimiento.usuario, self.user)
         self.assertEqual(movimiento.motivo, 'Entrada de proveedor')
 
+    def test_ajustar_stock_requiere_permiso_granular(self):
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        producto = Producto.objects.create(codigo_barras='750000000024', nombre='Refresco', categoria=categoria, stock=8)
+        viewer = User.objects.create_user(username='viewer', password='testpass')
+        viewer.user_permissions.add(Permission.objects.get(codename='ver_inventario'))
+        self.client.force_login(viewer)
+
+        response = self.client.get(reverse('ajustar_stock', args=[producto.id]))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].startswith(reverse('portal_principal')))
+
     def test_ajustar_stock_requiere_motivo(self):
         categoria = Categoria.objects.create(nombre='Bebidas')
         producto = Producto.objects.create(codigo_barras='750000000021', nombre='Jugo', categoria=categoria, stock=8)
@@ -321,6 +340,22 @@ class ProductoFormTests(TestCase):
         self.assertContains(response, 'El precio no puede ser negativo')
         precio.refresh_from_db()
         self.assertEqual(precio.precio, Decimal('13.75'))
+
+    def test_actualizar_precio_inline_requiere_permiso_granular(self):
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        producto = Producto.objects.create(codigo_barras='750000000041', nombre='Café', categoria=categoria, stock=5)
+        precio = PrecioProducto.objects.create(producto=producto, costo=Decimal('5.00'), precio=Decimal('12.50'))
+        editor = User.objects.create_user(username='editor', password='testpass')
+        editor.user_permissions.add(Permission.objects.get(codename='editar_productos'))
+        self.client.force_login(editor)
+
+        response = self.client.post(reverse('actualizar_precio_inline', args=[producto.id]), {'precio': '13.75'})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].startswith(reverse('portal_principal')))
+        precio.refresh_from_db()
+        self.assertEqual(precio.precio, Decimal('12.50'))
+        self.assertFalse(HistorialPrecio.objects.filter(producto=producto).exists())
 
     def test_entrada_rapida_registra_stock_y_movimiento(self):
         categoria = Categoria.objects.create(nombre='Bebidas')

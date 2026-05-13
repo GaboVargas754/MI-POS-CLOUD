@@ -7,9 +7,10 @@ class PwaAndMobileNavigationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='movil', password='testpass')
         self.user.user_permissions.add(
-            Permission.objects.get(codename='acceder_ventas'),
-            Permission.objects.get(codename='acceder_inventario'),
-            Permission.objects.get(codename='acceder_configuraciones'),
+            Permission.objects.get(codename='operar_pos'),
+            Permission.objects.get(codename='ver_estadisticas'),
+            Permission.objects.get(codename='ver_inventario'),
+            Permission.objects.get(codename='gestionar_usuarios'),
         )
 
     def test_manifest_expone_configuracion_pwa(self):

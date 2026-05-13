@@ -141,7 +141,11 @@ class ConfiguracionForm(forms.ModelForm):
 class RolForm(forms.ModelForm):
     permisos = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.filter(content_type__app_label__in=['ventas', 'inventario', 'configuraciones', 'auth']).order_by('content_type__app_label', 'name'),
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'w-4 h-4 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 dark:bg-gray-700 dark:border-gray-600'}),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'min-h-64 w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-yellow-500 outline-none',
+            'data-role-permissions-source': 'true',
+            'size': '12',
+        }),
         required=False,
         label="Permisos Asignados"
     )
@@ -156,8 +160,26 @@ class RolForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        nombres_permisos = ['acceder_ventas', 'acceder_inventario', 'acceder_configuraciones']
+        nombres_permisos = [
+            'operar_pos',
+            'abrir_cerrar_caja',
+            'cancelar_ventas',
+            'ver_historial_ventas',
+            'ver_estadisticas',
+            'ver_turnos',
+            'ver_inventario',
+            'editar_productos',
+            'ajustar_stock',
+            'editar_precios',
+            'importar_exportar_inventario',
+            'imprimir_etiquetas',
+            'gestionar_usuarios',
+            'gestionar_roles',
+            'gestionar_tiendas',
+            'editar_preferencias',
+        ]
         self.fields['permisos'].queryset = Permission.objects.filter(codename__in=nombres_permisos).order_by('name')
+        self.fields['permisos'].label_from_instance = lambda permiso: permiso.name
 
         if self.instance.pk:
             self.fields['permisos'].initial = self.instance.permissions.all()

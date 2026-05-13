@@ -14,9 +14,11 @@
     </div>
 
     <div class="w-full sm:w-auto">
+        {% if perms.configuraciones.editar_productos or request.user.is_superuser %}
         <button hx-get="{% url 'nueva_categoria' %}" hx-target="#modal-content" class="w-full sm:w-auto text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
             + Nueva Categoría
         </button>
+        {% endif %}
     </div>
 </div>
 

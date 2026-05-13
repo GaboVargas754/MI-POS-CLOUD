@@ -18,9 +18,27 @@
         {% if nav_items %}
         <div class="hidden md:flex items-center justify-center gap-1 flex-1">
             {% for item in nav_items %}
+            {% if request.user.is_superuser %}
             <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
                 {{ item.label }}
             </a>
+            {% elif item.label == 'POS' and perms.configuraciones.operar_pos %}
+            <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
+                {{ item.label }}
+            </a>
+            {% elif item.label == 'Estadísticas' and perms.configuraciones.ver_estadisticas %}
+            <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
+                {{ item.label }}
+            </a>
+            {% elif item.label == 'Inventario' and perms.configuraciones.ver_inventario %}
+            <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
+                {{ item.label }}
+            </a>
+            {% elif item.label == 'Sistema' and perms.configuraciones.gestionar_usuarios or item.label == 'Sistema' and perms.configuraciones.gestionar_roles or item.label == 'Sistema' and perms.configuraciones.gestionar_tiendas or item.label == 'Sistema' and perms.configuraciones.editar_preferencias %}
+            <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
+                {{ item.label }}
+            </a>
+            {% endif %}
             {% endfor %}
         </div>
         {% endif %}

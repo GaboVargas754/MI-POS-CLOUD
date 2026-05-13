@@ -11,8 +11,10 @@ from inventario.forms import PrecioProductoForm
 from configuraciones.utils import get_tienda_actual
 from core.utils import get_config_context, get_querystring_without_page
 
+EDITAR_PRECIOS_PERMISSION = 'configuraciones.editar_precios'
+
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(EDITAR_PRECIOS_PERMISSION, login_url='portal_principal')
 def lista_precios(request):
     query = request.GET.get('q', '').strip()
     precios_list = PrecioProducto.objects.all().select_related('producto').order_by('producto__nombre')
@@ -40,7 +42,7 @@ def lista_precios(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(EDITAR_PRECIOS_PERMISSION, login_url='portal_principal')
 def editar_precio(request, pk=None):
     tienda_actual = get_tienda_actual(request)
     precio_obj = get_object_or_404(PrecioProducto, pk=pk) if pk else None
@@ -70,7 +72,7 @@ def editar_precio(request, pk=None):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(EDITAR_PRECIOS_PERMISSION, login_url='portal_principal')
 @require_POST
 def actualizar_precio_inline(request, producto_id):
     tienda_actual = get_tienda_actual(request)

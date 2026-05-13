@@ -8,15 +8,19 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 from core.utils import get_config_context
+from core.permissions import any_permission_required
 from configuraciones.utils import get_tienda_actual
 from inventario.models import MovimientoInventario, Producto
 from ventas.models import DetalleVenta, SesionCaja, Venta
 from configuraciones.models import ConfiguracionSistema
-from ventas.views.carrito import VENTAS_PERMISSION, calcular_total_carrito
+from ventas.views.carrito import OPERAR_POS_PERMISSION, calcular_total_carrito
+
+CANCELAR_VENTAS_PERMISSION = 'configuraciones.cancelar_ventas'
+VER_HISTORIAL_VENTAS_PERMISSION = 'configuraciones.ver_historial_ventas'
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@any_permission_required([OPERAR_POS_PERMISSION, VER_HISTORIAL_VENTAS_PERMISSION], login_url='portal_principal')
 def imprimir_ticket(request, venta_id):
     tienda_actual = get_tienda_actual(request)
     venta = get_object_or_404(Venta.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)), id=venta_id)
@@ -31,7 +35,7 @@ def imprimir_ticket(request, venta_id):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(CANCELAR_VENTAS_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def cancelar_venta(request, venta_id):
     tienda_actual = get_tienda_actual(request)
@@ -95,7 +99,7 @@ def cancelar_venta(request, venta_id):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 @require_POST
 def procesar_venta(request):
     carrito = request.session.get('carrito', {})

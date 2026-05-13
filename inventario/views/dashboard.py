@@ -6,7 +6,7 @@ from configuraciones.utils import get_tienda_actual
 from inventario.models import MovimientoInventario, Producto
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required('configuraciones.ver_inventario', login_url='portal_principal')
 def dashboard(request):
     tienda_actual = get_tienda_actual(request)
     productos_activos = Producto.objects.filter(activo=True)

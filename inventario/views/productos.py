@@ -16,6 +16,12 @@ from inventario.forms import AjusteStockForm, EntradaRapidaForm, ImportarProduct
 from configuraciones.utils import get_tienda_actual
 from core.utils import get_config_context, get_querystring_without_page
 
+VER_INVENTARIO_PERMISSION = 'configuraciones.ver_inventario'
+EDITAR_PRODUCTOS_PERMISSION = 'configuraciones.editar_productos'
+AJUSTAR_STOCK_PERMISSION = 'configuraciones.ajustar_stock'
+IMPORTAR_EXPORTAR_INVENTARIO_PERMISSION = 'configuraciones.importar_exportar_inventario'
+IMPRIMIR_ETIQUETAS_PERMISSION = 'configuraciones.imprimir_etiquetas'
+
 
 def _str_to_bool(value):
     return str(value).strip().lower() not in {'0', 'false', 'no', 'inactivo', 'inactive'}
@@ -111,7 +117,7 @@ def _productos_filtrados(request):
     }
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(VER_INVENTARIO_PERMISSION, login_url='portal_principal')
 def lista_inventario(request):
     productos_list, filtros = _productos_filtrados(request)
 
@@ -136,7 +142,7 @@ def lista_inventario(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(EDITAR_PRODUCTOS_PERMISSION, login_url='portal_principal')
 def editar_producto(request, pk=None):
     tienda_actual = get_tienda_actual(request)
     if pk:
@@ -202,7 +208,7 @@ def editar_producto(request, pk=None):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(EDITAR_PRODUCTOS_PERMISSION, login_url='portal_principal')
 def resolver_codigo_producto(request):
     codigo_barras = request.GET.get('codigo_barras', '').strip()
     producto = Producto.objects.filter(codigo_barras=codigo_barras).first()
@@ -230,7 +236,7 @@ def resolver_codigo_producto(request):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(AJUSTAR_STOCK_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def ajustar_stock(request, pk):
     tienda_actual = get_tienda_actual(request)
@@ -271,7 +277,7 @@ def ajustar_stock(request, pk):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(VER_INVENTARIO_PERMISSION, login_url='portal_principal')
 def movimientos_producto(request, pk):
     producto = get_object_or_404(Producto.objects.select_related('categoria', 'precios'), pk=pk)
     tienda_actual = get_tienda_actual(request)
@@ -296,7 +302,7 @@ def movimientos_producto(request, pk):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(VER_INVENTARIO_PERMISSION, login_url='portal_principal')
 def historial_precios_producto(request, pk):
     producto = get_object_or_404(Producto.objects.select_related('categoria', 'precios'), pk=pk)
     tienda_actual = get_tienda_actual(request)
@@ -313,7 +319,7 @@ def historial_precios_producto(request, pk):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(AJUSTAR_STOCK_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def entrada_rapida(request):
     tienda_actual = get_tienda_actual(request)
@@ -354,7 +360,7 @@ def entrada_rapida(request):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(IMPORTAR_EXPORTAR_INVENTARIO_PERMISSION, login_url='portal_principal')
 def exportar_productos_csv(request):
     productos, _ = _productos_filtrados(request)
     response = HttpResponse(content_type='text/csv; charset=utf-8')
@@ -380,7 +386,7 @@ def exportar_productos_csv(request):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(IMPORTAR_EXPORTAR_INVENTARIO_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def importar_productos_csv(request):
     tienda_actual = get_tienda_actual(request)
@@ -484,7 +490,7 @@ def importar_productos_csv(request):
 
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(IMPRIMIR_ETIQUETAS_PERMISSION, login_url='portal_principal')
 def imprimir_etiquetas(request):
     ids = [id_producto for id_producto in request.GET.get('ids', '').split(',') if id_producto.isdigit()]
     if ids:

@@ -14,13 +14,21 @@
     </div>
 
     <div class="w-full sm:w-auto grid grid-cols-2 sm:flex gap-2">
+        {% if perms.configuraciones.ajustar_stock or request.user.is_superuser %}
         <a href="{% url 'entrada_rapida' %}" class="text-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors">Entrada</a>
+        {% endif %}
+        {% if perms.configuraciones.importar_exportar_inventario or request.user.is_superuser %}
         <a href="{% url 'importar_productos_csv' %}" class="text-center bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors">Importar</a>
         <a href="{% url 'exportar_productos_csv' %}{% if querystring %}?{{ querystring }}{% endif %}" class="text-center bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors">Exportar</a>
+        {% endif %}
+        {% if perms.configuraciones.imprimir_etiquetas or request.user.is_superuser %}
         <a href="{% url 'imprimir_etiquetas' %}{% if querystring %}?{{ querystring }}{% endif %}" target="_blank" class="text-center bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm transition-colors">Etiquetas</a>
+        {% endif %}
+        {% if perms.configuraciones.editar_productos or request.user.is_superuser %}
         <button hx-get="{% url 'nuevo_producto' %}" hx-target="#modal-content" class="col-span-2 sm:col-span-1 text-center bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
             + Nuevo
         </button>
+        {% endif %}
     </div>
 </div>
 
@@ -113,20 +121,32 @@
             <div class="flex items-center justify-between gap-3">
                 <div>
                     <p class="text-xs uppercase font-black text-gray-400 tracking-wider mb-1">Precio</p>
-                    {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                    {% if perms.configuraciones.editar_precios or request.user.is_superuser %}
+                        {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                    {% else %}
+                        <p class="text-lg font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00' }}</p>
+                    {% endif %}
                     {% if not p.precios %}
                         <p class="text-[10px] font-black text-red-500 mt-1">Sin precio</p>
                     {% endif %}
                 </div>
+                {% if perms.configuraciones.editar_productos or perms.configuraciones.ajustar_stock or request.user.is_superuser %}
                 <div class="flex flex-col gap-2 flex-shrink-0">
+                    {% if perms.configuraciones.editar_productos or request.user.is_superuser %}
                     <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="min-h-10 px-4 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 font-bold text-sm">Editar</button>
+                    {% endif %}
+                    {% if perms.configuraciones.ajustar_stock or request.user.is_superuser %}
                     <button hx-get="{% url 'ajustar_stock' p.id %}" hx-target="#modal-content" class="min-h-10 px-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 font-bold text-sm">Ajustar</button>
+                    {% endif %}
                 </div>
+                {% endif %}
             </div>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 {% if perms.configuraciones.imprimir_etiquetas or request.user.is_superuser %}sm:grid-cols-3{% endif %} gap-2">
                 <a href="{% url 'movimientos_producto' p.id %}" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Movimientos</a>
                 <a href="{% url 'historial_precios_producto' p.id %}" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Precios</a>
+                {% if perms.configuraciones.imprimir_etiquetas or request.user.is_superuser %}
                 <a href="{% url 'imprimir_etiquetas' %}?ids={{ p.id }}" target="_blank" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Etiqueta</a>
+                {% endif %}
             </div>
         </div>
         {% empty %}
@@ -162,7 +182,11 @@
                     </td>
                     <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ p.categoria.nombre|default:"Sin categoría" }}</td>
                     <td class="p-4 text-right">
-                        {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                        {% if perms.configuraciones.editar_precios or request.user.is_superuser %}
+                            {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                        {% else %}
+                            <span class="font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00' }}</span>
+                        {% endif %}
                     </td>
                     <td class="p-4 text-center">
                         {% if p.stock > p.stock_minimo %}
@@ -176,11 +200,17 @@
                     <td class="p-4 text-center text-sm font-bold text-gray-500 dark:text-gray-400">{{ p.stock_minimo }}</td>
                     <td class="p-4 text-center">
                         <div class="flex items-center justify-center gap-3">
+                            {% if perms.configuraciones.editar_productos or request.user.is_superuser %}
                             <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="text-purple-600 dark:text-purple-400 hover:underline font-bold text-sm">Editar</button>
+                            {% endif %}
+                            {% if perms.configuraciones.ajustar_stock or request.user.is_superuser %}
                             <button hx-get="{% url 'ajustar_stock' p.id %}" hx-target="#modal-content" class="text-green-600 dark:text-green-400 hover:underline font-bold text-sm">Ajustar</button>
+                            {% endif %}
                             <a href="{% url 'movimientos_producto' p.id %}" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Movimientos</a>
                             <a href="{% url 'historial_precios_producto' p.id %}" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Precios</a>
+                            {% if perms.configuraciones.imprimir_etiquetas or request.user.is_superuser %}
                             <a href="{% url 'imprimir_etiquetas' %}?ids={{ p.id }}" target="_blank" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Etiqueta</a>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

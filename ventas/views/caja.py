@@ -10,7 +10,9 @@ from django.views.decorators.http import require_http_methods
 from core.utils import get_config_context
 from configuraciones.utils import get_punto_venta_actual, get_tienda_actual
 from ventas.models import SesionCaja, Venta
-from ventas.views.carrito import VENTAS_PERMISSION
+from ventas.views.carrito import OPERAR_POS_PERMISSION
+
+CAJA_PERMISSION = 'configuraciones.abrir_cerrar_caja'
 
 
 def _contexto_pos(**extra_context):
@@ -20,7 +22,7 @@ def _contexto_pos(**extra_context):
     }
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(CAJA_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def abrir_caja(request):
     tienda_actual = get_tienda_actual(request)
@@ -48,7 +50,7 @@ def abrir_caja(request):
     return render(request, 'ventas/abrir_caja.html', _contexto_pos())
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(CAJA_PERMISSION, login_url='portal_principal')
 @require_http_methods(["GET", "POST"])
 def cerrar_caja(request):
     tienda_actual = get_tienda_actual(request)

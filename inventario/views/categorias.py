@@ -6,8 +6,11 @@ from inventario.models import Categoria
 from inventario.forms import CategoriaForm
 from core.utils import get_config_context, get_querystring_without_page
 
+VER_INVENTARIO_PERMISSION = 'configuraciones.ver_inventario'
+EDITAR_PRODUCTOS_PERMISSION = 'configuraciones.editar_productos'
+
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(VER_INVENTARIO_PERMISSION, login_url='portal_principal')
 def lista_categorias(request):
     query = request.GET.get('q', '').strip()
     categorias_list = Categoria.objects.all().order_by('nombre')
@@ -34,7 +37,7 @@ def lista_categorias(request):
     })
 
 @login_required
-@permission_required('configuraciones.acceder_inventario', login_url='portal_principal')
+@permission_required(EDITAR_PRODUCTOS_PERMISSION, login_url='portal_principal')
 def editar_categoria(request, pk=None):
     if pk:
         categoria = get_object_or_404(Categoria, pk=pk)

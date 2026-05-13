@@ -6,10 +6,10 @@ from inventario.models import Producto
 from ventas.models import SesionCaja
 from core.utils import get_config_context
 from configuraciones.utils import get_tienda_actual
-from ventas.views.carrito import VENTAS_PERMISSION, calcular_total_carrito
+from ventas.views.carrito import OPERAR_POS_PERMISSION, calcular_total_carrito
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 def pantalla_pos(request):
     tienda_actual = get_tienda_actual(request)
     sesion_abierta = SesionCaja.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), cajero=request.user, estado=True).first()
@@ -33,7 +33,7 @@ def pantalla_pos(request):
     return render(request, 'ventas/pos.html', contexto)
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 def buscar_productos(request):
     get_tienda_actual(request)
     query = request.GET.get('q', '')

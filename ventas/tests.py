@@ -12,7 +12,14 @@ from ventas.models import DetalleVenta, SesionCaja, Venta
 class FlujoVentasTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='cajero', password='testpass')
-        self.user.user_permissions.add(Permission.objects.get(codename='acceder_ventas'))
+        self.user.user_permissions.add(*Permission.objects.filter(codename__in=[
+            'operar_pos',
+            'abrir_cerrar_caja',
+            'cancelar_ventas',
+            'ver_historial_ventas',
+            'ver_estadisticas',
+            'ver_turnos',
+        ]))
         self.client.force_login(self.user)
 
         self.sesion = SesionCaja.objects.create(
@@ -285,8 +292,8 @@ class FlujoVentasTests(TestCase):
 
     def test_pos_muestra_accesos_a_modulos_permitidos(self):
         self.user.user_permissions.add(
-            Permission.objects.get(codename='acceder_inventario'),
-            Permission.objects.get(codename='acceder_configuraciones'),
+            Permission.objects.get(codename='ver_inventario'),
+            Permission.objects.get(codename='gestionar_usuarios'),
         )
         self.client.force_login(self.user)
 
@@ -488,6 +495,17 @@ class FlujoVentasTests(TestCase):
         self.assertContains(response, 'Productos a reintegrar')
         self.assertContains(response, '+2 stock')
         self.assertContains(response, 'motivo_cancelacion')
+
+    def test_cancelar_venta_requiere_permiso_granular(self):
+        venta = self.crear_venta_con_detalle()
+        supervisor = User.objects.create_user(username='supervisor', password='testpass')
+        supervisor.user_permissions.add(Permission.objects.get(codename='ver_historial_ventas'))
+        self.client.force_login(supervisor)
+
+        response = self.client.get(reverse('cancelar_venta', args=[venta.id]))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].startswith(reverse('portal_principal')))
 
     def test_cancelar_venta_rechaza_motivo_vacio(self):
         venta = self.crear_venta_con_detalle()

@@ -8,7 +8,7 @@ from configuraciones.utils import get_tienda_actual
 from inventario.models import Producto
 from ventas.models import SesionCaja
 
-VENTAS_PERMISSION = 'configuraciones.acceder_ventas'
+OPERAR_POS_PERMISSION = 'configuraciones.operar_pos'
 
 
 def calcular_total_carrito(carrito):
@@ -83,7 +83,7 @@ def _agregar_producto_a_carrito(carrito, producto):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 @require_POST
 def agregar_al_carrito(request, producto_id):
     carrito = request.session.get('carrito', {})
@@ -110,7 +110,7 @@ def agregar_al_carrito(request, producto_id):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 @require_POST
 def agregar_por_codigo(request):
     codigo_barras = request.POST.get('codigo_barras', '').strip()
@@ -131,7 +131,7 @@ def agregar_por_codigo(request):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 @require_POST
 def vaciar_carrito(request):
     carrito = request.session.get('carrito', {})
@@ -143,7 +143,7 @@ def vaciar_carrito(request):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 @require_POST
 def eliminar_item(request, producto_id):
     carrito = request.session.get('carrito', {})
@@ -160,7 +160,7 @@ def eliminar_item(request, producto_id):
 
 
 @login_required
-@permission_required(VENTAS_PERMISSION, login_url='portal_principal')
+@permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 @require_POST
 def restar_item(request, producto_id):
     carrito = request.session.get('carrito', {})

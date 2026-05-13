@@ -16,19 +16,49 @@
             <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">{{ field.label }}</label>
 
             {% if field.name == 'permisos' %}
-                <div class="max-h-64 overflow-y-auto bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl p-4 custom-scrollbar">
-                    <div class="checkbox-grid">
+                <div data-role-permission-selector class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/70 p-3 sm:p-4">
+                    <div data-role-permission-fallback class="space-y-2">
                         {{ field }}
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400">Mantén Ctrl/Cmd para seleccionar más de un permiso.</p>
+                    </div>
+
+                    <div data-role-permission-ui class="hidden space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div>
+                                <p class="text-sm font-black text-gray-900 dark:text-white">Permisos del rol</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Mueve permisos entre columnas. Se guardan solo los de la derecha.</p>
+                            </div>
+                            <span data-role-permission-summary class="inline-flex w-fit rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 text-xs font-black text-yellow-800 dark:text-yellow-200">0 asignados</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-3 lg:items-stretch">
+                            <section class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 min-h-0">
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <h3 class="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Disponibles</h3>
+                                    <span data-role-permission-available-count class="text-xs font-black text-gray-400">0</span>
+                                </div>
+                                <input type="search" data-role-permission-search="available" placeholder="Buscar permiso..." class="mb-3 w-full min-h-11 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-500 outline-none">
+                                <div data-role-permission-list="available" class="h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar"></div>
+                            </section>
+
+                            <div class="grid grid-cols-2 lg:grid-cols-1 gap-2 content-center">
+                                <button type="button" data-role-permission-action="add" class="min-h-11 rounded-xl bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700 text-white font-black px-4 transition">Agregar</button>
+                                <button type="button" data-role-permission-action="remove" class="min-h-11 rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-black px-4 transition">Quitar</button>
+                                <button type="button" data-role-permission-action="add-all" class="min-h-11 rounded-xl border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 font-black px-4 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition">Todos</button>
+                                <button type="button" data-role-permission-action="remove-all" class="min-h-11 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-black px-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Ninguno</button>
+                            </div>
+
+                            <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50/70 dark:bg-yellow-900/10 p-3 min-h-0">
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <h3 class="text-xs font-black uppercase tracking-widest text-yellow-700 dark:text-yellow-300">Asignados</h3>
+                                    <span data-role-permission-assigned-count class="text-xs font-black text-yellow-600 dark:text-yellow-300">0</span>
+                                </div>
+                                <input type="search" data-role-permission-search="assigned" placeholder="Buscar asignado..." class="mb-3 w-full min-h-11 rounded-xl border border-yellow-200 dark:border-yellow-800 bg-white dark:bg-gray-900 px-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-500 outline-none">
+                                <div data-role-permission-list="assigned" class="h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar"></div>
+                            </section>
+                        </div>
                     </div>
                 </div>
-                <style>
-                    .checkbox-grid ul { list-style: none !important; padding: 0 !important; margin: 0 !important; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
-                    .checkbox-grid li { display: flex !important; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 600; color: #4b5563; }
-                    .dark .checkbox-grid li { color: #d1d5db; }
-                    .checkbox-grid label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; width: 100%; }
-                    .checkbox-grid input[type="checkbox"] { width: 1.25rem; height: 1.25rem; border-radius: 0.375rem; border-color: #d1d5db; color: #f59e0b; cursor: pointer; }
-                    .dark .checkbox-grid input[type="checkbox"] { border-color: #4b5563; background-color: #1f2937; }
-                </style>
             {% else %}
                 {{ field }}
             {% endif %}
@@ -49,3 +79,184 @@
         </div>
     </form>
 </div>
+
+<script>
+(function () {
+    function initRolePermissionSelector(root) {
+        if (!root || root.dataset.rolePermissionEnhanced === 'true') return;
+        root.dataset.rolePermissionEnhanced = 'true';
+
+        const source = root.querySelector('[data-role-permissions-source]');
+        const fallback = root.querySelector('[data-role-permission-fallback]');
+        const ui = root.querySelector('[data-role-permission-ui]');
+        if (!source || !ui) return;
+
+        const availableList = root.querySelector('[data-role-permission-list="available"]');
+        const assignedList = root.querySelector('[data-role-permission-list="assigned"]');
+        const availableSearch = root.querySelector('[data-role-permission-search="available"]');
+        const assignedSearch = root.querySelector('[data-role-permission-search="assigned"]');
+        const summary = root.querySelector('[data-role-permission-summary]');
+        const availableCount = root.querySelector('[data-role-permission-available-count]');
+        const assignedCount = root.querySelector('[data-role-permission-assigned-count]');
+        const addButton = root.querySelector('[data-role-permission-action="add"]');
+        const removeButton = root.querySelector('[data-role-permission-action="remove"]');
+        const addAllButton = root.querySelector('[data-role-permission-action="add-all"]');
+        const removeAllButton = root.querySelector('[data-role-permission-action="remove-all"]');
+
+        const permissions = Array.from(source.options).map((option) => {
+            const label = option.text.trim();
+            const separatorIndex = label.indexOf(':');
+            return {
+                value: option.value,
+                label: label,
+                module: separatorIndex > -1 ? label.slice(0, separatorIndex).trim() : 'Permiso',
+                description: separatorIndex > -1 ? label.slice(separatorIndex + 1).trim() : label,
+            };
+        });
+        const assigned = new Set(Array.from(source.selectedOptions).map((option) => option.value));
+        const markedAvailable = new Set();
+        const markedAssigned = new Set();
+
+        function syncSource() {
+            Array.from(source.options).forEach((option) => {
+                option.selected = assigned.has(option.value);
+            });
+        }
+
+        function matchesSearch(permission, query) {
+            if (!query) return true;
+            return permission.label.toLowerCase().includes(query.toLowerCase());
+        }
+
+        function makeEmptyState(text) {
+            const empty = document.createElement('div');
+            empty.className = 'rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-4 text-center text-sm font-bold text-gray-400 dark:text-gray-500';
+            empty.textContent = text;
+            return empty;
+        }
+
+        function makePermissionRow(permission, targetSet, isAssigned) {
+            const label = document.createElement('label');
+            label.className = isAssigned
+                ? 'flex gap-3 rounded-xl border border-yellow-200 dark:border-yellow-800 bg-white dark:bg-gray-800 p-3 cursor-pointer hover:border-yellow-500 transition'
+                : 'flex gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-3 cursor-pointer hover:border-yellow-500 transition';
+            label.addEventListener('dblclick', function () {
+                if (isAssigned) {
+                    assigned.delete(permission.value);
+                } else {
+                    assigned.add(permission.value);
+                }
+                markedAvailable.delete(permission.value);
+                markedAssigned.delete(permission.value);
+                render();
+            });
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = permission.value;
+            checkbox.checked = targetSet.has(permission.value);
+            checkbox.className = 'mt-1 h-4 w-4 flex-shrink-0 rounded border-gray-300 text-yellow-500 focus:ring-yellow-500 dark:border-gray-600 dark:bg-gray-900';
+            checkbox.addEventListener('change', function () {
+                if (checkbox.checked) {
+                    targetSet.add(permission.value);
+                } else {
+                    targetSet.delete(permission.value);
+                }
+                updateButtons();
+            });
+
+            const content = document.createElement('span');
+            content.className = 'min-w-0';
+
+            const module = document.createElement('span');
+            module.className = 'block text-[10px] font-black uppercase tracking-widest text-yellow-600 dark:text-yellow-300';
+            module.textContent = permission.module;
+
+            const description = document.createElement('span');
+            description.className = 'block text-sm font-bold leading-snug text-gray-900 dark:text-white';
+            description.textContent = permission.description;
+
+            content.appendChild(module);
+            content.appendChild(description);
+            label.appendChild(checkbox);
+            label.appendChild(content);
+            return label;
+        }
+
+        function renderList(list, isAssigned) {
+            const query = isAssigned ? assignedSearch.value.trim() : availableSearch.value.trim();
+            const selectedState = isAssigned ? true : false;
+            const targetSet = isAssigned ? markedAssigned : markedAvailable;
+            const emptyText = isAssigned ? 'Sin permisos asignados.' : 'No hay permisos disponibles.';
+            const items = permissions.filter((permission) => assigned.has(permission.value) === selectedState && matchesSearch(permission, query));
+
+            list.replaceChildren();
+            if (!items.length) {
+                list.appendChild(makeEmptyState(emptyText));
+                return;
+            }
+
+            items.forEach((permission) => {
+                list.appendChild(makePermissionRow(permission, targetSet, isAssigned));
+            });
+        }
+
+        function updateButtons() {
+            const availableTotal = permissions.filter((permission) => !assigned.has(permission.value)).length;
+            const assignedTotal = permissions.length - availableTotal;
+            availableCount.textContent = availableTotal;
+            assignedCount.textContent = assignedTotal;
+            summary.textContent = assignedTotal === 1 ? '1 asignado' : `${assignedTotal} asignados`;
+            addButton.disabled = markedAvailable.size === 0;
+            removeButton.disabled = markedAssigned.size === 0;
+            addAllButton.disabled = availableTotal === 0;
+            removeAllButton.disabled = assignedTotal === 0;
+        }
+
+        function render() {
+            syncSource();
+            renderList(availableList, false);
+            renderList(assignedList, true);
+            updateButtons();
+        }
+
+        function moveMarked(fromSet, shouldAssign) {
+            fromSet.forEach((value) => {
+                if (shouldAssign) {
+                    assigned.add(value);
+                } else {
+                    assigned.delete(value);
+                }
+            });
+            fromSet.clear();
+            render();
+        }
+
+        availableSearch.addEventListener('input', render);
+        assignedSearch.addEventListener('input', render);
+        addButton.addEventListener('click', function () { moveMarked(markedAvailable, true); });
+        removeButton.addEventListener('click', function () { moveMarked(markedAssigned, false); });
+        addAllButton.addEventListener('click', function () {
+            permissions.forEach((permission) => assigned.add(permission.value));
+            markedAvailable.clear();
+            markedAssigned.clear();
+            render();
+        });
+        removeAllButton.addEventListener('click', function () {
+            assigned.clear();
+            markedAvailable.clear();
+            markedAssigned.clear();
+            render();
+        });
+
+        const form = root.closest('form');
+        if (form) form.addEventListener('submit', syncSource);
+
+        fallback.classList.add('hidden');
+        ui.classList.remove('hidden');
+        render();
+    }
+
+    document.querySelectorAll('[data-role-permission-selector]').forEach(initRolePermissionSelector);
+})();
+</script>
