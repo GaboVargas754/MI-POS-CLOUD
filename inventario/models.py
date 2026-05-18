@@ -1,4 +1,5 @@
 from django.db import models
+from django.db import transaction
 from django.core.exceptions import ValidationError
 
 class Categoria(models.Model):
@@ -93,7 +94,7 @@ class MovimientoInventario(models.Model):
 
     @classmethod
     def registrar(cls, *, producto, tipo, cantidad, stock_antes, stock_despues, usuario=None, venta=None, tienda=None, motivo=''):
-        return cls.objects.create(
+        movimiento = cls.objects.create(
             producto=producto,
             tienda=tienda,
             tipo=tipo,
@@ -104,6 +105,42 @@ class MovimientoInventario(models.Model):
             venta=venta,
             motivo=motivo,
         )
+        producto.stock = stock_despues
+        payload = {
+            'producto_id': producto.id,
+            'producto': producto.nombre,
+            'codigo_barras': producto.codigo_barras,
+            'stock': stock_despues,
+            'stock_minimo': producto.stock_minimo,
+            'tipo': tipo,
+            'cantidad': cantidad,
+            'movimiento_id': movimiento.id,
+        }
+        transaction.on_commit(lambda payload=payload: _emitir_eventos_inventario(payload, stock_antes))
+        return movimiento
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.producto.nombre} ({self.cantidad:+d})"
+
+
+def _emitir_eventos_inventario(payload, stock_antes):
+    from core import notifications
+
+    notifications.emitir_notificacion_todas_tiendas('inventario.movimiento', payload)
+
+    stock = payload['stock']
+    stock_minimo = payload['stock_minimo']
+    if stock <= 0 and stock_antes > 0:
+        notifications.emitir_notificacion_todas_tiendas('inventario.agotado', {
+            **payload,
+            'titulo': 'Producto agotado',
+            'mensaje': f"{payload['producto']} se quedó sin stock.",
+            'nivel': 'danger',
+        })
+    elif 0 < stock <= stock_minimo and stock_antes > stock_minimo:
+        notifications.emitir_notificacion_todas_tiendas('inventario.stock_bajo', {
+            **payload,
+            'titulo': 'Stock bajo',
+            'mensaje': f"{payload['producto']} queda en {stock} unidades.",
+            'nivel': 'warning',
+        })

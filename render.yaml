@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
     preDeployCommand: python manage.py migrate
-    startCommand: gunicorn pos_project.wsgi:application
+    startCommand: daphne -b 0.0.0.0 -p $PORT pos_project.asgi:application
     envVars:
       - key: DATABASE_URL
         sync: false

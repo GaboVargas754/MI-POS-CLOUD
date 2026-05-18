@@ -3,8 +3,10 @@ from . import views
 
 urlpatterns = [
     path('', views.dashboard, name='inventario_dashboard'),
+    path('live/', views.dashboard_live, name='inventario_dashboard_live'),
 
     path('productos/', views.lista_inventario, name='lista_inventario'),
+    path('productos/live/', views.lista_inventario_live, name='lista_inventario_live'),
     path('productos/nuevo/', views.editar_producto, name='nuevo_producto'),
     path('productos/resolver-codigo/', views.resolver_codigo_producto, name='resolver_codigo_producto'),
     path('productos/entrada-rapida/', views.entrada_rapida, name='entrada_rapida'),

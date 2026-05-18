@@ -1,0 +1,131 @@
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        {% for p in page_obj %}
+        <div class="p-4 space-y-3">
+            <div class="flex justify-between gap-3">
+                <div class="min-w-0">
+                    <h3 class="font-black text-gray-900 dark:text-white leading-tight">{{ p.nombre }}</h3>
+                    <p class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1 break-all">{{ p.codigo_barras }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ p.categoria.nombre|default:"Sin categoría" }} · mínimo {{ p.stock_minimo }}</p>
+                    {% if not p.activo %}
+                        <span class="inline-flex mt-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 text-xs font-black">Inactivo</span>
+                    {% endif %}
+                </div>
+                <div class="flex-shrink-0">
+                    {% if p.stock > p.stock_minimo %}
+                        <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                    {% elif p.stock > 0 %}
+                        <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                    {% else %}
+                        <span class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 px-3 py-1 rounded-full text-xs font-bold">Agotado</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs uppercase font-black text-gray-400 tracking-wider mb-1">Precio</p>
+                    {% if perms.configuraciones.editar_precios or request.user.is_superuser %}
+                        {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                    {% else %}
+                        <p class="text-lg font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00' }}</p>
+                    {% endif %}
+                    {% if not p.precios %}
+                        <p class="text-[10px] font-black text-red-500 mt-1">Sin precio</p>
+                    {% endif %}
+                </div>
+                {% if perms.configuraciones.editar_productos or perms.configuraciones.ajustar_stock or request.user.is_superuser %}
+                <div class="flex flex-col gap-2 flex-shrink-0">
+                    {% if perms.configuraciones.editar_productos or request.user.is_superuser %}
+                    <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="min-h-10 px-4 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 font-bold text-sm">Editar</button>
+                    {% endif %}
+                    {% if perms.configuraciones.ajustar_stock or request.user.is_superuser %}
+                    <button hx-get="{% url 'ajustar_stock' p.id %}" hx-target="#modal-content" class="min-h-10 px-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 font-bold text-sm">Ajustar</button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="grid grid-cols-2 {% if perms.configuraciones.imprimir_etiquetas or request.user.is_superuser %}sm:grid-cols-3{% endif %} gap-2">
+                <a href="{% url 'movimientos_producto' p.id %}" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Movimientos</a>
+                <a href="{% url 'historial_precios_producto' p.id %}" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Precios</a>
+                {% if perms.configuraciones.imprimir_etiquetas or request.user.is_superuser %}
+                <a href="{% url 'imprimir_etiquetas' %}?ids={{ p.id }}" target="_blank" class="min-h-10 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm flex items-center justify-center">Etiqueta</a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay productos en el inventario.</div>
+        {% endfor %}
+    </div>
+
+    <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[820px]">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Cód. Barras</th>
+                    <th class="p-4">Nombre</th>
+                    <th class="p-4">Categoría</th>
+                    <th class="p-4 text-right">Precio</th>
+                    <th class="p-4 text-center">Stock</th>
+                    <th class="p-4 text-center">Mínimo</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for p in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">{{ p.codigo_barras }}</td>
+                    <td class="p-4">
+                        <p class="font-bold">{{ p.nombre }}</p>
+                        {% if not p.activo %}
+                            <p class="text-xs font-black text-gray-500 dark:text-gray-400 mt-1">Inactivo</p>
+                        {% endif %}
+                        {% if not p.precios %}
+                            <p class="text-xs font-black text-red-500 mt-1">Sin precio asignado</p>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ p.categoria.nombre|default:"Sin categoría" }}</td>
+                    <td class="p-4 text-right">
+                        {% if perms.configuraciones.editar_precios or request.user.is_superuser %}
+                            {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
+                        {% else %}
+                            <span class="font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00' }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        {% if p.stock > p.stock_minimo %}
+                            <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                        {% elif p.stock > 0 %}
+                            <span class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-3 py-1 rounded-full text-xs font-bold">{{ p.stock }}</span>
+                        {% else %}
+                            <span class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 px-3 py-1 rounded-full text-xs font-bold">Agotado</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center text-sm font-bold text-gray-500 dark:text-gray-400">{{ p.stock_minimo }}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-3">
+                            {% if perms.configuraciones.editar_productos or request.user.is_superuser %}
+                            <button hx-get="{% url 'editar_producto' p.id %}" hx-target="#modal-content" class="text-purple-600 dark:text-purple-400 hover:underline font-bold text-sm">Editar</button>
+                            {% endif %}
+                            {% if perms.configuraciones.ajustar_stock or request.user.is_superuser %}
+                            <button hx-get="{% url 'ajustar_stock' p.id %}" hx-target="#modal-content" class="text-green-600 dark:text-green-400 hover:underline font-bold text-sm">Ajustar</button>
+                            {% endif %}
+                            <a href="{% url 'movimientos_producto' p.id %}" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Movimientos</a>
+                            <a href="{% url 'historial_precios_producto' p.id %}" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Precios</a>
+                            {% if perms.configuraciones.imprimir_etiquetas or request.user.is_superuser %}
+                            <a href="{% url 'imprimir_etiquetas' %}?ids={{ p.id }}" target="_blank" class="text-gray-600 dark:text-gray-300 hover:underline font-bold text-sm">Etiqueta</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay productos en el inventario.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "base/pagination.html" %}
+</div>

@@ -281,6 +281,9 @@ class FlujoVentasTests(TestCase):
         self.assertContains(response, 'toast-carrito')
         self.assertContains(response, 'actualizarTotalCarritoMovil')
         self.assertContains(response, 'agregarCodigoEscaneado')
+        self.assertContains(response, 'refrescarBusquedaActivaPos')
+        self.assertContains(response, 'producto.precio_actualizado')
+        self.assertContains(response, 'pos:notificacion')
         self.assertContains(response, reverse('agregar_por_codigo'))
         self.assertContains(response, 'aria-label="Cerrar turno"')
         self.assertNotContains(response, 'btn-pos-menu')
@@ -319,6 +322,19 @@ class FlujoVentasTests(TestCase):
         self.assertContains(response, reverse('historial_ventas'))
         self.assertContains(response, 'Turnos')
         self.assertContains(response, reverse('historial_turnos'))
+        self.assertContains(response, 'dashboard-estadisticas-tiempo-real')
+        self.assertContains(response, reverse('dashboard_live'))
+        self.assertContains(response, 'pos:notificacion')
+
+    def test_dashboard_live_devuelve_partial_actualizable(self):
+        self.crear_venta_con_detalle(total=Decimal('25.00'))
+
+        response = self.client.get(reverse('dashboard_live'), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_ventas'], Decimal('25.00'))
+        self.assertContains(response, 'Ventas Totales')
+        self.assertNotContains(response, 'Estadísticas de Ventas')
 
     def test_historial_ventas_muestra_tickets_y_resumen(self):
         venta = self.crear_venta_con_detalle()

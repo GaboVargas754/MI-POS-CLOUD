@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
+from core.notifications import emitir_notificacion_tienda
 from core.utils import get_config_context
 from core.permissions import any_permission_required
 from configuraciones.utils import get_tienda_actual
@@ -87,6 +88,21 @@ def cancelar_venta(request, venta_id):
             venta.fecha_cancelacion = timezone.now()
             venta.cancelado_por = request.user
             venta.save(update_fields=['estado', 'motivo_cancelacion', 'fecha_cancelacion', 'cancelado_por'])
+
+            venta_id = venta.id
+            tienda_id = venta.tienda_id or tienda_actual.id
+            total = f'{venta.total:.2f}'
+            payload = {
+                'titulo': 'Venta cancelada',
+                'mensaje': f'Ticket #{venta_id} cancelado por ${total}',
+                'venta_id': venta_id,
+                'total': total,
+            }
+            transaction.on_commit(lambda tienda_id=tienda_id, payload=payload: emitir_notificacion_tienda(
+                tienda_id,
+                'venta.cancelada',
+                payload,
+            ))
 
         messages.success(request, f'Ticket #{venta.id} cancelado y stock reintegrado.')
         return redirect('historial_ventas')
@@ -202,6 +218,23 @@ def procesar_venta(request):
             nueva_venta.pago_recibido = pago_final
             nueva_venta.cambio = cambio
             nueva_venta.save(update_fields=['total', 'pago_recibido', 'cambio'])
+
+            venta_id = nueva_venta.id
+            tienda_id = nueva_venta.tienda_id or tienda_actual.id
+            total = f'{nueva_venta.total:.2f}'
+            metodo = nueva_venta.get_metodo_pago_display()
+            payload = {
+                'titulo': 'Nueva venta registrada',
+                'mensaje': f'Ticket #{venta_id} por ${total} ({metodo})',
+                'venta_id': venta_id,
+                'total': total,
+                'metodo_pago': nueva_venta.metodo_pago,
+            }
+            transaction.on_commit(lambda tienda_id=tienda_id, payload=payload: emitir_notificacion_tienda(
+                tienda_id,
+                'venta.creada',
+                payload,
+            ))
 
             request.session['carrito'] = {}
 

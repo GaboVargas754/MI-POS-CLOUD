@@ -11,6 +11,18 @@ VER_ESTADISTICAS_PERMISSION = 'configuraciones.ver_estadisticas'
 @login_required
 @permission_required(VER_ESTADISTICAS_PERMISSION, login_url='portal_principal')
 def dashboard(request):
+    contexto = _dashboard_context(request)
+    return render(request, 'ventas/dashboard.html', contexto)
+
+
+@login_required
+@permission_required(VER_ESTADISTICAS_PERMISSION, login_url='portal_principal')
+def dashboard_live(request):
+    contexto = _dashboard_context(request)
+    return render(request, 'ventas/partials/dashboard_estadisticas.html', contexto)
+
+
+def _dashboard_context(request):
     tienda_actual = get_tienda_actual(request)
     hoy = timezone.now().date()
     filtro_tienda = Q(tienda=tienda_actual) | Q(tienda__isnull=True)
@@ -30,7 +42,7 @@ def dashboard(request):
 
     stock_bajo = Producto.objects.filter(stock__lt=5)
 
-    contexto = {
+    return {
         **get_config_context('Estadísticas', 'border-blue-600'),
         'total_ventas': total_ventas,
         'num_tickets': num_tickets,
@@ -39,4 +51,3 @@ def dashboard(request):
         'stock_bajo': stock_bajo,
         'hoy': hoy,
     }
-    return render(request, 'ventas/dashboard.html', contexto)

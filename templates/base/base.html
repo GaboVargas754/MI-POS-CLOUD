@@ -61,6 +61,10 @@
         <div id="modal-content" class="w-full sm:max-w-2xl max-h-[100dvh] sm:max-h-[90dvh] overflow-y-auto transform transition-all"></div>
     </div>
 
+    {% if request.user.is_authenticated %}
+    <div id="notificaciones-tiempo-real" class="fixed right-4 top-20 z-[70] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2 pointer-events-none"></div>
+    {% endif %}
+
     <script>
         // Función para cerrar el modal
         function cerrarModal() {
@@ -99,6 +103,97 @@
             });
         }
     </script>
+
+    {% if request.user.is_authenticated %}
+    <script>
+        (function() {
+            if (!('WebSocket' in window) || window.POSRealtimeInicializado) return;
+            window.POSRealtimeInicializado = true;
+
+            const contenedor = document.getElementById('notificaciones-tiempo-real');
+            const protocolo = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const url = protocolo + '://' + window.location.host + '/ws/notificaciones/';
+            let socket = null;
+            let intentos = 0;
+            let cierreManual = false;
+
+            function conectar() {
+                socket = new WebSocket(url);
+                window.POSRealtimeSocket = socket;
+
+                socket.onopen = function() {
+                    intentos = 0;
+                };
+
+                socket.onmessage = function(event) {
+                    let payload;
+                    try {
+                        payload = JSON.parse(event.data);
+                    } catch (error) {
+                        console.warn('Notificación inválida:', error);
+                        return;
+                    }
+
+                    document.dispatchEvent(new CustomEvent('pos:notificacion', { detail: payload }));
+                    if (payload.mensaje) mostrarNotificacion(payload);
+                };
+
+                socket.onclose = function() {
+                    if (cierreManual) return;
+                    const espera = Math.min(1000 * Math.pow(2, intentos), 15000);
+                    intentos += 1;
+                    window.setTimeout(conectar, espera);
+                };
+
+                socket.onerror = function() {
+                    socket.close();
+                };
+            }
+
+            function mostrarNotificacion(payload) {
+                if (!contenedor) return;
+
+                const toast = document.createElement('div');
+                const temas = {
+                    danger: 'border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400',
+                    warning: 'border-yellow-200 dark:border-yellow-900/50 text-yellow-600 dark:text-yellow-400',
+                    info: 'border-blue-200 dark:border-blue-900/50 text-blue-600 dark:text-blue-400',
+                    success: 'border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400'
+                };
+                const tema = temas[payload.nivel] || temas.success;
+                toast.className = 'pointer-events-auto translate-y-2 rounded-2xl border bg-white p-4 text-gray-900 shadow-2xl opacity-0 transition-all duration-200 dark:bg-gray-800 dark:text-white ' + tema;
+
+                const titulo = document.createElement('p');
+                titulo.className = 'text-xs font-black uppercase tracking-wider';
+                titulo.textContent = payload.titulo || 'Actualización en tiempo real';
+
+                const mensaje = document.createElement('p');
+                mensaje.className = 'mt-1 text-sm font-bold';
+                mensaje.textContent = payload.mensaje;
+
+                toast.appendChild(titulo);
+                toast.appendChild(mensaje);
+                contenedor.appendChild(toast);
+
+                window.requestAnimationFrame(function() {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                });
+
+                window.setTimeout(function() {
+                    toast.classList.add('translate-y-2', 'opacity-0');
+                    window.setTimeout(function() { toast.remove(); }, 220);
+                }, 4200);
+            }
+
+            window.addEventListener('beforeunload', function() {
+                cierreManual = true;
+                if (socket) socket.close();
+            });
+
+            conectar();
+        })();
+    </script>
+    {% endif %}
 
     {% block extra_body %}{% endblock %}
     {% block extra_js %}{% endblock %}

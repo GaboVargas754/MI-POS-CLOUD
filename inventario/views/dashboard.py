@@ -8,6 +8,18 @@ from inventario.models import MovimientoInventario, Producto
 @login_required
 @permission_required('configuraciones.ver_inventario', login_url='portal_principal')
 def dashboard(request):
+    contexto = _dashboard_context(request)
+    return render(request, 'inventario/dashboard.html', contexto)
+
+
+@login_required
+@permission_required('configuraciones.ver_inventario', login_url='portal_principal')
+def dashboard_live(request):
+    contexto = _dashboard_context(request)
+    return render(request, 'inventario/partials/dashboard_contenido.html', contexto)
+
+
+def _dashboard_context(request):
     tienda_actual = get_tienda_actual(request)
     productos_activos = Producto.objects.filter(activo=True)
     valor_inventario = productos_activos.aggregate(
@@ -23,7 +35,7 @@ def dashboard(request):
     )
     resumen['inactivos'] = Producto.objects.filter(activo=False).count()
 
-    contexto = {
+    return {
         **get_config_context('Inventario', 'border-purple-600'),
         **resumen,
         'valor_inventario': valor_inventario,
@@ -32,4 +44,3 @@ def dashboard(request):
             .order_by('stock', 'nombre')[:8],
         'movimientos_recientes': MovimientoInventario.objects.select_related('producto', 'usuario', 'venta', 'tienda').filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True))[:8],
     }
-    return render(request, 'inventario/dashboard.html', contexto)

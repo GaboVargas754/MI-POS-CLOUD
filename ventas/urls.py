@@ -17,6 +17,7 @@ urlpatterns = [
     path('ticket/<int:venta_id>/', views.imprimir_ticket, name='imprimir_ticket'),
     path('ticket/<int:venta_id>/cancelar/', views.cancelar_venta, name='cancelar_venta'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('dashboard/live/', views.dashboard_live, name='dashboard_live'),
     path('historial/', views.historial_ventas, name='historial_ventas'),
     path('turnos/', views.historial_turnos, name='historial_turnos'),
     path('turnos/<int:sesion_id>/corte/', views.imprimir_corte, name='imprimir_corte'),

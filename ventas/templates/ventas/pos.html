@@ -335,6 +335,55 @@
         inputBuscador.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
+    (function() {
+        const eventosActualizables = new Set(['inventario.movimiento', 'inventario.stock_bajo', 'inventario.agotado', 'producto.precio_actualizado', 'producto.actualizado']);
+        let refrescando = false;
+        let refrescarDespues = false;
+
+        async function refrescarBusquedaActivaPos() {
+            const inputBuscador = document.getElementById('buscador_pos');
+            const resultados = document.getElementById('resultados-busqueda');
+            if (!inputBuscador || !resultados || !inputBuscador.value.trim()) return;
+
+            if (refrescando) {
+                refrescarDespues = true;
+                return;
+            }
+
+            refrescando = true;
+            resultados.classList.add('opacity-70');
+            const baseUrl = inputBuscador.getAttribute('hx-get') || '{% url "buscar_productos" %}';
+            const url = baseUrl + '?q=' + encodeURIComponent(inputBuscador.value.trim());
+
+            try {
+                if (window.htmx) {
+                    await htmx.ajax('GET', url, { target: '#resultados-busqueda', swap: 'innerHTML' });
+                } else {
+                    const response = await fetch(url, {
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (!response.ok) throw new Error('No se pudo actualizar la búsqueda del POS.');
+                    resultados.innerHTML = await response.text();
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                resultados.classList.remove('opacity-70');
+                refrescando = false;
+                if (refrescarDespues) {
+                    refrescarDespues = false;
+                    refrescarBusquedaActivaPos();
+                }
+            }
+        }
+
+        document.addEventListener('pos:notificacion', function(event) {
+            const payload = event.detail || {};
+            if (eventosActualizables.has(payload.event)) refrescarBusquedaActivaPos();
+        });
+    })();
+
     function obtenerCsrfToken() {
         const headers = document.body ? document.body.getAttribute('hx-headers') : '';
         if (headers) {

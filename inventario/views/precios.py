@@ -3,8 +3,10 @@ from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q
 from django.views.decorators.http import require_POST
+from core import notifications
 from inventario.models import HistorialPrecio, Producto
 from inventario.models import PrecioProducto
 from inventario.forms import PrecioProductoForm
@@ -63,6 +65,19 @@ def editar_precio(request, pk=None):
                 usuario=request.user,
                 motivo='Edición de precios',
             )
+            producto = precio_guardado.producto
+            payload = {
+                'precio_anterior': f'{precio_anterior:.2f}' if precio_anterior is not None else None,
+                'precio': f'{precio_guardado.precio:.2f}',
+                'titulo': 'Precio actualizado',
+                'mensaje': f'{producto.nombre} ahora cuesta ${precio_guardado.precio:.2f}.',
+                'nivel': 'info',
+            }
+            transaction.on_commit(lambda producto=producto, payload=payload: notifications.emitir_producto_actualizado(
+                producto,
+                'producto.precio_actualizado',
+                payload,
+            ))
         return redirect('lista_precios')
 
     return render(request, 'inventario/precios/formulario.html', {
@@ -122,4 +137,16 @@ def actualizar_precio_inline(request, producto_id):
     )
 
     producto = Producto.objects.select_related('precios').get(id=producto.id)
+    payload = {
+        'precio_anterior': f'{precio_anterior:.2f}' if precio_anterior is not None else None,
+        'precio': f'{precio_obj.precio:.2f}',
+        'titulo': 'Precio actualizado',
+        'mensaje': f'{producto.nombre} ahora cuesta ${precio_obj.precio:.2f}.',
+        'nivel': 'info',
+    }
+    transaction.on_commit(lambda producto=producto, payload=payload: notifications.emitir_producto_actualizado(
+        producto,
+        'producto.precio_actualizado',
+        payload,
+    ))
     return render(request, 'inventario/productos/partials/precio_inline.html', {'p': producto})

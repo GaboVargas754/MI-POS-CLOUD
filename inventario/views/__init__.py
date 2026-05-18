@@ -1,4 +1,4 @@
-from .dashboard import dashboard
+from .dashboard import dashboard, dashboard_live
 from .productos import (
     ajustar_stock,
     editar_producto,
@@ -8,6 +8,7 @@ from .productos import (
     importar_productos_csv,
     imprimir_etiquetas,
     lista_inventario,
+    lista_inventario_live,
     movimientos_producto,
     resolver_codigo_producto,
 )

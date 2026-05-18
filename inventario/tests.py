@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth.models import Permission, User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -118,6 +119,27 @@ class ProductoFormTests(TestCase):
         self.assertContains(response, reverse('importar_productos_csv'))
         self.assertContains(response, reverse('exportar_productos_csv'))
         self.assertContains(response, reverse('imprimir_etiquetas'))
+        self.assertContains(response, 'inventario-lista-tiempo-real')
+        self.assertContains(response, reverse('lista_inventario_live'))
+        self.assertContains(response, 'pos:notificacion')
+
+    def test_lista_inventario_live_devuelve_resultados_filtrados(self):
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        agua = Producto.objects.create(codigo_barras='750000000001', nombre='Agua Mineral', categoria=categoria, stock=8)
+        pan = Producto.objects.create(codigo_barras='750000000002', nombre='Pan Dulce', categoria=categoria, stock=4)
+        PrecioProducto.objects.create(producto=agua, costo=Decimal('5.00'), precio=Decimal('12.50'))
+        PrecioProducto.objects.create(producto=pan, costo=Decimal('4.00'), precio=Decimal('10.00'))
+
+        response = self.client.get(
+            reverse('lista_inventario_live'),
+            {'q': 'Agua'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Agua Mineral')
+        self.assertNotContains(response, 'Pan Dulce')
+        self.assertNotContains(response, 'Catálogo de Productos')
 
     def test_resolver_codigo_producto_existente_abre_edicion(self):
         categoria = Categoria.objects.create(nombre='Bebidas')
@@ -321,6 +343,44 @@ class ProductoFormTests(TestCase):
         self.assertContains(response, 'Entrada Rápida')
         self.assertContains(response, agotado.nombre)
         self.assertContains(response, bajo.nombre)
+        self.assertContains(response, 'inventario-dashboard-tiempo-real')
+        self.assertContains(response, reverse('inventario_dashboard_live'))
+        self.assertContains(response, 'pos:notificacion')
+
+    def test_dashboard_inventario_live_devuelve_partial_actualizable(self):
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        Producto.objects.create(codigo_barras='750000000030', nombre='Agotado', categoria=categoria, stock=0)
+
+        response = self.client.get(reverse('inventario_dashboard_live'), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['agotados'], 1)
+        self.assertContains(response, 'Productos que requieren atención')
+        self.assertNotContains(response, 'Control de productos')
+
+    def test_movimiento_inventario_emite_eventos_realtime(self):
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        producto = Producto.objects.create(codigo_barras='750000000034', nombre='Agua Chica', categoria=categoria, stock=6, stock_minimo=5)
+
+        with patch('core.notifications.emitir_notificacion_todas_tiendas') as emitir:
+            with self.captureOnCommitCallbacks(execute=True):
+                MovimientoInventario.registrar(
+                    producto=producto,
+                    tipo=MovimientoInventario.Tipo.AJUSTE,
+                    cantidad=-2,
+                    stock_antes=6,
+                    stock_despues=4,
+                    usuario=self.user,
+                    motivo='Merma',
+                )
+
+        eventos = [call.args[0] for call in emitir.call_args_list]
+        self.assertIn('inventario.movimiento', eventos)
+        self.assertIn('inventario.stock_bajo', eventos)
+        payload_bajo = emitir.call_args_list[1].args[1]
+        self.assertEqual(payload_bajo['producto'], producto.nombre)
+        self.assertEqual(payload_bajo['stock'], 4)
+        self.assertEqual(payload_bajo['nivel'], 'warning')
 
     def test_actualizar_precio_inline_usa_decimal_y_rechaza_negativos(self):
         categoria = Categoria.objects.create(nombre='Bebidas')
@@ -340,6 +400,20 @@ class ProductoFormTests(TestCase):
         self.assertContains(response, 'El precio no puede ser negativo')
         precio.refresh_from_db()
         self.assertEqual(precio.precio, Decimal('13.75'))
+
+    def test_actualizar_precio_inline_emite_evento_realtime(self):
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        producto = Producto.objects.create(codigo_barras='750000000042', nombre='Café Realtime', categoria=categoria, stock=5)
+        PrecioProducto.objects.create(producto=producto, costo=Decimal('5.00'), precio=Decimal('12.50'))
+
+        with patch('core.notifications.emitir_producto_actualizado') as emitir:
+            with self.captureOnCommitCallbacks(execute=True):
+                response = self.client.post(reverse('actualizar_precio_inline', args=[producto.id]), {'precio': '13.75'})
+
+        self.assertEqual(response.status_code, 200)
+        emitir.assert_called_once()
+        self.assertEqual(emitir.call_args.args[1], 'producto.precio_actualizado')
+        self.assertEqual(emitir.call_args.args[2]['precio'], '13.75')
 
     def test_actualizar_precio_inline_requiere_permiso_granular(self):
         categoria = Categoria.objects.create(nombre='Bebidas')

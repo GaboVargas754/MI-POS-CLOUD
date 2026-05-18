@@ -11,6 +11,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from core import notifications
 from inventario.models import Categoria, HistorialPrecio, MovimientoInventario, PrecioProducto, Producto
 from inventario.forms import AjusteStockForm, EntradaRapidaForm, ImportarProductosForm, ProductoForm
 from configuraciones.utils import get_tienda_actual
@@ -74,6 +75,18 @@ def _guardar_precio_producto(producto, costo, precio, usuario, motivo, tienda=No
         usuario=usuario,
         motivo=motivo,
     )
+    payload = {
+        'precio_anterior': f'{precio_anterior:.2f}' if precio_anterior is not None else None,
+        'precio': f'{precio_obj.precio:.2f}',
+        'titulo': 'Precio actualizado',
+        'mensaje': f'{producto.nombre} ahora cuesta ${precio_obj.precio:.2f}.',
+        'nivel': 'info',
+    }
+    transaction.on_commit(lambda producto=producto, payload=payload: notifications.emitir_producto_actualizado(
+        producto,
+        'producto.precio_actualizado',
+        payload,
+    ))
     return precio_obj
 
 
@@ -119,6 +132,18 @@ def _productos_filtrados(request):
 @login_required
 @permission_required(VER_INVENTARIO_PERMISSION, login_url='portal_principal')
 def lista_inventario(request):
+    contexto = _lista_inventario_context(request)
+    return render(request, 'inventario/productos/lista.html', contexto)
+
+
+@login_required
+@permission_required(VER_INVENTARIO_PERMISSION, login_url='portal_principal')
+def lista_inventario_live(request):
+    contexto = _lista_inventario_context(request)
+    return render(request, 'inventario/productos/partials/lista_resultados.html', contexto)
+
+
+def _lista_inventario_context(request):
     productos_list, filtros = _productos_filtrados(request)
 
     per_page = request.GET.get('per_page', 10)
@@ -132,14 +157,14 @@ def lista_inventario(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'inventario/productos/lista.html', {
+    return {
         **get_config_context('Inventario', 'border-purple-600'),
         'page_obj': page_obj,
         'per_page': per_page,
         **filtros,
         'categorias': Categoria.objects.all().order_by('nombre'),
         'querystring': get_querystring_without_page(request),
-    })
+    }
 
 @login_required
 @permission_required(EDITAR_PRODUCTOS_PERMISSION, login_url='portal_principal')
@@ -161,6 +186,10 @@ def editar_producto(request, pk=None):
                     Producto.objects.select_for_update().get(pk=producto.pk)
 
                 producto_guardado = form.save()
+                transaction.on_commit(lambda producto_id=producto_guardado.id: notifications.emitir_producto_actualizado(
+                    Producto.objects.select_related('precios').get(id=producto_id),
+                    'producto.actualizado',
+                ))
                 _guardar_precio_producto(
                     producto_guardado,
                     form.cleaned_data.get('costo'),
