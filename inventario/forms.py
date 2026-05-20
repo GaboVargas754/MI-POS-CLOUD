@@ -10,14 +10,14 @@ class ProductoForm(forms.ModelForm):
         max_digits=10,
         decimal_places=2,
         label='Costo de compra',
-        widget=forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.50', 'placeholder': '0.00'})
+        widget=forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.01', 'data-decimal-places': '2', 'placeholder': '0.00'})
     )
     precio = forms.DecimalField(
         required=False,
         max_digits=10,
         decimal_places=2,
         label='Precio de venta',
-        widget=forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.50', 'placeholder': '0.00'})
+        widget=forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.01', 'data-decimal-places': '2', 'placeholder': '0.00'})
     )
 
     class Meta:
@@ -84,7 +84,7 @@ class PrecioProductoForm(forms.ModelForm):
         required=False,
         max_digits=10,
         decimal_places=2,
-        widget=forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.50', 'placeholder': '0.00'})
+        widget=forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.01', 'data-decimal-places': '2', 'placeholder': '0.00'})
     )
 
     class Meta:
@@ -92,7 +92,7 @@ class PrecioProductoForm(forms.ModelForm):
         fields = ['producto', 'costo', 'precio']
         widgets = {
             'producto': forms.Select(attrs={'class': clases_comunes}),
-            'precio': forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.50', 'placeholder': 'Ej. 15.50'}),
+            'precio': forms.NumberInput(attrs={'class': clases_comunes, 'step': '0.01', 'data-decimal-places': '2', 'placeholder': 'Ej. 15.50'}),
         }
         labels = {
             'producto': 'Selecciona el Producto',

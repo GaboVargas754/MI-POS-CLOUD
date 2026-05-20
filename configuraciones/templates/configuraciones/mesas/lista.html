@@ -1,0 +1,80 @@
+{% extends "base/base.html" %}
+
+{% block title %}Mesas de Restaurante{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <div class="flex items-center gap-4 w-full sm:w-auto">
+        <a href="{% url 'config_dashboard' %}" class="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 text-gray-500" title="Regresar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">Mesas de Restaurante</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Configura las mesas que aparecerán al abrir comandas.</p>
+        </div>
+    </div>
+
+    <button hx-get="{% url 'nueva_mesa' %}" hx-target="#modal-content" class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-colors">+ Mesa</button>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        {% for mesa in page_obj %}
+        <div class="p-4 space-y-3">
+            <div class="flex justify-between gap-3">
+                <div>
+                    <h3 class="font-black text-gray-900 dark:text-white">{{ mesa.nombre }}</h3>
+                    <p class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ mesa.codigo }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ mesa.zona|default:"Sin zona" }} · {{ mesa.capacidad }} personas</p>
+                </div>
+                {% if mesa.activa %}
+                    <span class="h-fit rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-1 text-xs font-black">Activa</span>
+                {% else %}
+                    <span class="h-fit rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-3 py-1 text-xs font-black">Inactiva</span>
+                {% endif %}
+            </div>
+            <button hx-get="{% url 'editar_mesa' mesa.id %}" hx-target="#modal-content" class="min-h-11 w-full rounded-xl bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 font-bold text-sm">Editar mesa</button>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay mesas registradas.</div>
+        {% endfor %}
+    </div>
+
+    <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[720px]">
+            <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700 text-gray-500 uppercase text-xs tracking-wider border-b dark:border-gray-600">
+                    <th class="p-4">Mesa</th>
+                    <th class="p-4">Código</th>
+                    <th class="p-4">Zona</th>
+                    <th class="p-4 text-center">Capacidad</th>
+                    <th class="p-4 text-center">Estado</th>
+                    <th class="p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for mesa in page_obj %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="p-4 font-black text-gray-900 dark:text-white">{{ mesa.nombre }}</td>
+                    <td class="p-4 font-mono text-sm text-gray-500 dark:text-gray-400">{{ mesa.codigo }}</td>
+                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ mesa.zona|default:"Sin zona" }}</td>
+                    <td class="p-4 text-center font-bold text-gray-700 dark:text-gray-300">{{ mesa.capacidad }}</td>
+                    <td class="p-4 text-center">
+                        {% if mesa.activa %}<span class="font-black text-green-600 dark:text-green-400 text-xs uppercase">Activa</span>{% else %}<span class="font-black text-red-600 dark:text-red-400 text-xs uppercase">Inactiva</span>{% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button hx-get="{% url 'editar_mesa' mesa.id %}" hx-target="#modal-content" class="text-yellow-600 dark:text-yellow-400 hover:underline font-bold text-sm">Editar</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="p-8 text-center text-gray-400 dark:text-gray-500 italic">No hay mesas registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "base/pagination.html" %}
+</div>
+{% endblock %}

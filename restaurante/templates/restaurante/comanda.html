@@ -1,0 +1,184 @@
+{% extends "base/base.html" %}
+
+{% block title %}Comanda #{{ pedido.id }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-5">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <a href="{% url 'restaurante_dashboard' %}" class="inline-flex items-center text-sm font-black text-orange-600 dark:text-orange-400 hover:underline mb-2">Volver a comandas</a>
+            <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">{{ pedido.nombre_display }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pedido #{{ pedido.id }} · {{ pedido.get_tipo_display }} · {{ pedido.get_estado_display }}</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+            {% if perms.configuraciones.operar_kds or request.user.is_superuser %}
+            <a href="{% url 'restaurante_kds' %}" class="inline-flex min-h-12 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30 px-5 text-sm font-black text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition">Ver KDS</a>
+            {% endif %}
+            {% if pedido.venta_id %}
+            <a href="{% url 'imprimir_ticket' pedido.venta_id %}" target="_blank" class="inline-flex min-h-12 items-center justify-center rounded-xl bg-green-600 px-5 text-sm font-black text-white hover:bg-green-700 transition">Ticket #{{ pedido.venta_id }}</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if pedido.estado != 'COBRADO' and pedido.estado != 'CANCELADO' %}
+    <section class="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-5 shadow-sm">
+        <label for="buscador-productos-restaurante" class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Agregar producto</label>
+        <input id="buscador-productos-restaurante" type="search" name="q" placeholder="Buscar por nombre, código o categoría"
+               class="w-full min-h-14 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 text-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+               hx-get="{% url 'restaurante_buscar_productos' pedido.id %}"
+               hx-trigger="input changed delay:300ms, search"
+               hx-target="#resultados-productos-restaurante"
+               autocomplete="off">
+        <div id="resultados-productos-restaurante" class="mt-4">
+            <p class="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-6 text-center text-sm text-gray-400 dark:text-gray-500">Busca un producto para agregarlo como borrador.</p>
+        </div>
+    </section>
+    {% endif %}
+
+    {% include 'restaurante/partials/comanda_panel.html' %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const panel = document.getElementById('comanda-panel');
+        if (!panel) return;
+        const pedidoId = Number(panel.dataset.pedidoId);
+        const eventos = new Set(['restaurante.pedido_actualizado', 'restaurante.pedido_enviado_cocina', 'restaurante.item_cancelado', 'restaurante.item_estado_actualizado', 'restaurante.pedido_cobrado']);
+        let refrescando = false;
+        let refrescarDespues = false;
+
+        async function refrescarComanda() {
+            const panelActual = document.getElementById('comanda-panel');
+            if (!panelActual) return;
+            if (refrescando) {
+                refrescarDespues = true;
+                return;
+            }
+            refrescando = true;
+            panelActual.classList.add('opacity-70');
+            try {
+                await htmx.ajax('GET', panelActual.dataset.liveUrl, { target: '#comanda-panel', swap: 'outerHTML' });
+            } catch (error) {
+                console.error(error);
+            } finally {
+                const panelNuevo = document.getElementById('comanda-panel');
+                if (panelNuevo) panelNuevo.classList.remove('opacity-70');
+                refrescando = false;
+                if (refrescarDespues) {
+                    refrescarDespues = false;
+                    refrescarComanda();
+                }
+            }
+        }
+
+        document.addEventListener('pos:notificacion', function(event) {
+            const payload = event.detail || {};
+            if (Number(payload.pedido_id) === pedidoId && eventos.has(payload.event)) refrescarComanda();
+        });
+    })();
+
+    function actualizarCobroRestaurante() {
+        const panel = document.getElementById('comanda-panel');
+        const subtotal = Number(panel ? panel.dataset.subtotal : 0);
+        const porcentajeInput = document.getElementById('porcentaje-propina-restaurante');
+        const porcentaje = Number(porcentajeInput ? porcentajeInput.value : 0) || 0;
+        const propina = Math.round((subtotal * porcentaje / 100) * 100) / 100;
+        const total = Math.round((subtotal + propina) * 100) / 100;
+        const metodo = document.querySelector('input[name="metodo_pago"]:checked');
+        const inputPago = document.getElementById('pago-recibido-restaurante');
+        const cambio = document.getElementById('cambio-restaurante');
+        const cambioMixto = document.getElementById('cambio-mixto-restaurante');
+        const boton = document.getElementById('btn-cobrar-restaurante');
+        const metodoPago = metodo ? metodo.value : 'EFE';
+        const esEfectivo = metodoPago === 'EFE';
+        const esMixto = metodoPago === 'MIX';
+        const pagoSimple = document.getElementById('pago-simple-restaurante');
+        const pagosMixtos = document.getElementById('pagos-mixtos-restaurante');
+        let pago = Number(inputPago ? inputPago.value : 0);
+
+        actualizarResumenPropinaRestaurante(subtotal, propina, total);
+        if (pagoSimple) pagoSimple.classList.toggle('hidden', esMixto);
+        if (pagosMixtos) pagosMixtos.classList.toggle('hidden', !esMixto);
+
+        if (!inputPago || !cambio || !boton) return;
+        if (boton.dataset.sesionAbierta !== 'true') {
+            boton.disabled = true;
+            return;
+        }
+        inputPago.name = 'pago_recibido';
+
+        if (esMixto) {
+            const efectivo = Number(document.getElementById('pago-efectivo-restaurante')?.value || 0) || 0;
+            const tarjeta = Number(document.getElementById('pago-tarjeta-restaurante')?.value || 0) || 0;
+            const transferencia = Number(document.getElementById('pago-transferencia-restaurante')?.value || 0) || 0;
+            const noEfectivo = tarjeta + transferencia;
+            const pagado = efectivo + noEfectivo;
+
+            if (noEfectivo > total || pagado < total) {
+                const diferencia = noEfectivo > total ? 0 : total - pagado;
+                if (cambioMixto) cambioMixto.innerText = diferencia.toFixed(2);
+                boton.disabled = true;
+                return;
+            }
+
+            if (cambioMixto) cambioMixto.innerText = (pagado - total).toFixed(2);
+            boton.disabled = false;
+            return;
+        }
+
+        if (!esEfectivo) {
+            inputPago.value = total.toFixed(2);
+            inputPago.readOnly = true;
+            cambio.innerText = '0.00';
+            boton.disabled = false;
+            return;
+        }
+
+        inputPago.readOnly = false;
+        if (!pago || pago < total) {
+            cambio.innerText = '0.00';
+            boton.disabled = true;
+            return;
+        }
+
+        cambio.innerText = (pago - total).toFixed(2);
+        boton.disabled = false;
+    }
+
+    function setPropinaRestaurante(porcentaje, personalizado) {
+        const input = document.getElementById('porcentaje-propina-restaurante');
+        const custom = document.getElementById('porcentaje-propina-custom');
+        let valor = Number(porcentaje || 0);
+        if (!Number.isFinite(valor) || valor < 0) valor = 0;
+        if (valor > 100) valor = 100;
+        if (input) input.value = valor.toFixed(2);
+        if (!personalizado && custom) custom.value = '';
+
+        document.querySelectorAll('.propina-restaurante-opcion').forEach(function(button) {
+            const activa = !personalizado && Number(button.dataset.propinaOpcion) === valor;
+            button.classList.toggle('bg-orange-600', activa);
+            button.classList.toggle('text-white', activa);
+            button.classList.toggle('bg-white', !activa);
+            button.classList.toggle('dark:bg-gray-800', !activa);
+            button.classList.toggle('text-orange-700', !activa);
+            button.classList.toggle('dark:text-orange-300', !activa);
+            button.classList.toggle('border', !activa);
+            button.classList.toggle('border-orange-200', !activa);
+            button.classList.toggle('dark:border-orange-900', !activa);
+        });
+
+        actualizarCobroRestaurante();
+    }
+
+    function actualizarResumenPropinaRestaurante(subtotal, propina, total) {
+        const subtotalEl = document.getElementById('subtotal-restaurante');
+        const propinaEl = document.getElementById('propina-restaurante');
+        const totalEl = document.getElementById('total-cobro-restaurante');
+        if (subtotalEl) subtotalEl.innerText = subtotal.toFixed(2);
+        if (propinaEl) propinaEl.innerText = propina.toFixed(2);
+        if (totalEl) totalEl.innerText = total.toFixed(2);
+    }
+</script>
+{% endblock %}

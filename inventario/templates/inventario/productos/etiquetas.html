@@ -23,7 +23,7 @@
         <div class="etiqueta">
             <div>
                 <div class="nombre">{{ producto.nombre }}</div>
-                <div class="precio">${{ producto.precios.precio|default:"0.00" }}</div>
+                <div class="precio">${{ producto.precios.precio|default:"0.00"|floatformat:2 }}</div>
             </div>
             <div>
                 <svg class="barcode" data-code="{{ producto.codigo_barras }}"></svg>

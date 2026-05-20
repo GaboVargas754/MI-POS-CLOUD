@@ -121,7 +121,7 @@
             </svg>
             <span class="text-lg">Ver Carrito</span>
         </div>
-        <span id="mobile-cart-total-value" class="text-2xl font-black">${{ total|default:"0.00" }}</span>
+        <span id="mobile-cart-total-value" class="text-2xl font-black">${{ total|default:"0.00"|floatformat:2 }}</span>
     </button>
 
     <div id="panel-carrito-container" class="fixed inset-x-0 bottom-20 top-[68px] bg-white dark:bg-gray-800 z-30 transform translate-y-full transition-transform duration-300 lg:relative lg:inset-auto lg:translate-y-0 lg:w-1/3 lg:border-l border-gray-200 dark:border-gray-700 flex flex-col shadow-2xl lg:shadow-none min-h-0">
@@ -175,6 +175,10 @@
 
 {% block extra_js %}
 <script>
+    let escaneoFisicoEnProceso = false;
+    let ultimoCodigoEscaneadoFisico = '';
+    let ultimoEscaneoFisicoAt = 0;
+
     function toggleCartMobile() {
         const panel = document.getElementById('panel-carrito-container');
         const btnFlotante = document.getElementById('btn-flotante-carrito');
@@ -206,6 +210,12 @@
     });
 
     document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        const disparador = evt.detail.elt;
+        if (disparador && disparador.id === 'buscador_pos' && Date.now() - ultimoEscaneoFisicoAt < 1200) {
+            evt.preventDefault();
+            return;
+        }
+
         const tarjeta = evt.detail.elt ? evt.detail.elt.closest('.producto-resultado') : null;
         if (tarjeta) {
             tarjeta.classList.add('producto-agregando');
@@ -271,7 +281,7 @@
     }
 
     async function agregarCodigoEscaneado(codigoBarras) {
-        const codigo = (codigoBarras || '').trim();
+        const codigo = normalizarCodigoEscaneado(codigoBarras);
         if (!codigo) return;
 
         try {
@@ -298,13 +308,18 @@
 
             manejarResultadoCarrito(resultado);
 
-            if (resultado !== 'agregado') {
+            if (resultado === 'agregado') {
+                limpiarBusquedaEscaneada();
+            } else {
                 buscarCodigoEscaneado(codigo);
             }
+
+            return resultado;
         } catch (err) {
             console.error('No se pudo agregar el código escaneado:', err);
             mostrarFeedbackCarrito('Buscando código escaneado');
             buscarCodigoEscaneado(codigo);
+            return null;
         }
     }
 
@@ -331,9 +346,89 @@
         const inputBuscador = document.getElementById('buscador_pos');
         if (!inputBuscador) return;
 
-        inputBuscador.value = codigo;
+        inputBuscador.value = normalizarCodigoEscaneado(codigo);
         inputBuscador.dispatchEvent(new Event('input', { bubbles: true }));
     }
+
+    function normalizarCodigoEscaneado(codigo) {
+        return (codigo || '').replace(/[\r\n\t]/g, '').trim();
+    }
+
+    function limpiarBusquedaEscaneada() {
+        const inputBuscador = document.getElementById('buscador_pos');
+        const resultados = document.getElementById('resultados-busqueda');
+
+        if (inputBuscador) {
+            inputBuscador.value = '';
+            inputBuscador.focus();
+        }
+        if (resultados) {
+            resultados.innerHTML = '<p class="text-gray-400 dark:text-gray-600 italic text-center py-10 sm:py-20">Busca un producto para comenzar...</p>';
+        }
+    }
+
+    (function inicializarEscanerFisicoPos() {
+        const inputBuscador = document.getElementById('buscador_pos');
+        if (!inputBuscador) return;
+
+        function esEventoEnterEscanerFisico(event) {
+            return event.key === 'Enter'
+                || event.code === 'Enter'
+                || event.code === 'NumpadEnter'
+                || event.keyCode === 13
+                || event.which === 13;
+        }
+
+        async function procesarEscanerFisico(event) {
+            const codigo = normalizarCodigoEscaneado(inputBuscador.value);
+            if (!codigo) return;
+
+            const ahora = Date.now();
+            if (escaneoFisicoEnProceso || (codigo === ultimoCodigoEscaneadoFisico && ahora - ultimoEscaneoFisicoAt < 900)) {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                return;
+            }
+
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            escaneoFisicoEnProceso = true;
+            ultimoCodigoEscaneadoFisico = codigo;
+            ultimoEscaneoFisicoAt = ahora;
+
+            try {
+                await agregarCodigoEscaneado(codigo);
+            } finally {
+                window.setTimeout(function() {
+                    escaneoFisicoEnProceso = false;
+                }, 150);
+            }
+        }
+
+        ['keydown', 'keyup', 'keypress'].forEach(function(nombreEvento) {
+            inputBuscador.addEventListener(nombreEvento, function(event) {
+                if (esEventoEnterEscanerFisico(event)) procesarEscanerFisico(event);
+            });
+        });
+
+        inputBuscador.addEventListener('beforeinput', function(event) {
+            if (event.inputType === 'insertLineBreak') procesarEscanerFisico(event);
+        });
+
+        inputBuscador.addEventListener('input', function(event) {
+            if (/[\r\n]/.test(inputBuscador.value)) procesarEscanerFisico(event);
+        });
+
+        inputBuscador.addEventListener('change', function(event) {
+            const codigo = normalizarCodigoEscaneado(inputBuscador.value);
+            if (/^[^\s]{3,}$/.test(codigo)) procesarEscanerFisico(event);
+        });
+    })();
 
     (function() {
         const eventosActualizables = new Set(['inventario.movimiento', 'inventario.stock_bajo', 'inventario.agotado', 'producto.precio_actualizado', 'producto.actualizado']);

@@ -9,6 +9,8 @@
                     ESTADÍSTICAS
                 {% elif nav_title == 'Inventario' or nav_title == 'Módulo de Inventario' or nav_title == 'Catálogo de Productos' or nav_title == 'Gestión de Categorías' or nav_title == 'Gestión de Precios' %}
                     INVENTARIO
+                {% elif nav_title == 'Restaurante' or nav_title == 'Comanda' or nav_title == 'KDS' %}
+                    RESTAURANTE
                 {% else %}
                     SISTEMA
                 {% endif %}
@@ -34,7 +36,11 @@
             <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
                 {{ item.label }}
             </a>
-            {% elif item.label == 'Sistema' and perms.configuraciones.gestionar_usuarios or item.label == 'Sistema' and perms.configuraciones.gestionar_roles or item.label == 'Sistema' and perms.configuraciones.gestionar_tiendas or item.label == 'Sistema' and perms.configuraciones.editar_preferencias %}
+            {% elif item.label == 'Restaurante' and perms.configuraciones.operar_restaurante or item.label == 'Restaurante' and perms.configuraciones.operar_kds %}
+            <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
+                {{ item.label }}
+            </a>
+            {% elif item.label == 'Sistema' and perms.configuraciones.gestionar_usuarios or item.label == 'Sistema' and perms.configuraciones.gestionar_roles or item.label == 'Sistema' and perms.configuraciones.gestionar_tiendas or item.label == 'Sistema' and perms.configuraciones.editar_preferencias or item.label == 'Sistema' and perms.configuraciones.configurar_restaurante %}
             <a href="{{ item.url }}" class="nav-desktop-link inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-black text-gray-700 dark:text-gray-200 transition {{ item.hover_class|default:'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-600 dark:hover:text-yellow-400' }}">
                 {{ item.label }}
             </a>

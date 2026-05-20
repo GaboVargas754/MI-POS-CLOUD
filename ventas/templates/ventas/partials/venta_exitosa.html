@@ -15,12 +15,24 @@
         </div>
         <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
             <span class="font-bold">Total</span>
-            <span class="font-black text-green-600 dark:text-green-400">${{ venta.total }}</span>
+            <span class="font-black text-green-600 dark:text-green-400">${{ venta.total|floatformat:2 }}</span>
         </div>
+        {% if venta.propina > 0 %}
+        <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
+            <span class="font-bold">Propina</span>
+            <span class="font-black text-orange-600 dark:text-orange-400">${{ venta.propina|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+        {% for pago in venta.pagos.all %}
+        <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
+            <span class="font-bold">{{ pago.get_metodo_pago_display }}</span>
+            <span class="font-black text-gray-800 dark:text-white">${{ pago.monto|floatformat:2 }}</span>
+        </div>
+        {% endfor %}
         {% if venta.cambio > 0 %}
         <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-2">
             <span class="font-bold">Cambio</span>
-            <span class="font-black text-blue-600 dark:text-blue-400">${{ venta.cambio }}</span>
+            <span class="font-black text-blue-600 dark:text-blue-400">${{ venta.cambio|floatformat:2 }}</span>
         </div>
         {% endif %}
     </div>

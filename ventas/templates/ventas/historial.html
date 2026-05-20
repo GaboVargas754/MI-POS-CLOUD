@@ -112,7 +112,7 @@
                         {% for detalle in venta.detalles.all %}{{ detalle.cantidad }}x {{ detalle.producto.nombre }}{% if not forloop.last %}, {% endif %}{% empty %}Sin detalle{% endfor %}
                     </p>
                 </div>
-                <p class="text-2xl font-black {% if venta.estado == 'CANCELADA' %}text-red-500 line-through{% else %}text-green-600 dark:text-green-400{% endif %}">${{ venta.total }}</p>
+                <p class="text-2xl font-black {% if venta.estado == 'CANCELADA' %}text-red-500 line-through{% else %}text-green-600 dark:text-green-400{% endif %}">${{ venta.total|floatformat:2 }}</p>
             </div>
 
             {% if venta.estado == 'CANCELADA' and venta.motivo_cancelacion %}
@@ -165,7 +165,7 @@
                     <td class="p-4 max-w-xs text-sm text-gray-600 dark:text-gray-400">
                         {% for detalle in venta.detalles.all %}{{ detalle.cantidad }}x {{ detalle.producto.nombre }}{% if not forloop.last %}, {% endif %}{% empty %}Sin detalle{% endfor %}
                     </td>
-                    <td class="p-4 text-right font-black {% if venta.estado == 'CANCELADA' %}text-red-500 line-through{% else %}text-green-600 dark:text-green-400{% endif %}">${{ venta.total }}</td>
+                    <td class="p-4 text-right font-black {% if venta.estado == 'CANCELADA' %}text-red-500 line-through{% else %}text-green-600 dark:text-green-400{% endif %}">${{ venta.total|floatformat:2 }}</td>
                     <td class="p-4 text-center">
                         <div class="flex flex-col gap-2 items-center">
                             <a href="{% url 'imprimir_ticket' venta.id %}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm">Reimprimir</a>

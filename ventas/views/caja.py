@@ -4,12 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from django.db.models import Sum
 from django.db.models import Q
 from django.views.decorators.http import require_http_methods
 from core.utils import get_config_context
 from configuraciones.utils import get_punto_venta_actual, get_tienda_actual
 from ventas.models import SesionCaja, Venta
+from ventas.payments import dinero, total_pagos_por_metodo
 from ventas.views.carrito import OPERAR_POS_PERMISSION
 
 CAJA_PERMISSION = 'configuraciones.abrir_cerrar_caja'
@@ -33,8 +33,8 @@ def abrir_caja(request):
 
     if request.method == 'POST':
         try:
-            fondo = Decimal(request.POST.get('fondo_inicial') or '0')
-        except InvalidOperation:
+            fondo = dinero(request.POST.get('fondo_inicial'), 'fondo inicial')
+        except ValueError:
             return render(request, 'ventas/abrir_caja.html', _contexto_pos(error='Ingresa un fondo inicial válido.'))
 
         SesionCaja.objects.create(
@@ -60,12 +60,21 @@ def cerrar_caja(request):
         messages.warning(request, 'No hay un turno abierto. Abre caja antes de continuar.')
         return redirect('abrir_caja')
 
-    ventas_efectivo = Venta.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), sesion=sesion, metodo_pago='EFE', estado='ACTIVA').aggregate(Sum('total'))['total__sum'] or Decimal('0.00')
+    ventas_activas = Venta.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), sesion=sesion, estado='ACTIVA')
+    ventas_efectivo = total_pagos_por_metodo(ventas_activas, 'EFE')
     esperado_en_caja = sesion.fondo_inicial + ventas_efectivo
 
     if request.method == 'POST':
         try:
-            efectivo_contado = Decimal(request.POST.get('efectivo_cierre') or '0')
+            efectivo_raw = request.POST.get('efectivo_cierre')
+            efectivo_valor = Decimal(str(efectivo_raw if efectivo_raw not in [None, ''] else '0'))
+        except ValueError:
+            return render(request, 'ventas/cerrar_caja.html', _contexto_pos(
+                sesion=sesion,
+                ventas_efectivo=ventas_efectivo,
+                esperado_en_caja=esperado_en_caja,
+                error='Ingresa un efectivo de cierre válido.',
+            ))
         except InvalidOperation:
             return render(request, 'ventas/cerrar_caja.html', _contexto_pos(
                 sesion=sesion,
@@ -74,13 +83,23 @@ def cerrar_caja(request):
                 error='Ingresa un efectivo de cierre válido.',
             ))
 
-        if efectivo_contado < 0:
+        if not efectivo_valor.is_finite():
+            return render(request, 'ventas/cerrar_caja.html', _contexto_pos(
+                sesion=sesion,
+                ventas_efectivo=ventas_efectivo,
+                esperado_en_caja=esperado_en_caja,
+                error='Ingresa un efectivo de cierre válido.',
+            ))
+
+        if efectivo_valor < 0:
             return render(request, 'ventas/cerrar_caja.html', _contexto_pos(
                 sesion=sesion,
                 ventas_efectivo=ventas_efectivo,
                 esperado_en_caja=esperado_en_caja,
                 error='El efectivo de cierre no puede ser negativo.',
             ))
+
+        efectivo_contado = dinero(efectivo_valor, 'efectivo de cierre')
 
         sesion.efectivo_cierre = efectivo_contado
         sesion.fecha_cierre = timezone.now()

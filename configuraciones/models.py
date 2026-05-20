@@ -55,6 +55,7 @@ class ConfiguracionSistema(models.Model):
         permissions = [
             ("acceder_ventas", "Módulo de Ventas: Acceso al Punto de Venta y Cobro"),
             ("acceder_inventario", "Módulo de Inventario: Gestión de Productos y Categorías"),
+            ("acceder_restaurante", "Módulo de Restaurante: Comandas y cocina"),
             ("acceder_configuraciones", "Módulo de Sistema: Usuarios, Roles y Preferencias"),
             ("operar_pos", "Ventas: Operar POS y cobrar"),
             ("abrir_cerrar_caja", "Ventas: Abrir y cerrar caja"),
@@ -68,6 +69,9 @@ class ConfiguracionSistema(models.Model):
             ("editar_precios", "Inventario: Editar precios"),
             ("importar_exportar_inventario", "Inventario: Importar y exportar catálogo"),
             ("imprimir_etiquetas", "Inventario: Imprimir etiquetas"),
+            ("operar_restaurante", "Restaurante: Abrir comandas, enviar a cocina y cobrar"),
+            ("operar_kds", "Restaurante: Operar pantalla de cocina"),
+            ("configurar_restaurante", "Restaurante: Configurar mesas y estaciones"),
             ("gestionar_usuarios", "Sistema: Gestionar usuarios"),
             ("gestionar_roles", "Sistema: Gestionar roles"),
             ("gestionar_tiendas", "Sistema: Gestionar tiendas y cajas"),

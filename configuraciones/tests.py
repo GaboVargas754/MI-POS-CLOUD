@@ -2,6 +2,7 @@ from django.contrib.auth.models import Permission, User
 from django.test import TestCase
 from django.urls import reverse
 from configuraciones.models import PerfilUsuario, PuntoVenta, Tienda
+from restaurante.models import Mesa
 
 
 class ConfiguracionViewsTests(TestCase):
@@ -12,6 +13,7 @@ class ConfiguracionViewsTests(TestCase):
             'gestionar_roles',
             'gestionar_tiendas',
             'editar_preferencias',
+            'configurar_restaurante',
         ]))
         self.client.force_login(self.user)
 
@@ -86,3 +88,43 @@ class ConfiguracionViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Nueva Tienda')
+
+    def test_lista_mesas_y_formulario(self):
+        Mesa.objects.create(nombre='Mesa 1', codigo='M1', zona='Terraza', capacidad=4)
+
+        response = self.client.get(reverse('lista_mesas'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mesas de Restaurante')
+        self.assertContains(response, 'Mesa 1')
+
+        response = self.client.get(reverse('nueva_mesa'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nueva Mesa')
+
+    def test_crear_mesa_desde_sistema(self):
+        response = self.client.post(reverse('nueva_mesa'), {
+            'nombre': 'Mesa 2',
+            'codigo': 'M2',
+            'zona': 'Interior',
+            'capacidad': 6,
+            'activa': 'on',
+        })
+
+        self.assertRedirects(response, reverse('lista_mesas'))
+        mesa = Mesa.objects.get(codigo='M2')
+        self.assertEqual(mesa.nombre, 'Mesa 2')
+        self.assertEqual(mesa.zona, 'Interior')
+        self.assertEqual(mesa.capacidad, 6)
+        self.assertTrue(mesa.activa)
+
+    def test_mesas_requiere_permiso_configurar_restaurante(self):
+        usuario = User.objects.create_user(username='sin-mesas', password='testpass')
+        usuario.user_permissions.add(Permission.objects.get(codename='gestionar_usuarios'))
+        self.client.force_login(usuario)
+
+        response = self.client.get(reverse('lista_mesas'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response['Location'].startswith(reverse('portal_principal')))

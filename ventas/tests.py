@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from configuraciones.utils import get_tienda_actual
 from inventario.models import Categoria, MovimientoInventario, PrecioProducto, Producto
-from ventas.models import DetalleVenta, SesionCaja, Venta
+from ventas.models import DetalleVenta, PagoVenta, SesionCaja, Venta
 
 
 class FlujoVentasTests(TestCase):
@@ -79,6 +79,17 @@ class FlujoVentasTests(TestCase):
         self.assertEqual(carrito[str(self.producto.id)]['cantidad'], 1)
         self.assertEqual(carrito[str(self.producto.id)]['precio'], '12.50')
 
+    def test_agregar_por_codigo_normaliza_caracteres_de_control(self):
+        response = self.client.post(
+            reverse('agregar_por_codigo'),
+            {'codigo_barras': '750000\r\n000001\t'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['X-Carrito-Resultado'], 'agregado')
+        carrito = self.client.session['carrito']
+        self.assertEqual(carrito[str(self.producto.id)]['cantidad'], 1)
+
     def test_agregar_por_codigo_respeta_stock_disponible(self):
         self.producto.stock = 1
         self.producto.save(update_fields=['stock'])
@@ -110,9 +121,12 @@ class FlujoVentasTests(TestCase):
         self.assertEqual(venta.sesion, self.sesion)
         self.assertEqual(venta.tienda, get_tienda_actual(response.wsgi_request))
         self.assertEqual(venta.metodo_pago, 'EFE')
+        self.assertEqual(venta.subtotal, Decimal('25.00'))
+        self.assertEqual(venta.propina, Decimal('0.00'))
         self.assertEqual(venta.total, Decimal('25.00'))
         self.assertEqual(venta.pago_recibido, Decimal('30.00'))
         self.assertEqual(venta.cambio, Decimal('5.00'))
+        self.assertEqual(list(venta.pagos.values_list('metodo_pago', 'monto')), [('EFE', Decimal('25.00'))])
 
         detalle = DetalleVenta.objects.get(venta=venta)
         self.assertEqual(detalle.precio_unitario, Decimal('12.50'))
@@ -141,13 +155,38 @@ class FlujoVentasTests(TestCase):
         self.assertEqual(venta.total, Decimal('12.50'))
         self.assertEqual(venta.pago_recibido, Decimal('12.50'))
         self.assertEqual(venta.cambio, Decimal('0.00'))
+        self.assertEqual(list(venta.pagos.values_list('metodo_pago', 'monto')), [('TAR', Decimal('12.50'))])
         self.assertContains(response, 'Tarjeta')
+
+    def test_procesar_venta_guarda_pago_mixto(self):
+        self.client.post(reverse('agregar_al_carrito', args=[self.producto.id]))
+        self.client.post(reverse('agregar_al_carrito', args=[self.producto.id]))
+
+        response = self.client.post(reverse('procesar_venta'), {
+            'metodo_pago': 'MIX',
+            'pago_efectivo': '10.00',
+            'pago_tarjeta': '15.00',
+            'pago_transferencia': '0',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        venta = Venta.objects.get()
+        self.assertEqual(venta.metodo_pago, 'MIX')
+        self.assertEqual(venta.total, Decimal('25.00'))
+        self.assertEqual(venta.pago_recibido, Decimal('25.00'))
+        self.assertEqual(venta.cambio, Decimal('0.00'))
+        self.assertEqual(list(venta.pagos.values_list('metodo_pago', 'monto')), [
+            ('EFE', Decimal('10.00')),
+            ('TAR', Decimal('15.00')),
+        ])
 
     def test_carrito_muestra_controles_de_cobro_rapido(self):
         response = self.client.post(reverse('agregar_al_carrito', args=[self.producto.id]))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Método de pago')
+        self.assertContains(response, 'Mixto')
+        self.assertContains(response, 'pagos-mixtos')
         self.assertContains(response, 'pagos-rapidos')
         self.assertContains(response, 'setPagoRapido')
         self.assertContains(response, 'mostrarCobroRapido')
@@ -292,6 +331,19 @@ class FlujoVentasTests(TestCase):
         self.assertContains(response, 'bottom-20')
         self.assertContains(response, 'bottom-40')
         self.assertContains(response, reverse('cerrar_caja'))
+
+    def test_pos_agrega_codigo_con_pistola_fisica(self):
+        response = self.client.get(reverse('pantalla_pos'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'inicializarEscanerFisicoPos')
+        self.assertContains(response, 'esEventoEnterEscanerFisico')
+        self.assertContains(response, "event.code === 'NumpadEnter'")
+        self.assertContains(response, 'event.keyCode === 13')
+        self.assertContains(response, "event.inputType === 'insertLineBreak'")
+        self.assertContains(response, 'normalizarCodigoEscaneado')
+        self.assertContains(response, 'agregarCodigoEscaneado(codigo)')
+        self.assertContains(response, 'limpiarBusquedaEscaneada')
 
     def test_pos_muestra_accesos_a_modulos_permitidos(self):
         self.user.user_permissions.add(
@@ -490,6 +542,31 @@ class FlujoVentasTests(TestCase):
         self.assertContains(response, '$25.00')
         self.assertContains(response, '$75.00')
         self.assertContains(response, '$5.00')
+
+    def test_corte_suma_pago_mixto_por_metodo(self):
+        self.sesion.estado = False
+        self.sesion.fecha_cierre = timezone.now()
+        self.sesion.efectivo_cierre = Decimal('70.00')
+        self.sesion.save(update_fields=['estado', 'fecha_cierre', 'efectivo_cierre'])
+        venta = Venta.objects.create(
+            cajero=self.user,
+            sesion=self.sesion,
+            subtotal=Decimal('25.00'),
+            total=Decimal('25.00'),
+            pago_recibido=Decimal('25.00'),
+            cambio=Decimal('0.00'),
+            metodo_pago='MIX',
+        )
+        PagoVenta.objects.create(venta=venta, metodo_pago='EFE', monto=Decimal('10.00'))
+        PagoVenta.objects.create(venta=venta, metodo_pago='TAR', monto=Decimal('15.00'))
+
+        response = self.client.get(reverse('imprimir_corte', args=[self.sesion.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['ventas_efectivo'], Decimal('10.00'))
+        self.assertEqual(response.context['ventas_tarjeta'], Decimal('15.00'))
+        self.assertEqual(response.context['total_ventas'], Decimal('25.00'))
+        self.assertEqual(response.context['esperado_en_caja'], Decimal('60.00'))
 
     def test_dashboard_excluye_ventas_canceladas(self):
         self.crear_venta_con_detalle(total=Decimal('25.00'))

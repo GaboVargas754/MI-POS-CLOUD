@@ -33,7 +33,7 @@
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-2xl border-l-8 border-green-500 p-5 shadow-sm">
         <p class="text-xs uppercase tracking-wider font-black text-gray-500 dark:text-gray-400">Precio</p>
-        <p class="text-3xl font-black text-gray-900 dark:text-white">${{ producto.precios.precio|default:"0.00" }}</p>
+        <p class="text-3xl font-black text-gray-900 dark:text-white">${{ producto.precios.precio|default:"0.00"|floatformat:2 }}</p>
     </div>
 </div>
 

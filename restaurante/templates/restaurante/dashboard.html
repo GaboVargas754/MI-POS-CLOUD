@@ -1,0 +1,116 @@
+{% extends "base/base.html" %}
+
+{% block title %}Restaurante - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <p class="text-xs font-black uppercase tracking-wider text-orange-600 dark:text-orange-400">Restaurante</p>
+            <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">Comandas abiertas</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Mesa, para llevar y cocina conectados en tiempo real.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+            {% if perms.configuraciones.operar_kds or request.user.is_superuser %}
+            <a href="{% url 'restaurante_kds' %}" class="inline-flex min-h-12 items-center justify-center rounded-xl bg-orange-600 px-5 text-sm font-black text-white shadow-sm hover:bg-orange-700 transition">Abrir KDS</a>
+            {% endif %}
+            <a href="{% url 'portal_principal' %}" class="inline-flex min-h-12 items-center justify-center rounded-xl bg-white dark:bg-gray-800 px-5 text-sm font-black text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">Inicio</a>
+        </div>
+    </div>
+
+    {% if perms.configuraciones.operar_restaurante or request.user.is_superuser %}
+    <section class="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm">
+        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-4">Nueva comanda</h3>
+        <form method="post" action="{% url 'restaurante_crear_pedido' %}" class="grid grid-cols-1 lg:grid-cols-[auto_1fr_1fr_auto] gap-3 items-end">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Tipo</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tipo" value="MESA" class="peer sr-only" checked onchange="actualizarTipoPedidoRestaurante()">
+                        <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 text-sm font-black text-gray-700 dark:text-gray-200 peer-checked:border-orange-600 peer-checked:bg-orange-600 peer-checked:text-white transition">Mesa</span>
+                    </label>
+                    {% if config_restaurante.permitir_para_llevar %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tipo" value="PARA_LLEVAR" class="peer sr-only" onchange="actualizarTipoPedidoRestaurante()">
+                        <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 text-sm font-black text-gray-700 dark:text-gray-200 peer-checked:border-orange-600 peer-checked:bg-orange-600 peer-checked:text-white transition">Para llevar</span>
+                    </label>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="campo-mesa-restaurante">
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Mesa</label>
+                <select name="mesa" class="w-full min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
+                    <option value="">Selecciona mesa</option>
+                    {% for mesa in mesas %}
+                    <option value="{{ mesa.id }}">{% if mesa.zona %}{{ mesa.zona }} - {% endif %}{{ mesa.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="campo-referencia-restaurante">
+                <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Referencia</label>
+                <input type="text" name="referencia" placeholder="Cliente, folio o nota" class="w-full min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
+            </div>
+
+            <button type="submit" class="min-h-12 rounded-xl bg-orange-600 px-6 font-black text-white shadow-sm hover:bg-orange-700 transition">Abrir</button>
+        </form>
+    </section>
+    {% endif %}
+
+    <section id="pedidos-restaurante-live" data-live-url="{% url 'restaurante_dashboard_live' %}">
+        {% include 'restaurante/partials/pedidos_abiertos.html' %}
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function actualizarTipoPedidoRestaurante() {
+        const tipo = document.querySelector('input[name="tipo"]:checked');
+        const campoMesa = document.getElementById('campo-mesa-restaurante');
+        const mesa = campoMesa ? campoMesa.querySelector('select[name="mesa"]') : null;
+        const esMesa = !tipo || tipo.value === 'MESA';
+
+        if (campoMesa) campoMesa.classList.toggle('opacity-50', !esMesa);
+        if (mesa) mesa.disabled = !esMesa;
+    }
+
+    actualizarTipoPedidoRestaurante();
+
+    (function() {
+        const contenedor = document.getElementById('pedidos-restaurante-live');
+        if (!contenedor) return;
+        const eventos = new Set(['restaurante.pedido_creado', 'restaurante.pedido_actualizado', 'restaurante.pedido_enviado_cocina', 'restaurante.item_cancelado', 'restaurante.item_estado_actualizado', 'restaurante.pedido_cobrado']);
+        let refrescando = false;
+        let refrescarDespues = false;
+
+        async function refrescarPedidos() {
+            if (refrescando) {
+                refrescarDespues = true;
+                return;
+            }
+            refrescando = true;
+            contenedor.classList.add('opacity-70');
+            try {
+                await htmx.ajax('GET', contenedor.dataset.liveUrl, { target: '#pedidos-restaurante-live', swap: 'innerHTML' });
+            } catch (error) {
+                console.error(error);
+            } finally {
+                contenedor.classList.remove('opacity-70');
+                refrescando = false;
+                if (refrescarDespues) {
+                    refrescarDespues = false;
+                    refrescarPedidos();
+                }
+            }
+        }
+
+        document.addEventListener('pos:notificacion', function(event) {
+            const payload = event.detail || {};
+            if (eventos.has(payload.event)) refrescarPedidos();
+        });
+    })();
+</script>
+{% endblock %}

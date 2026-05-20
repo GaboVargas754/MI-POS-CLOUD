@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User, Group, Permission
 from .models import ConfiguracionSistema, PerfilUsuario, PuntoVenta, Tienda
 from .utils import get_tienda_principal
+from restaurante.models import Mesa
 
 # Clases base para el estilo amarillo
 clases_comunes = 'w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors'
@@ -123,6 +124,19 @@ class PuntoVentaForm(forms.ModelForm):
             'activo': forms.CheckboxInput(attrs={'class': 'w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500'}),
         }
 
+
+class MesaForm(forms.ModelForm):
+    class Meta:
+        model = Mesa
+        fields = ['nombre', 'codigo', 'zona', 'capacidad', 'activa']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. Mesa 1'}),
+            'codigo': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. M1'}),
+            'zona': forms.TextInput(attrs={'class': clases_comunes, 'placeholder': 'Ej. Terraza'}),
+            'capacidad': forms.NumberInput(attrs={'class': clases_comunes, 'min': '1'}),
+            'activa': forms.CheckboxInput(attrs={'class': 'w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500'}),
+        }
+
 class ConfiguracionForm(forms.ModelForm):
     class Meta:
         model = ConfiguracionSistema
@@ -173,6 +187,9 @@ class RolForm(forms.ModelForm):
             'editar_precios',
             'importar_exportar_inventario',
             'imprimir_etiquetas',
+            'operar_restaurante',
+            'operar_kds',
+            'configurar_restaurante',
             'gestionar_usuarios',
             'gestionar_roles',
             'gestionar_tiendas',

@@ -110,7 +110,7 @@
             <div class="grid grid-cols-2 gap-2 text-sm">
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
                     <p class="text-[10px] uppercase font-black text-gray-400 tracking-wider">Fondo</p>
-                    <p class="font-black text-gray-900 dark:text-white">${{ sesion.fondo_inicial }}</p>
+                    <p class="font-black text-gray-900 dark:text-white">${{ sesion.fondo_inicial|floatformat:2 }}</p>
                 </div>
                 <div class="rounded-xl bg-green-50 dark:bg-green-900/20 p-3">
                     <p class="text-[10px] uppercase font-black text-green-500 tracking-wider">Ventas</p>
@@ -122,7 +122,7 @@
                 </div>
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
                     <p class="text-[10px] uppercase font-black text-gray-400 tracking-wider">Contado</p>
-                    <p class="font-black text-gray-900 dark:text-white">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre }}{% else %}-{% endif %}</p>
+                    <p class="font-black text-gray-900 dark:text-white">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre|floatformat:2 }}{% else %}-{% endif %}</p>
                 </div>
             </div>
 
@@ -174,10 +174,10 @@
                         <div>{{ sesion.fecha_apertura|date:"d/m/Y H:i" }}</div>
                         <div>{% if sesion.fecha_cierre %}{{ sesion.fecha_cierre|date:"d/m/Y H:i" }}{% else %}En curso{% endif %}</div>
                     </td>
-                    <td class="p-4 text-right font-mono">${{ sesion.fondo_inicial }}</td>
+                    <td class="p-4 text-right font-mono">${{ sesion.fondo_inicial|floatformat:2 }}</td>
                     <td class="p-4 text-right font-black text-green-600 dark:text-green-400">${{ sesion.total_ventas|floatformat:2 }}</td>
                     <td class="p-4 text-right font-mono">${{ sesion.esperado_en_caja|floatformat:2 }}</td>
-                    <td class="p-4 text-right font-mono">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre }}{% else %}-{% endif %}</td>
+                    <td class="p-4 text-right font-mono">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre|floatformat:2 }}{% else %}-{% endif %}</td>
                     <td class="p-4 text-right font-black">
                         {% if sesion.efectivo_cierre is not None %}
                             {% if sesion.diferencia > 0 %}

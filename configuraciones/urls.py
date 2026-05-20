@@ -16,6 +16,11 @@ urlpatterns = [
     path('puntos-venta/nuevo/', views.editar_punto_venta, name='nuevo_punto_venta'),
     path('puntos-venta/editar/<int:pk>/', views.editar_punto_venta, name='editar_punto_venta'),
 
+    # Mesas de restaurante
+    path('mesas/', views.lista_mesas, name='lista_mesas'),
+    path('mesas/nueva/', views.editar_mesa, name='nueva_mesa'),
+    path('mesas/editar/<int:pk>/', views.editar_mesa, name='editar_mesa'),
+
     # Preferencias
     path('ajustes/', views.ajustes_sistema, name='ajustes_sistema'),
 

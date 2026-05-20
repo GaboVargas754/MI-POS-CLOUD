@@ -1,0 +1,70 @@
+{% extends "base/base.html" %}
+
+{% block title %}KDS - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-5">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <a href="{% url 'restaurante_dashboard' %}" class="inline-flex items-center text-sm font-black text-orange-600 dark:text-orange-400 hover:underline mb-2">Volver a restaurante</a>
+            <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">KDS</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Pantalla de preparación en tiempo real.</p>
+        </div>
+        {% if config_restaurante.usa_estaciones %}
+        <form method="get" class="w-full lg:w-72">
+            <label class="block text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Estación</label>
+            <select name="estacion" onchange="this.form.submit()" class="w-full min-h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
+                <option value="">Todas</option>
+                <option value="sin_estacion" {% if estacion_id == 'sin_estacion' %}selected{% endif %}>Sin estación</option>
+                {% for estacion in estaciones %}
+                <option value="{{ estacion.id }}" {% if estacion.id|stringformat:'s' == estacion_id %}selected{% endif %}>{{ estacion.nombre }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+    </div>
+
+    <section id="kds-panel" data-live-url="{% url 'restaurante_kds_live' %}{% if estacion_id %}?estacion={{ estacion_id }}{% endif %}" class="transition-opacity">
+        {% include 'restaurante/partials/kds_panel.html' %}
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const eventos = new Set(['restaurante.pedido_enviado_cocina', 'restaurante.item_cancelado', 'restaurante.item_estado_actualizado', 'restaurante.pedido_cobrado']);
+        let refrescando = false;
+        let refrescarDespues = false;
+
+        async function refrescarKds() {
+            const panel = document.getElementById('kds-panel');
+            if (!panel) return;
+            if (refrescando) {
+                refrescarDespues = true;
+                return;
+            }
+            refrescando = true;
+            panel.classList.add('opacity-70');
+            try {
+                await htmx.ajax('GET', panel.dataset.liveUrl, { target: '#kds-panel', swap: 'innerHTML' });
+            } catch (error) {
+                console.error(error);
+            } finally {
+                const panelActual = document.getElementById('kds-panel');
+                if (panelActual) panelActual.classList.remove('opacity-70');
+                refrescando = false;
+                if (refrescarDespues) {
+                    refrescarDespues = false;
+                    refrescarKds();
+                }
+            }
+        }
+
+        document.addEventListener('pos:notificacion', function(event) {
+            const payload = event.detail || {};
+            if (eventos.has(payload.event)) refrescarKds();
+        });
+    })();
+</script>
+{% endblock %}

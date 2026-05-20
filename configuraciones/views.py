@@ -3,21 +3,24 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
-from .forms import ConfiguracionForm, PuntoVentaForm, RolForm, TiendaForm, UsuarioForm
+from .forms import ConfiguracionForm, MesaForm, PuntoVentaForm, RolForm, TiendaForm, UsuarioForm
 from .models import ConfiguracionSistema, PuntoVenta, Tienda
 from .utils import get_perfil_usuario
 from core.permissions import any_permission_required
 from core.utils import get_config_context
+from restaurante.models import Mesa
 
 GESTIONAR_USUARIOS_PERMISSION = 'configuraciones.gestionar_usuarios'
 GESTIONAR_ROLES_PERMISSION = 'configuraciones.gestionar_roles'
 GESTIONAR_TIENDAS_PERMISSION = 'configuraciones.gestionar_tiendas'
 EDITAR_PREFERENCIAS_PERMISSION = 'configuraciones.editar_preferencias'
+CONFIGURAR_RESTAURANTE_PERMISSION = 'configuraciones.configurar_restaurante'
 SISTEMA_PERMISSIONS = [
     GESTIONAR_USUARIOS_PERMISSION,
     GESTIONAR_ROLES_PERMISSION,
     GESTIONAR_TIENDAS_PERMISSION,
     EDITAR_PREFERENCIAS_PERMISSION,
+    CONFIGURAR_RESTAURANTE_PERMISSION,
 ]
 
 @login_required
@@ -191,4 +194,41 @@ def editar_punto_venta(request, pk=None):
         'form': form,
         'titulo': 'Editar Punto de Venta' if punto else 'Nuevo Punto de Venta',
         'is_instance': punto is not None,
+    })
+
+
+@login_required
+@permission_required(CONFIGURAR_RESTAURANTE_PERMISSION, login_url='portal_principal')
+def lista_mesas(request):
+    mesas_list = Mesa.objects.all().order_by('zona', 'nombre')
+    per_page = request.GET.get('per_page', 10)
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(mesas_list, per_page)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'configuraciones/mesas/lista.html', {
+        **get_config_context('Sistema', 'border-yellow-500'),
+        'page_obj': page_obj,
+        'per_page': per_page,
+    })
+
+
+@login_required
+@permission_required(CONFIGURAR_RESTAURANTE_PERMISSION, login_url='portal_principal')
+def editar_mesa(request, pk=None):
+    mesa = get_object_or_404(Mesa, pk=pk) if pk else None
+    form = MesaForm(request.POST or None, instance=mesa)
+
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('lista_mesas')
+
+    return render(request, 'configuraciones/mesas/formulario_mesa.html', {
+        'form': form,
+        'titulo': 'Editar Mesa' if mesa else 'Nueva Mesa',
+        'is_instance': mesa is not None,
     })

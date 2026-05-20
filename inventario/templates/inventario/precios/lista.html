@@ -47,15 +47,15 @@
             <div class="grid grid-cols-3 gap-2 text-center">
                 <div class="rounded-xl bg-red-50 dark:bg-red-900/20 p-3">
                     <p class="text-[10px] uppercase font-black text-red-400 tracking-wider">Costo</p>
-                    <p class="font-mono font-bold text-red-500">${{ p.costo }}</p>
+                    <p class="font-mono font-bold text-red-500">${{ p.costo|floatformat:2 }}</p>
                 </div>
                 <div class="rounded-xl bg-green-50 dark:bg-green-900/20 p-3">
                     <p class="text-[10px] uppercase font-black text-green-500 tracking-wider">Precio</p>
-                    <p class="font-mono font-bold text-green-600 dark:text-green-400">${{ p.precio }}</p>
+                    <p class="font-mono font-bold text-green-600 dark:text-green-400">${{ p.precio|floatformat:2 }}</p>
                 </div>
                 <div class="rounded-xl bg-purple-50 dark:bg-purple-900/20 p-3">
                     <p class="text-[10px] uppercase font-black text-purple-500 tracking-wider">Margen</p>
-                    <p class="font-mono font-bold text-purple-600 dark:text-purple-300">${{ p.margen_ganancia }}</p>
+                    <p class="font-mono font-bold text-purple-600 dark:text-purple-300">${{ p.margen_ganancia|floatformat:2 }}</p>
                 </div>
             </div>
 
@@ -82,11 +82,11 @@
                 {% for p in page_obj %}
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td class="p-4 font-bold text-gray-800 dark:text-gray-200">{{ p.producto.nombre }}</td>
-                    <td class="p-4 text-center font-mono text-red-500">${{ p.costo }}</td>
-                    <td class="p-4 text-center font-mono text-green-500 font-bold">${{ p.precio }}</td>
+                    <td class="p-4 text-center font-mono text-red-500">${{ p.costo|floatformat:2 }}</td>
+                    <td class="p-4 text-center font-mono text-green-500 font-bold">${{ p.precio|floatformat:2 }}</td>
                     <td class="p-4 text-center">
                         <span class="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full font-bold">
-                            +${{ p.margen_ganancia }}
+                            +${{ p.margen_ganancia|floatformat:2 }}
                         </span>
                     </td>
                     <td class="p-4 text-center text-xs text-gray-400">

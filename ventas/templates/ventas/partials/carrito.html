@@ -27,12 +27,12 @@
                             +
                         </button>
 
-                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">x ${{ item.precio }}</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">x ${{ item.precio|floatformat:2 }}</span>
                     </div>
                 </div>
 
                 <div class="flex flex-col items-end gap-2">
-                    <span class="font-bold text-blue-600 dark:text-blue-400 text-lg">${{ item.subtotal }}</span>
+                    <span class="font-bold text-blue-600 dark:text-blue-400 text-lg">${{ item.subtotal|floatformat:2 }}</span>
 
                     <button hx-post="{% url 'eliminar_item' id %}"
                             hx-target="#panel-carrito"
@@ -53,7 +53,7 @@
 <div class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 mt-auto transition-colors">
     <div class="flex justify-between items-end mb-4">
         <h3 class="text-sm sm:text-lg font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total a pagar</h3>
-        <h3 data-cart-total class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">${{ total|default:"0.00" }}</h3>
+        <h3 data-cart-total class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">${{ total|default:"0.00"|floatformat:2 }}</h3>
     </div>
 
     {% if total > 0 %}
@@ -69,7 +69,7 @@
         </div>
 
         <label class="block text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Método de pago</label>
-        <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="grid grid-cols-4 gap-2 mb-4">
             <label class="cursor-pointer">
                 <input type="radio" name="metodo_pago" value="EFE" class="peer sr-only" checked onchange="actualizarMetodoPago()">
                 <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2 text-xs font-black text-gray-600 dark:text-gray-300 transition peer-checked:border-green-600 peer-checked:bg-green-600 peer-checked:text-white">Efectivo</span>
@@ -82,6 +82,10 @@
                 <input type="radio" name="metodo_pago" value="TRA" class="peer sr-only" onchange="actualizarMetodoPago()">
                 <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2 text-xs font-black text-gray-600 dark:text-gray-300 transition peer-checked:border-purple-600 peer-checked:bg-purple-600 peer-checked:text-white">Transfer.</span>
             </label>
+            <label class="cursor-pointer">
+                <input type="radio" name="metodo_pago" value="MIX" class="peer sr-only" onchange="actualizarMetodoPago()">
+                <span class="flex min-h-12 items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2 text-xs font-black text-gray-600 dark:text-gray-300 transition peer-checked:border-orange-600 peer-checked:bg-orange-600 peer-checked:text-white">Mixto</span>
+            </label>
         </div>
 
         <div id="pagos-rapidos" class="grid grid-cols-5 gap-2 mb-3">
@@ -92,10 +96,35 @@
             <button type="button" onclick="setPagoRapido(500)" class="min-h-11 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-black hover:bg-gray-200 dark:hover:bg-gray-600 transition">$500</button>
         </div>
 
-        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Pago recibido ($)</label>
-        <input type="number" id="pago_recibido" name="pago_recibido" min="0" step="0.50" inputmode="decimal"
-               class="w-full min-h-12 p-3 text-xl font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
-               placeholder="Ej. 500" oninput="calcularCambio()">
+        <div id="pago-simple">
+            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Pago recibido ($)</label>
+            <input type="number" id="pago_recibido" name="pago_recibido" min="0" step="0.01" inputmode="decimal" data-decimal-places="2"
+                   class="w-full min-h-12 p-3 text-xl font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
+                   placeholder="Ej. 500" oninput="calcularCambio()">
+        </div>
+
+        <div id="pagos-mixtos" class="hidden space-y-3">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Efectivo ($)</label>
+                <input type="number" name="pago_efectivo" id="pago_efectivo" min="0" step="0.01" inputmode="decimal" data-decimal-places="2"
+                       class="w-full min-h-12 p-3 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-gray-900 dark:text-white"
+                       placeholder="0.00" oninput="calcularCambio()">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Tarjeta ($)</label>
+                    <input type="number" name="pago_tarjeta" id="pago_tarjeta" min="0" step="0.01" inputmode="decimal" data-decimal-places="2"
+                           class="w-full min-h-12 p-3 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white"
+                           placeholder="0.00" oninput="calcularCambio()">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Transfer. ($)</label>
+                    <input type="number" name="pago_transferencia" id="pago_transferencia" min="0" step="0.01" inputmode="decimal" data-decimal-places="2"
+                           class="w-full min-h-12 p-3 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-gray-900 dark:text-white"
+                           placeholder="0.00" oninput="calcularCambio()">
+                </div>
+            </div>
+        </div>
 
         <div id="estado-pago" class="flex justify-between items-center mt-3 text-gray-400 dark:text-gray-500 transition-colors">
             <span id="estado-pago-texto" class="font-bold uppercase text-sm">Pago pendiente</span>
@@ -140,6 +169,7 @@
         const btnMostrar = document.getElementById('btn-mostrar-cobro');
         const btnConfirmar = document.getElementById('btn-cobrar');
         const inputPago = document.getElementById('pago_recibido');
+        const pagoEfectivo = document.getElementById('pago_efectivo');
 
         if (controles) controles.classList.remove('hidden');
         if (btnMostrar) btnMostrar.classList.add('hidden');
@@ -149,7 +179,11 @@
         }
 
         actualizarMetodoPago();
-        if (inputPago && !inputPago.readOnly) inputPago.focus();
+        if (pagoEfectivo && document.querySelector('input[name="metodo_pago"]:checked')?.value === 'MIX') {
+            pagoEfectivo.focus();
+        } else if (inputPago && !inputPago.readOnly) {
+            inputPago.focus();
+        }
     }
 
     function ocultarCobroRapido() {
@@ -172,12 +206,45 @@
         const metodoPago = metodoSeleccionado ? metodoSeleccionado.value : 'EFE';
         const btnCobrar = document.getElementById('btn-cobrar');
         let pago = parseFloat(inputPago ? inputPago.value : '0');
+        const pagoEfectivo = parseFloat(document.getElementById('pago_efectivo')?.value || '0') || 0;
+        const pagoTarjeta = parseFloat(document.getElementById('pago_tarjeta')?.value || '0') || 0;
+        const pagoTransferencia = parseFloat(document.getElementById('pago_transferencia')?.value || '0') || 0;
 
         const spanCambio = document.getElementById('cambio_visual');
         const contenedorCambio = document.getElementById('estado-pago');
         const textoEstado = document.getElementById('estado-pago-texto');
 
         if (!inputPago || !spanCambio || !contenedorCambio || !textoEstado) return;
+
+        if (metodoPago === 'MIX') {
+            const noEfectivo = pagoTarjeta + pagoTransferencia;
+            const totalPagado = pagoEfectivo + noEfectivo;
+
+            if (noEfectivo > total) {
+                spanCambio.innerText = '0.00';
+                textoEstado.innerText = 'Tarjeta/transfer. excede total';
+                contenedorCambio.classList.remove('text-green-600', 'dark:text-green-400', 'text-gray-400', 'dark:text-gray-500');
+                contenedorCambio.classList.add('text-red-600', 'dark:text-red-400');
+                if (btnCobrar) btnCobrar.disabled = true;
+                return;
+            }
+
+            if (totalPagado < total) {
+                spanCambio.innerText = (total - totalPagado).toFixed(2);
+                textoEstado.innerText = 'Falta por pagar';
+                contenedorCambio.classList.remove('text-green-600', 'dark:text-green-400', 'text-gray-400', 'dark:text-gray-500');
+                contenedorCambio.classList.add('text-red-600', 'dark:text-red-400');
+                if (btnCobrar) btnCobrar.disabled = true;
+                return;
+            }
+
+            spanCambio.innerText = (totalPagado - total).toFixed(2);
+            textoEstado.innerText = totalPagado > total ? 'Cambio a entregar' : 'Pago exacto';
+            contenedorCambio.classList.remove('text-gray-400', 'dark:text-gray-500', 'text-red-600', 'dark:text-red-400');
+            contenedorCambio.classList.add('text-green-600', 'dark:text-green-400');
+            if (btnCobrar) btnCobrar.disabled = false;
+            return;
+        }
 
         if (metodoPago !== 'EFE') {
             inputPago.value = total.toFixed(2);
@@ -219,10 +286,16 @@
     function actualizarMetodoPago() {
         const metodoSeleccionado = document.querySelector('input[name="metodo_pago"]:checked');
         const pagosRapidos = document.getElementById('pagos-rapidos');
+        const pagosMixtos = document.getElementById('pagos-mixtos');
+        const pagoSimple = document.getElementById('pago-simple');
         const inputPago = document.getElementById('pago_recibido');
-        const esEfectivo = !metodoSeleccionado || metodoSeleccionado.value === 'EFE';
+        const metodoPago = metodoSeleccionado ? metodoSeleccionado.value : 'EFE';
+        const esEfectivo = metodoPago === 'EFE';
+        const esMixto = metodoPago === 'MIX';
 
         if (pagosRapidos) pagosRapidos.classList.toggle('hidden', !esEfectivo);
+        if (pagosMixtos) pagosMixtos.classList.toggle('hidden', !esMixto);
+        if (pagoSimple) pagoSimple.classList.toggle('hidden', esMixto);
         if (esEfectivo && inputPago) inputPago.readOnly = false;
 
         calcularCambio();

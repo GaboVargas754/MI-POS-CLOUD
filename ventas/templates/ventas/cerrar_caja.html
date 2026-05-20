@@ -24,7 +24,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 <div class="rounded-2xl bg-gray-50 dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-700">
                     <p class="text-[10px] uppercase font-black text-gray-500 dark:text-gray-400 tracking-wider">Fondo inicial</p>
-                    <p class="text-2xl font-black text-gray-900 dark:text-white">${{ sesion.fondo_inicial }}</p>
+                    <p class="text-2xl font-black text-gray-900 dark:text-white">${{ sesion.fondo_inicial|floatformat:2 }}</p>
                 </div>
                 <div class="rounded-2xl bg-green-50 dark:bg-green-900/20 p-4 border border-green-100 dark:border-green-900/40">
                     <p class="text-[10px] uppercase font-black text-green-600 dark:text-green-400 tracking-wider">Ventas efectivo</p>
@@ -52,7 +52,7 @@
                         <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                             <span class="text-green-600 dark:text-green-400 text-3xl font-black">$</span>
                         </div>
-                        <input type="number" id="efectivo_cierre" name="efectivo_cierre" step="0.50" min="0" required autofocus inputmode="decimal" oninput="calcularDiferenciaCierre()"
+                        <input type="number" id="efectivo_cierre" name="efectivo_cierre" step="0.01" min="0" required autofocus inputmode="decimal" data-decimal-places="2" oninput="calcularDiferenciaCierre()"
                                class="w-full text-right text-4xl font-black p-5 pl-14 border-2 border-gray-200 dark:border-gray-700 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-100 dark:focus:ring-green-900/40 outline-none text-gray-800 dark:text-white bg-gray-50 dark:bg-gray-900 transition-colors"
                                placeholder="0.00">
                     </div>

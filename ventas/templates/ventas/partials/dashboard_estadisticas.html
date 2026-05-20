@@ -1,7 +1,7 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
     <div class="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 border-green-500 transition-all hover:shadow-md">
         <p class="text-gray-500 dark:text-gray-400 uppercase text-xs font-black tracking-widest">Ventas Totales</p>
-        <p class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">${{ total_ventas }}</p>
+        <p class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">${{ total_ventas|floatformat:2 }}</p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 border-blue-500 transition-all hover:shadow-md">

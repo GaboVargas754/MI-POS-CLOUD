@@ -75,7 +75,7 @@
             <tr>
                 <td class="text-left" style="vertical-align: top;">{{ item.cantidad }}</td>
                 <td class="text-left">{{ item.producto.nombre|truncatechars:18 }}</td>
-                <td class="text-right">${{ item.subtotal }}</td>
+                <td class="text-right">${{ item.subtotal|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -83,17 +83,40 @@
 
     <div class="border-top" style="margin-top: 10px; padding-top: 10px;">
         <table style="width: 100%; margin-top: 0;">
+            {% if venta.propina > 0 %}
+            <tr>
+                <td class="text-left">Subtotal:</td>
+                <td class="text-right">${{ venta.subtotal|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td class="text-left">Propina {{ venta.porcentaje_propina|floatformat:2 }}%:</td>
+                <td class="text-right">${{ venta.propina|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
             <tr>
                 <td class="text-left bold">TOTAL:</td>
-                <td class="text-right bold" style="font-size: 18px;">${{ venta.total }}</td>
+                <td class="text-right bold" style="font-size: 18px;">${{ venta.total|floatformat:2 }}</td>
             </tr>
+            {% for pago in venta.pagos.all %}
             <tr>
-                <td class="text-left">Efectivo Recibido:</td>
-                <td class="text-right">${{ venta.pago_recibido }}</td>
+                <td class="text-left">{{ pago.get_metodo_pago_display }}:</td>
+                <td class="text-right">${{ pago.monto|floatformat:2 }}</td>
             </tr>
+            {% empty %}
+            <tr>
+                <td class="text-left">{{ venta.get_metodo_pago_display }}:</td>
+                <td class="text-right">${{ venta.total|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+            {% if venta.pago_recibido > venta.total %}
+            <tr>
+                <td class="text-left">Recibido:</td>
+                <td class="text-right">${{ venta.pago_recibido|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
             <tr>
                 <td class="text-left bold">CAMBIO:</td>
-                <td class="text-right bold">${{ venta.cambio }}</td>
+                <td class="text-right bold">${{ venta.cambio|floatformat:2 }}</td>
             </tr>
         </table>
     </div>

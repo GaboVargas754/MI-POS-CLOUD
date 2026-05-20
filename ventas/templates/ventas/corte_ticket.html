@@ -29,17 +29,18 @@
     </div>
 
     <table>
-        <tr><td>Fondo inicial:</td><td class="text-right">${{ sesion.fondo_inicial }}</td></tr>
+        <tr><td>Fondo inicial:</td><td class="text-right">${{ sesion.fondo_inicial|floatformat:2 }}</td></tr>
         <tr><td>Ventas efectivo:</td><td class="text-right">${{ ventas_efectivo|floatformat:2 }}</td></tr>
         <tr><td>Ventas tarjeta:</td><td class="text-right">${{ ventas_tarjeta|floatformat:2 }}</td></tr>
         <tr><td>Ventas transfer.:</td><td class="text-right">${{ ventas_transferencia|floatformat:2 }}</td></tr>
+        <tr><td>Propinas incluidas:</td><td class="text-right">${{ total_propinas|floatformat:2 }}</td></tr>
         <tr class="border-top"><td class="bold">Total ventas:</td><td class="text-right bold">${{ total_ventas|floatformat:2 }}</td></tr>
         <tr><td>Tickets:</td><td class="text-right">{{ total_tickets }}</td></tr>
     </table>
 
     <table class="border-top">
         <tr><td>Esperado caja:</td><td class="text-right">${{ esperado_en_caja|floatformat:2 }}</td></tr>
-        <tr><td>Efectivo contado:</td><td class="text-right">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre }}{% else %}-{% endif %}</td></tr>
+        <tr><td>Efectivo contado:</td><td class="text-right">{% if sesion.efectivo_cierre is not None %}${{ sesion.efectivo_cierre|floatformat:2 }}{% else %}-{% endif %}</td></tr>
         <tr>
             <td class="bold">Diferencia:</td>
             <td class="text-right bold">

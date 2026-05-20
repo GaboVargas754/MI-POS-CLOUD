@@ -28,7 +28,7 @@
                     {% if perms.configuraciones.editar_precios or request.user.is_superuser %}
                         {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
                     {% else %}
-                        <p class="text-lg font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00' }}</p>
+                        <p class="text-lg font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00'|floatformat:2 }}</p>
                     {% endif %}
                     {% if not p.precios %}
                         <p class="text-[10px] font-black text-red-500 mt-1">Sin precio</p>
@@ -89,7 +89,7 @@
                         {% if perms.configuraciones.editar_precios or request.user.is_superuser %}
                             {% include 'inventario/productos/partials/precio_inline.html' with p=p %}
                         {% else %}
-                            <span class="font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00' }}</span>
+                            <span class="font-black text-purple-600 dark:text-purple-400">${{ p.precios.precio|default:'0.00'|floatformat:2 }}</span>
                         {% endif %}
                     </td>
                     <td class="p-4 text-center">

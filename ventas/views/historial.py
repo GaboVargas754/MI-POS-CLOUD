@@ -31,7 +31,10 @@ def historial_ventas(request):
 
     metodos_validos = {metodo for metodo, _ in Venta.METODOS_PAGO}
     if metodo_pago in metodos_validos:
-        ventas = ventas.filter(metodo_pago=metodo_pago)
+        if metodo_pago == 'MIX':
+            ventas = ventas.filter(metodo_pago='MIX')
+        else:
+            ventas = ventas.filter(Q(pagos__metodo_pago=metodo_pago) | Q(pagos__isnull=True, metodo_pago=metodo_pago)).distinct()
 
     estados_validos = {estado_venta for estado_venta, _ in Venta.ESTADOS}
     if estado in estados_validos:

@@ -11,6 +11,10 @@ from ventas.models import SesionCaja
 OPERAR_POS_PERMISSION = 'configuraciones.operar_pos'
 
 
+def normalizar_codigo_escaneado(codigo):
+    return str(codigo or '').replace('\r', '').replace('\n', '').replace('\t', '').strip()
+
+
 def calcular_total_carrito(carrito):
     total = Decimal('0.00')
 
@@ -113,7 +117,7 @@ def agregar_al_carrito(request, producto_id):
 @permission_required(OPERAR_POS_PERMISSION, login_url='portal_principal')
 @require_POST
 def agregar_por_codigo(request):
-    codigo_barras = request.POST.get('codigo_barras', '').strip()
+    codigo_barras = normalizar_codigo_escaneado(request.POST.get('codigo_barras', ''))
     carrito = request.session.get('carrito', {})
     respuesta_sin_turno = _respuesta_si_no_hay_turno(request, carrito)
     if respuesta_sin_turno is not None:

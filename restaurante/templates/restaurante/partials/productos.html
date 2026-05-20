@@ -1,0 +1,25 @@
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    {% for producto in productos %}
+    <form hx-post="{% url 'restaurante_agregar_item' pedido_id %}" hx-target="#comanda-panel" hx-swap="outerHTML" class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 p-4 shadow-sm">
+        {% csrf_token %}
+        <input type="hidden" name="producto_id" value="{{ producto.id }}">
+        <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+                <h4 class="font-black text-gray-900 dark:text-white leading-tight">{{ producto.nombre }}</h4>
+                <p class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">{{ producto.codigo_barras }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Stock {{ producto.stock }}</p>
+            </div>
+            <p class="text-xl font-black text-orange-600 dark:text-orange-400">${{ producto.precios.precio|floatformat:2 }}</p>
+        </div>
+        <div class="mt-4 grid grid-cols-[90px_1fr_auto] gap-2 items-center">
+            <input type="number" name="cantidad" value="1" min="1" max="{{ producto.stock }}" class="min-h-11 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-center font-black text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
+            <input type="text" name="nota" placeholder="Nota opcional" class="min-h-11 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
+            <button type="submit" class="min-h-11 rounded-xl bg-orange-600 px-4 text-sm font-black text-white hover:bg-orange-700 transition">Agregar</button>
+        </div>
+    </form>
+    {% empty %}
+    {% if request.GET.q %}
+    <p class="lg:col-span-2 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-6 text-center text-sm text-gray-500 dark:text-gray-400">No se encontraron productos con "{{ request.GET.q }}".</p>
+    {% endif %}
+    {% endfor %}
+</div>

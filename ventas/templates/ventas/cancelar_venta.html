@@ -32,7 +32,7 @@
                 </div>
                 <div class="rounded-2xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-900/40">
                     <p class="text-[10px] uppercase font-black text-red-500 tracking-wider">Total a cancelar</p>
-                    <p class="font-black text-red-700 dark:text-red-300 text-2xl">${{ venta.total }}</p>
+                    <p class="font-black text-red-700 dark:text-red-300 text-2xl">${{ venta.total|floatformat:2 }}</p>
                 </div>
             </div>
 
@@ -43,7 +43,7 @@
                     <div class="p-4 flex justify-between gap-3">
                         <div>
                             <p class="font-bold text-gray-900 dark:text-white">{{ detalle.producto.nombre }}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ detalle.cantidad }} x ${{ detalle.precio_unitario }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ detalle.cantidad }} x ${{ detalle.precio_unitario|floatformat:2 }}</p>
                         </div>
                         <p class="font-black text-green-600 dark:text-green-400">+{{ detalle.cantidad }} stock</p>
                     </div>

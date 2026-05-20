@@ -13,6 +13,7 @@ from core.permissions import any_permission_required
 from configuraciones.utils import get_tienda_actual
 from inventario.models import MovimientoInventario, Producto
 from ventas.models import DetalleVenta, SesionCaja, Venta
+from ventas.payments import calcular_desglose_pago, registrar_pagos_venta
 from configuraciones.models import ConfiguracionSistema
 from ventas.views.carrito import OPERAR_POS_PERMISSION, calcular_total_carrito
 
@@ -24,7 +25,7 @@ VER_HISTORIAL_VENTAS_PERMISSION = 'configuraciones.ver_historial_ventas'
 @any_permission_required([OPERAR_POS_PERMISSION, VER_HISTORIAL_VENTAS_PERMISSION], login_url='portal_principal')
 def imprimir_ticket(request, venta_id):
     tienda_actual = get_tienda_actual(request)
-    venta = get_object_or_404(Venta.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)), id=venta_id)
+    venta = get_object_or_404(Venta.objects.prefetch_related('pagos').filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True)), id=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
 
     config = ConfiguracionSistema.objects.first()
@@ -134,18 +135,6 @@ def procesar_venta(request):
         return render(request, 'ventas/partials/carrito.html', {'carrito': {}, 'total': Decimal('0.00')})
 
     try:
-        metodo_pago = request.POST.get('metodo_pago', 'EFE')
-        metodos_validos = {metodo for metodo, _ in Venta.METODOS_PAGO}
-        if metodo_pago not in metodos_validos:
-            raise ValueError("Selecciona un método de pago válido.")
-
-        pago_recibido = Decimal('0.00')
-        if metodo_pago == 'EFE':
-            pago_str = request.POST.get('pago_recibido', '0') or '0'
-            pago_recibido = Decimal(pago_str)
-            if pago_recibido < 0:
-                raise ValueError("El pago recibido no puede ser negativo.")
-
         with transaction.atomic():
             sesion = SesionCaja.objects.select_for_update().filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), cajero=request.user, estado=True).first()
             if not sesion:
@@ -155,7 +144,10 @@ def procesar_venta(request):
                 cajero=request.user,
                 sesion=sesion,
                 tienda=tienda_actual,
-                metodo_pago=metodo_pago,
+                metodo_pago='EFE',
+                subtotal=Decimal('0.00'),
+                propina=Decimal('0.00'),
+                porcentaje_propina=Decimal('0.00'),
                 total=Decimal('0.00'),
             )
 
@@ -204,20 +196,24 @@ def procesar_venta(request):
                     motivo=f'Venta ticket #{nueva_venta.id}',
                 )
 
-            if metodo_pago == 'EFE':
-                if pago_recibido > 0 and pago_recibido < venta_total:
-                    raise ValueError(f"El monto recibido (${pago_recibido}) es menor al total a pagar (${venta_total}).")
+            desglose_pago = calcular_desglose_pago(
+                total=venta_total,
+                metodo_pago=request.POST.get('metodo_pago', 'EFE'),
+                pago_recibido=request.POST.get('pago_recibido', '0'),
+                pago_efectivo=request.POST.get('pago_efectivo', '0'),
+                pago_tarjeta=request.POST.get('pago_tarjeta', '0'),
+                pago_transferencia=request.POST.get('pago_transferencia', '0'),
+            )
 
-                pago_final = pago_recibido if pago_recibido > 0 else venta_total
-                cambio = pago_final - venta_total
-            else:
-                pago_final = venta_total
-                cambio = Decimal('0.00')
-
+            nueva_venta.subtotal = venta_total
+            nueva_venta.propina = Decimal('0.00')
+            nueva_venta.porcentaje_propina = Decimal('0.00')
             nueva_venta.total = venta_total
-            nueva_venta.pago_recibido = pago_final
-            nueva_venta.cambio = cambio
-            nueva_venta.save(update_fields=['total', 'pago_recibido', 'cambio'])
+            nueva_venta.metodo_pago = desglose_pago['metodo_pago']
+            nueva_venta.pago_recibido = desglose_pago['pago_recibido']
+            nueva_venta.cambio = desglose_pago['cambio']
+            nueva_venta.save(update_fields=['subtotal', 'propina', 'porcentaje_propina', 'total', 'metodo_pago', 'pago_recibido', 'cambio'])
+            registrar_pagos_venta(nueva_venta, desglose_pago['pagos'])
 
             venta_id = nueva_venta.id
             tienda_id = nueva_venta.tienda_id or tienda_actual.id

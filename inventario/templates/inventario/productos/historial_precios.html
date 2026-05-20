@@ -24,16 +24,16 @@
                     <p class="font-black text-gray-900 dark:text-white">{{ cambio.fecha|date:"d/m/Y H:i" }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ cambio.usuario.username|default:"Sistema" }} · {{ cambio.motivo|default:"Sin motivo" }}</p>
                 </div>
-                <span class="rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 text-xs font-black">${{ cambio.precio_nuevo }}</span>
+                <span class="rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 text-xs font-black">${{ cambio.precio_nuevo|floatformat:2 }}</span>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
                     <p class="text-[10px] uppercase font-black text-gray-400 tracking-wider">Costo</p>
-                    <p class="font-black">${{ cambio.costo_anterior|default:"0.00" }} → ${{ cambio.costo_nuevo }}</p>
+                    <p class="font-black">${{ cambio.costo_anterior|default:"0.00"|floatformat:2 }} → ${{ cambio.costo_nuevo|floatformat:2 }}</p>
                 </div>
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
                     <p class="text-[10px] uppercase font-black text-gray-400 tracking-wider">Precio</p>
-                    <p class="font-black">${{ cambio.precio_anterior|default:"0.00" }} → ${{ cambio.precio_nuevo }}</p>
+                    <p class="font-black">${{ cambio.precio_anterior|default:"0.00"|floatformat:2 }} → ${{ cambio.precio_nuevo|floatformat:2 }}</p>
                 </div>
             </div>
         </div>
@@ -60,10 +60,10 @@
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ cambio.fecha|date:"d/m/Y H:i" }}</td>
                     <td class="p-4 text-sm">{{ cambio.usuario.username|default:"Sistema" }}</td>
-                    <td class="p-4 text-right font-mono">${{ cambio.costo_anterior|default:"0.00" }}</td>
-                    <td class="p-4 text-right font-mono text-red-600 dark:text-red-400">${{ cambio.costo_nuevo }}</td>
-                    <td class="p-4 text-right font-mono">${{ cambio.precio_anterior|default:"0.00" }}</td>
-                    <td class="p-4 text-right font-mono font-black text-green-600 dark:text-green-400">${{ cambio.precio_nuevo }}</td>
+                    <td class="p-4 text-right font-mono">${{ cambio.costo_anterior|default:"0.00"|floatformat:2 }}</td>
+                    <td class="p-4 text-right font-mono text-red-600 dark:text-red-400">${{ cambio.costo_nuevo|floatformat:2 }}</td>
+                    <td class="p-4 text-right font-mono">${{ cambio.precio_anterior|default:"0.00"|floatformat:2 }}</td>
+                    <td class="p-4 text-right font-mono font-black text-green-600 dark:text-green-400">${{ cambio.precio_nuevo|floatformat:2 }}</td>
                     <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ cambio.motivo|default:"Sin motivo" }}</td>
                 </tr>
                 {% empty %}

@@ -22,6 +22,7 @@ class Venta(models.Model):
         ('EFE', 'Efectivo'),
         ('TAR', 'Tarjeta'),
         ('TRA', 'Transferencia'),
+        ('MIX', 'Mixto'),
     ]
     ESTADOS = [
         ('ACTIVA', 'Activa'),
@@ -32,6 +33,9 @@ class Venta(models.Model):
 
     fecha = models.DateTimeField(auto_now_add=True)
     cajero = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    propina = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    porcentaje_propina = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     metodo_pago = models.CharField(max_length=3, choices=METODOS_PAGO, default='EFE')
     pago_recibido = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -43,6 +47,24 @@ class Venta(models.Model):
 
     def __str__(self):
         return f"Ticket #{self.id} - {self.fecha.strftime('%d/%m/%Y')} - ${self.total}"
+
+
+class PagoVenta(models.Model):
+    METODOS_PAGO = [
+        ('EFE', 'Efectivo'),
+        ('TAR', 'Tarjeta'),
+        ('TRA', 'Transferencia'),
+    ]
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='pagos')
+    metodo_pago = models.CharField(max_length=3, choices=METODOS_PAGO)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.get_metodo_pago_display()} - ${self.monto}"
 
 class DetalleVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')

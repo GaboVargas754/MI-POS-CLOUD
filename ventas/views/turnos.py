@@ -10,6 +10,7 @@ from core.utils import get_config_context, get_querystring_without_page
 from configuraciones.utils import get_tienda_actual
 from configuraciones.models import ConfiguracionSistema
 from ventas.models import SesionCaja, Venta
+from ventas.payments import total_pagos_por_metodo
 VER_TURNOS_PERMISSION = 'configuraciones.ver_turnos'
 
 
@@ -19,10 +20,11 @@ def _decimal(value):
 
 def _totales_turno(sesion):
     ventas = Venta.objects.filter(Q(tienda=sesion.tienda) | Q(tienda__isnull=True), sesion=sesion, estado='ACTIVA')
-    ventas_efectivo = _decimal(ventas.filter(metodo_pago='EFE').aggregate(total=Sum('total'))['total'])
-    ventas_tarjeta = _decimal(ventas.filter(metodo_pago='TAR').aggregate(total=Sum('total'))['total'])
-    ventas_transferencia = _decimal(ventas.filter(metodo_pago='TRA').aggregate(total=Sum('total'))['total'])
+    ventas_efectivo = total_pagos_por_metodo(ventas, 'EFE')
+    ventas_tarjeta = total_pagos_por_metodo(ventas, 'TAR')
+    ventas_transferencia = total_pagos_por_metodo(ventas, 'TRA')
     total_ventas = ventas_efectivo + ventas_tarjeta + ventas_transferencia
+    total_propinas = _decimal(ventas.aggregate(total=Sum('propina'))['total'])
     esperado_en_caja = sesion.fondo_inicial + ventas_efectivo
     diferencia = None
 
@@ -34,6 +36,7 @@ def _totales_turno(sesion):
         'ventas_tarjeta': ventas_tarjeta,
         'ventas_transferencia': ventas_transferencia,
         'total_ventas': total_ventas,
+        'total_propinas': total_propinas,
         'total_tickets': ventas.count(),
         'esperado_en_caja': esperado_en_caja,
         'diferencia': diferencia,
@@ -81,9 +84,9 @@ def historial_turnos(request):
 
     resumen = turnos.aggregate(
         total_ventas=Sum('venta__total', filter=Q(venta__estado='ACTIVA')),
-        ventas_efectivo=Sum('venta__total', filter=Q(venta__metodo_pago='EFE', venta__estado='ACTIVA')),
         total_tickets=Count('venta', filter=Q(venta__estado='ACTIVA')),
     )
+    ventas_turnos = Venta.objects.filter(Q(tienda=tienda_actual) | Q(tienda__isnull=True), sesion__in=turnos, estado='ACTIVA')
     total_turnos = turnos.count()
 
     try:
@@ -108,7 +111,7 @@ def historial_turnos(request):
         'querystring': get_querystring_without_page(request),
         'total_turnos': total_turnos,
         'total_ventas': _decimal(resumen['total_ventas']),
-        'ventas_efectivo': _decimal(resumen['ventas_efectivo']),
+        'ventas_efectivo': total_pagos_por_metodo(ventas_turnos, 'EFE'),
         'total_tickets': resumen['total_tickets'] or 0,
     }
     return render(request, 'ventas/turnos_historial.html', contexto)

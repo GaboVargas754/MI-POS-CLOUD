@@ -85,6 +85,33 @@
             if (event.key === 'Escape') cerrarModal();
         });
 
+        function limitarDecimalesInput(input) {
+            const places = Number(input.dataset.decimalPlaces || 2);
+            if (!input.value || places < 0) return;
+
+            const normalized = input.value.replace(',', '.');
+            const parts = normalized.split('.');
+            if (parts.length > 1 && parts[1].length > places) {
+                input.value = parts[0] + '.' + parts[1].slice(0, places);
+            }
+        }
+
+        function formatearDecimalInput(input) {
+            const places = Number(input.dataset.decimalPlaces || 2);
+            if (!input.value || places < 0) return;
+
+            const value = Number(input.value);
+            if (Number.isFinite(value)) input.value = value.toFixed(places);
+        }
+
+        document.addEventListener('input', function(event) {
+            if (event.target.matches('[data-decimal-places]')) limitarDecimalesInput(event.target);
+        });
+
+        document.addEventListener('blur', function(event) {
+            if (event.target.matches('[data-decimal-places]')) formatearDecimalInput(event.target);
+        }, true);
+
         // Mostrar modal automáticamente cuando HTMX carga contenido en el target
         document.addEventListener('htmx:afterOnLoad', function(evt) {
             if (evt.detail.target.id === 'modal-content') {
